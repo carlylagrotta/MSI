@@ -13,7 +13,8 @@ import cantera as ct
 import MSI.utilities.plotting_script as plotter
 
 
-files_to_include = [['Masten_1.yaml'],
+files_to_include = [['Masten_0.yaml'],
+                    ['Masten_1.yaml'],
                     ['Masten_2.yaml'],
                     ['Masten_3.yaml'],
                     ['Masten_4.yaml'],
@@ -42,7 +43,7 @@ files_to_include = [['Masten_1.yaml'],
                     ['Masten_27.yaml'],
                     ['Masten_28.yaml']] 
 
-files_to_include = [['Masten_0.yaml']]                                                       
+#files_to_include = [['Masten_0.yaml']]                                                       
                              
 numer_of_iterations = 3                                         
 cti_file = 'masten_paper_gri_thermo.cti'

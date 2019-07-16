@@ -217,6 +217,15 @@ class MSI_shocktube_optimization(object):
             #tab
             self.z_matrix = z_matrix
             
+            
+            
+            
+            self.X_data_frame = X_data_frame
+            self.prior_diag = prior_diag
+            self.prior_diag_df = prior_diag_df
+            self.sorted_prior_diag = sorted_prior_diag
+            self.covariance_prior_df = sorted_prior_diag
+            self.prior_sigmas_df = prior_sigmas_df
         else:
             X,covarience,s_matrix,y_matrix,delta_X,z_matrix,X_data_frame,posterior_diag,posterior_diag_df,sorted_posterior_diag,covariance_posterior_df,posterior_sigmas_df = self.matrix_builder_instance.matrix_manipulation(loop_counter,self.S_matrix,self.Y_matrix,self.z_matrix,XLastItteration = self.X,active_parameters=self.active_parameters)
             self.X = X
@@ -226,6 +235,12 @@ class MSI_shocktube_optimization(object):
             self.delta_X = delta_X
             self.z_matrix = z_matrix
             #tab
+            self.X_data_frame = X_data_frame
+            self.posterior_diag = posterior_diag
+            self.posterior_diag_df =posterior_diag_df
+            self.sorted_posterior_diag=sorted_posterior_diag
+            self.covariance_posterior_df = covariance_posterior_df
+            self.posterior_sigmas_df = covariance_posterior_df
 
         
 

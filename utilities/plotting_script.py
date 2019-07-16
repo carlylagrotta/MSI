@@ -4,6 +4,12 @@ import pandas as pd
 import cantera as ct
 import copy
 from textwrap import wrap
+import scipy.stats as stats
+import math
+from scipy.stats import multivariate_normal
+from matplotlib import style
+
+
 
 class Plotting(object):
     def __init__(self,S_matrix,
@@ -26,7 +32,8 @@ class Plotting(object):
                  k_target_values='Off',
                  working_directory='',
                  sigma_uncertainty_weighted_sensitivity_csv='',
-                 simulation_run=None):
+                 simulation_run=None,
+                 shock_tube_instance = None):
         self.S_matrix = S_matrix
         self.s_matrix = s_matrix
         self.Y_matrix = Y_matrix
@@ -50,6 +57,7 @@ class Plotting(object):
         self.working_directory = working_directory
         self.sigma_uncertainty_weighted_sensitivity_csv  = sigma_uncertainty_weighted_sensitivity_csv
         self.simulation_run = simulation_run
+        self.shock_tube_instance = shock_tube_instance
         
  #fix all the indexing to have a captial or lowercase time situation or add the module that lets you do either to all the scripts  
 
@@ -1151,8 +1159,113 @@ class Plotting(object):
                 plt.semilogy(target_value_temps_optimized[i],target_value_ks_optimized[i],'o',color='black')
                 plt.xlabel('Temperature (K)')
                 plt.ylabel('Kmol/m^3-s')
-                plt.title(reaction_list_from_mechanism[reaction])      
+                plt.title(reaction_list_from_mechanism[reaction])
+                
+                
+                
+        
+    def plotting_normal_distributions(self,paramter_list,optimized_cti_file=''):
+        
+        all_parameters = self.shock_tube_instance.posterior_diag_df['parameter'].tolist()
+        df = self.shock_tube_instance.posterior_diag_df
+        gas_optimized = ct.Solution(optimized_cti_file)
+        
+        for parameter in paramter_list:
+            indx = all_parameters.index(parameter)
+            variance = df['value'][indx]
+            letter,number = parameter.split('_')
+            number = int(number)
+            A=gas_optimized.reaction(number).rate.pre_exponential_factor
+            n=gas_optimized.reaction(number).rate.temperature_exponent
+            Ea=gas_optimized.reaction(number).rate.activation_energy
+            
+            if letter =='A':
+                mu = np.log(A)
+                #convert to chemkin units
+            if letter == 'n':
+                mu = n
+            if letter == 'Ea':
+                mu=Ea
+            
+            sigma = math.sqrt(variance)
+            x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+            plt.plot(x, stats.norm.pdf(x, mu, sigma))
+            plt.show()   
+    
+        return
+    
+    
+    def plotting_joint_normal_distributions(self,coupled_parameters,optimized_cti_file=''):
+                
+        all_parameters = self.shock_tube_instance.posterior_diag_df['parameter'].tolist()
+        df = self.shock_tube_instance.posterior_diag_df
+        gas_optimized = ct.Solution(optimized_cti_file)
+        
+        
+        for couple in coupled_parameters:
+            indx1 = all_parameters.index(couple[0])
+            indx2 = all_parameters.index(couple[1])
+            variance1 = df['value'][indx1]
+            variance2 = df['value'][indx2]
+            
+            letter1,number1 = couple[0].split('_')
+            letter2,number2 = couple[1].split('_')
+            number1 = int(number1)
+            number2 = int(number2)
+            
+            A1=gas_optimized.reaction(number1).rate.pre_exponential_factor
+            n1=gas_optimized.reaction(number1).rate.temperature_exponent
+            Ea1=gas_optimized.reaction(number1).rate.activation_energy
+            
+            
+            
+            covariance_couple = self.covarience[number1,number2]
+            if letter1 =='A':
+                mu1 = np.log(A1)
+                #convert to chemkin units
+            if letter1 == 'n':
+                mu1 = n1
+            if letter1 == 'Ea':
+                mu1=Ea1
+                
+            A2=gas_optimized.reaction(number2).rate.pre_exponential_factor
+            n2=gas_optimized.reaction(number2).rate.temperature_exponent
+            Ea2=gas_optimized.reaction(number2).rate.activation_energy    
+            
+            if letter2 =='A':
+                mu2 = np.log(A2)
+                #convert to chemkin units
+            if letter2 == 'n':
+                mu2 = n2
+            if letter2 == 'Ea':
+                mu2=Ea2
+            
+            
+            style.use('fivethirtyeight')
 
+            mu_x = mu1
+            variance_x = variance1
+
+            mu_y = mu2
+            variance_y = variance2
+
+            x = np.linspace(.7213,50,50)
+            y = np.linspace(10,50,50)
+            X,Y = np.meshgrid(x,y)
+            
+            pos = np.array([X.flatten(),Y.flatten()]).T
+            
+            
+            
+            rv = multivariate_normal([mu_x, mu_y], [[variance_x, covariance_couple], [covariance_couple, variance_y]])
+            
+            
+            fig = plt.figure()
+            ax0 = fig.add_subplot(111)
+            ax0.contour(rv.pdf(pos).reshape(50,50))
+            
+            
+        return 
                 
                 
             
