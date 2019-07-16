@@ -1,7 +1,8 @@
-import sys
-sys.path.append('..')
+import sys, os
+sys.path.append('../../') #get rid of this at some point with central test script or when package is built
+os.chdir('../../')
 
-from cti_core import soln2cti as cti_pp
+import MSI.cti_core.soln2cti as cti_pp
 
 import cantera as ct
 gas = ct.Solution("../data/test_data/lam.cti")

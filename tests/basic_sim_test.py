@@ -1,3 +1,8 @@
+import sys, os
+sys.path.append('../../') #get rid of this at some point with central test script or when package is built
+os.chdir('../../')
+
+
 import cantera as ct
 import pandas as pd
 import numpy as np
