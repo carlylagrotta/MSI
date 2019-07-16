@@ -6,8 +6,9 @@ Created on Tue Aug 15 11:53:46 2017
 """
 
 #Free Flame simulator for use in TMRP project
-import sys
-sys.path.append('..')
+import sys, os
+sys.path.append('../../') #get rid of this at some point with central test script or when package is built
+os.chdir('../../')
 
 import numpy as np
 import cantera as ct

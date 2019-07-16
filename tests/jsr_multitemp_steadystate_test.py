@@ -1,5 +1,6 @@
-import sys
-sys.path.append('.') #get rid of this at some point with central test script or when package is built
+import sys, os
+sys.path.append('../../') #get rid of this at some point with central test script or when package is built
+os.chdir('../../')
 
 import MSI.simulations.instruments.jsr_steadystate as jsr
 import MSI.cti_core.cti_processor as pr

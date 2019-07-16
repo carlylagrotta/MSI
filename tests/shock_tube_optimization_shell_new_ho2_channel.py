@@ -23,8 +23,9 @@ Created on Thu Feb 28 14:05:29 2019
 """
 
 
-import sys
-sys.path.append('.') #get rid of this at some point with central test script or when package is built
+import sys, os
+sys.path.append('../../') #get rid of this at some point with central test script or when package is built
+os.chdir('../../')
 
 import MSI.simulations.instruments.shock_tube as st
 import MSI.cti_core.cti_processor as pr

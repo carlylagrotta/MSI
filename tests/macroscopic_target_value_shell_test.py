@@ -1,5 +1,7 @@
-import sys
-sys.path.append('.') #get rid of this at some point with central test script or when package is built
+import sys, os
+sys.path.append('../../') #get rid of this at some point with central test script or when package is built
+os.chdir('../../')
+
 import pandas as pd 
 import MSI.optimization.shock_tube_optimization_shell as stMSI
 import MSI.utilities.testing_class as testing_class 
