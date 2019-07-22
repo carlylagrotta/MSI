@@ -108,3 +108,17 @@ class Graph_Parser(object):
                 if(c != 0): pts.append((tval/c, vval/c)) # Identify colors/average values found and append
             
             return pts
+        
+        if(mode == 'color-all'):
+            xax = self.hax.get_xcoord()
+            yax = self.vax.get_ycoord()
+            pts = []
+            for t in range(xax[0]+2, xax[1]-2, step):                
+                for v in range(yax[0], yax[1]-3):
+                    # If color matches
+                    if(np.array_equal(self.img[v, t], self.color)):
+                        vval = self.vax.pt_approx((v, t))
+                        tval = self.hax.pt_approx((v, t))
+                        pts.append((tval, vval)) # Identify colors/average values found and append
+            
+            return pts
