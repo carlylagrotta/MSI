@@ -15,7 +15,7 @@ import sys
 from tkinter import ttk
 from skimage import io
 
-if(not sys.argv[1]):
+if(len(sys.argv)==1):
     fname = '../data/pdf_data/Hong_2013_ppm.png'
 else:
     fname = sys.argv[1].rstrip()
@@ -30,12 +30,13 @@ class Graphify(ttk.Frame):
         self.initUI()
 
     def click(self, event):
-            self.px = imgCV[event.y, event.x]
-            #print(self.px)
-            self.pos = [event.y, event.x]
-            #print(self.pos)
-            self.pname.set("Color %d %d %d" % (self.px[0], self.px[1], self.px[2]))
-            self.lname.set("Location %d %d" % (self.pos[0], self.pos[1]))
+        self.px = imgCV[event.y, event.x]
+        #print(self.px)
+        self.pos = [event.y, event.x]
+        #print(self.pos)
+        self.pname.set("Color %d %d %d" % (self.px[0], self.px[1], self.px[2]))
+        self.lname.set("Location %d %d" % (self.pos[0], self.pos[1]))         
+
 
     def calc_graph(self):
         if(not self.x[0].get().replace('.','',1).isdigit() or not self.x[1].get().replace('.','',1).isdigit()):
@@ -44,7 +45,7 @@ class Graphify(ttk.Frame):
         if(not self.y[0].get().replace('.','',1).isdigit() or not self.y[1].get().replace('.','',1).isdigit()):
             print("Y Range needs to be number")
             return
-
+    
         if(self.spath.get().replace(' ','')):
             self.savename = self.spath.get().rstrip()
 
@@ -63,8 +64,11 @@ class Graphify(ttk.Frame):
                                 xval, yval,
                                 (self.pos[0], self.pos[1]), fname)
 
+        if(self.opt == 0):
+            pt = graph.get_pts()
+        else:
+            pt = graph.get_pts(mode='color-all')
 
-        pt = graph.get_pts()
         x, y = zip(*pt)
         plt.scatter(x,y)
         plt.show(block=False)
@@ -136,6 +140,18 @@ class Graphify(ttk.Frame):
         tk.Label(self, textvariable=self.lname,
                     borderwidth=1).grid(row=4, column=2)
 
+        # Set radiobuttons
+        self.opt = tk.IntVar() # 0=one line 1=all
+        self.opt.set(0)
+        self.rb = []
+        self.rb.append(tk.Radiobutton(self, text="Single Line",
+            variable=self.opt, value=0))
+        self.rb[0].grid(row=1, column=7)
+
+        self.rb.append(tk.Radiobutton(self, text="All Points",
+            variable=self.opt, value=1))
+        self.rb[1].grid(row=2, column=7)
+
         # Buttons for submission
         coordButton = tk.Button(self, text='Approximate Data', command=self.calc_graph)
         coordButton.grid(row=1, column=5, rowspan=2)
@@ -159,13 +175,14 @@ class Graphify(ttk.Frame):
         self.spath = tk.Entry(self, borderwidth=1, width=15)
         self.spath.grid(row=6,column=2)
 
-
         # Image Handler
         self.canvas = tk.Canvas(width=800, height=800, bg='white')
         self.canvas.pack()
         self.img = tk.PhotoImage(file=fname)        
         self.canvas.create_image(0,0,image=self.img, anchor=tk.NW)
         self.canvas.bind("<Button-1>", self.click)
+        #self.canvas.bind()
+        
 
         
 def main():
