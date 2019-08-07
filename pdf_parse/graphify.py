@@ -39,12 +39,12 @@ class Graphify(ttk.Frame):
 
 
     def calc_graph(self):
-        if(not self.x[0].get().replace('.','',1).isdigit() or not self.x[1].get().replace('.','',1).isdigit()):
-            print("X Range needs to be number")
-            return
-        if(not self.y[0].get().replace('.','',1).isdigit() or not self.y[1].get().replace('.','',1).isdigit()):
-            print("Y Range needs to be number")
-            return
+        #if(not self.x[0].get().replace('.','',1).isdigit() or not self.x[1].get().replace('.','',1).isdigit()):
+         #   print("X Range needs to be number")
+         #   return
+        #if(not self.y[0].get().replace('.','',1).isdigit() or not self.y[1].get().replace('.','',1).isdigit()):
+         #   print("Y Range needs to be number")
+          #  return
     
         if(self.spath.get().replace(' ','')):
             self.savename = self.spath.get().rstrip()
