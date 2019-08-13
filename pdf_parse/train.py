@@ -16,25 +16,28 @@ import set_train_data as std
 device = tc.device("cpu")
 
 # Load Training Data & Validation Data for split
-seed = 1
-b_size = 100
+seed = 3
+b_size = 200000
 v_size = 0.2
 data_path='/users/spyder/Desktop/training/'
 
-train_data, valid_data = std.load_dataset(data_path=data_path,
-                                      random_seed = seed, 
-                                      batch_size = b_size,
-                                      valid_size = v_size
+train_data, valid_data, train_size, valid_size = std.load_dataset(data_path=data_path,
+                                                                  random_seed = seed, 
+                                                                  batch_size = b_size,
+                                                                  valid_size = v_size,
+                                                                  max_num
+                                                                  = 1000000
         )
 
-data_loader = {"train": train_data, "val":valid_data}
+data_loader   = {"train": train_data, "val":valid_data}
+dataset_sizes = {"train": train_size, "val":valid_size}
 
 # Hyper Parameters for tuning
-lr = 0.001
-w_decay = 0.0001
+lr = 0.0001
+w_decay = 0.00001
 n_class = 7
 
-num_epoch = 3
+num_epoch = 20
 
 # 
 model = m.ParseNet(num_classes=7)
@@ -51,12 +54,18 @@ def save_models(epoch):
 
 def train(model, criterion, optimizer, num_epochs, scheduler):
     since = time.time()
+    acc_dict = {'train': [], 'val':[]}
 
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.ion()
+    plt.show()
+    
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
 
     for epoch in range(num_epoch):
-        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        print('Epoch {}/{}'.format(epoch+1, num_epochs))
         print('-' * 10)
 
         # Each epoch has a training and validation phase
@@ -96,15 +105,25 @@ def train(model, criterion, optimizer, num_epochs, scheduler):
 
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects.double() / dataset_sizes[phase]
+            
+            acc_dict[phase].append(epoch_acc)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
+            
 
             # deep copy the model
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
-    
+        ax.clear()
+        plt.plot(range(len(acc_dict['train'])), acc_dict['train'])
+        plt.plot(range(len(acc_dict['train'])), acc_dict['val'])
+        plt.pause(0.001)
+        
+        plt.legend(['train', 'validation'])
 
+    input("Press Enter to continue...")
+    
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 train(model, loss_fn, optimizer, num_epoch, exp_lr_scheduler)

@@ -53,7 +53,8 @@ def load_dataset(data_path='/users/spyder/Desktop/training/',
                  random_seed = 0,
                  shuffle=True,
                  show_sample=False,
-                 num_workers=0
+                 num_workers=0,
+                 max_num = None
         ):    
 
     # Normalize Data
@@ -63,12 +64,13 @@ def load_dataset(data_path='/users/spyder/Desktop/training/',
         )
 
     valid_transform = tv.transforms.Compose([
+            tv.transforms.Grayscale(num_output_channels=3),
             tv.transforms.ToTensor(),
             normalize
             ])
     train_transform = tv.transforms.Compose([
+            tv.transforms.Grayscale(num_output_channels=3),
             tv.transforms.ToTensor(),
-            
             normalize,
         ])
 
@@ -93,8 +95,12 @@ def load_dataset(data_path='/users/spyder/Desktop/training/',
         np.random.shuffle(indices)
     
     train_idx, valid_idx = indices[split:], indices[:split]
-    train_sampler = tc.utils.data.sampler.SubsetRandomSampler(train_idx)
-    valid_sampler = tc.utils.data.sampler.SubsetRandomSampler(valid_idx)
+    if(max_num):
+        train_sampler = tc.utils.data.sampler.SubsetRandomSampler(train_idx[:max_num])
+        valid_sampler = tc.utils.data.sampler.SubsetRandomSampler(valid_idx[:int(max_num*valid_size)])
+    else:
+        train_sampler = tc.utils.data.sampler.SubsetRandomSampler(train_idx)
+        valid_sampler = tc.utils.data.sampler.SubsetRandomSampler(valid_idx)
 
     # Load data
     train_loader = tc.utils.data.DataLoader(
@@ -110,6 +116,9 @@ def load_dataset(data_path='/users/spyder/Desktop/training/',
                 num_workers=num_workers,
                 sampler=valid_sampler
         )
+    
+    train_size = len(train_dataset)
+    valid_size = len(valid_dataset)
 
     if show_sample:
         sample_loader = tc.utils.data.DataLoader(
@@ -122,7 +131,7 @@ def load_dataset(data_path='/users/spyder/Desktop/training/',
         plot_images(X, labels)
 
 
-    return train_loader, valid_loader
+    return train_loader, valid_loader, train_size, valid_size
 
 
 
