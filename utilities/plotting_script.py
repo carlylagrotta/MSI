@@ -8,6 +8,7 @@ import scipy.stats as stats
 import math
 from scipy.stats import multivariate_normal
 from matplotlib import style
+from mpl_toolkits.mplot3d import Axes3D
 
 
 
@@ -1164,7 +1165,10 @@ class Plotting(object):
                 
                 
         
-    def plotting_normal_distributions(self,paramter_list,optimized_cti_file=''):
+    def plotting_normal_distributions(self,
+                                      paramter_list,
+                                      optimized_cti_file='',
+                                      pdf_distribution_file=''):
         
         all_parameters = self.shock_tube_instance.posterior_diag_df['parameter'].tolist()
         df = self.shock_tube_instance.posterior_diag_df
@@ -1180,27 +1184,47 @@ class Plotting(object):
             Ea=gas_optimized.reaction(number).rate.activation_energy
             
             if letter =='A':
-                mu = np.log(A)
-                #convert to chemkin units
+                mu = np.log(A*1000)
+                sigma = math.sqrt(variance)
+                sigma = sigma
+                
             if letter == 'n':
                 mu = n
+                sigma = math.sqrt(variance)
+                #sigma = sigma/2
             if letter == 'Ea':
-                mu=Ea
+                mu=Ea/1000/4.184            
+                sigma = math.sqrt(variance)
+                sigma = sigma*ct.gas_constant/(1000*4.184)
+                #sigma = sigma/2
+
             
-            sigma = math.sqrt(variance)
+            
             x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+            plt.figure()
             plt.plot(x, stats.norm.pdf(x, mu, sigma))
-            plt.show()   
+            plt.xlabel(parameter)
+            plt.ylabel('pdf')
+            plt.savefig(self.working_directory+'/'+parameter+'_distribution'+'_.pdf',bbox_inches='tight')
+
+            if bool(pdf_distribution_file):
+                df2 = pd.read_csv(pdf_distribution_file)
+                #temp = np.log(np.exp(df2[parameter].values)/9.33e13)
+                #plt.plot(temp,df2['pdf_'+parameter])
+                plt.plot(df2[parameter],df2['pdf_'+parameter])
+                plt.savefig(self.working_directory+'/'+parameter+'_distribution'+'_.pdf',bbox_inches='tight')
+
     
-        return
+
     
-    
-    def plotting_joint_normal_distributions(self,coupled_parameters,optimized_cti_file=''):
+    def plotting_joint_normal_distributions(self,
+                                            coupled_parameters,
+                                            optimized_cti_file='',
+                                            joint_data_csv=''):
                 
         all_parameters = self.shock_tube_instance.posterior_diag_df['parameter'].tolist()
         df = self.shock_tube_instance.posterior_diag_df
         gas_optimized = ct.Solution(optimized_cti_file)
-        
         
         for couple in coupled_parameters:
             indx1 = all_parameters.index(couple[0])
@@ -1212,64 +1236,201 @@ class Plotting(object):
             letter2,number2 = couple[1].split('_')
             number1 = int(number1)
             number2 = int(number2)
-            
+            number1_covariance = number1
+            number2_covariance = number2
+
+            if letter1=='n':
+                number1_covariance = number1+len(gas_optimized.reaction_equations())
+            if letter1=='Ea':
+                number1_covariance = number1+len(gas_optimized.reaction_equations())*2
+                
+            if letter2=='n':
+                number2_covariance = number2+len(gas_optimized.reaction_equations())
+            if letter2 == 'Ea':
+                number2_covariance = number2+len(gas_optimized.reaction_equations())*2
+                
             A1=gas_optimized.reaction(number1).rate.pre_exponential_factor
             n1=gas_optimized.reaction(number1).rate.temperature_exponent
             Ea1=gas_optimized.reaction(number1).rate.activation_energy
             
             
-            
-            covariance_couple = self.covarience[number1,number2]
+            covariance_couple = self.covarience[number1_covariance,number2_covariance]
+            print(number1_covariance,number2_covariance)
+            #covariance_couple = .00760122
             if letter1 =='A':
-                mu1 = np.log(A1)
+                mu1 = np.log(A1*1000)
+                mu_x = mu1
+                variance_x = variance1
+                sigma = np.sqrt(variance_x)
+                
+                #sigma = np.exp(sigma)
+                #sigma = sigma*1000
+                #sigma = np.log(sigma)
+                #sigma = sigma/2
+                variance_x = sigma**2
                 #convert to chemkin units
             if letter1 == 'n':
                 mu1 = n1
+                mu_x = mu1
+                variance_x = variance1
+                sigma = np.sqrt(variance_x)
+                #sigma = sigma/2
+                variance_x = sigma**2
             if letter1 == 'Ea':
-                mu1=Ea1
+                mu1=Ea1/1000/4.184 
+                mu_x = mu1                
+                variance_x = variance1
+                sigma = math.sqrt(variance_x)
+                sigma = sigma*ct.gas_constant/(1000*4.184)
+                #sigma = sigma/2
+                variance_x = sigma**2
+
                 
             A2=gas_optimized.reaction(number2).rate.pre_exponential_factor
             n2=gas_optimized.reaction(number2).rate.temperature_exponent
             Ea2=gas_optimized.reaction(number2).rate.activation_energy    
             
             if letter2 =='A':
-                mu2 = np.log(A2)
+                mu2 = np.log(A2*1000)
+                mu_y = mu2
+                variance_y = variance2
+                sigma = np.sqrt(variance_y)
+                sigma = sigma
+                #sigma = np.exp(sigma)
+                #sigma = sigma*1000
+                #sigma = np.log(sigma)
+                #sigma = sigma/2
+                variance_y = sigma**2
                 #convert to chemkin units
             if letter2 == 'n':
                 mu2 = n2
+                mu_y = mu2
+                variance_y = variance2      
+                sigma = np.sqrt(variance_y)
+                #sigma = sigma/2
+                variance_y = sigma**2
+                
             if letter2 == 'Ea':
-                mu2=Ea2
+                mu2 = Ea2/1000/4.184 
+                mu_y = mu2
+                variance_y = variance2
+                sigma = math.sqrt(variance_y)
+                sigma = sigma*ct.gas_constant/(1000*4.184)
+                #sigma = sigma/2
+                variance_y = sigma**2
+
             
+            if letter2 =='Ea' or letter1 == 'Ea':
+                covariance_couple = covariance_couple*ct.gas_constant/(1000*4.184)
+                if letter2=='Ea' and letter1=='Ea':
+                    covariance_couple = np.sqrt(covariance_couple)
+                    covariance_couple = covariance_couple*ct.gas_constant/(1000*4.184)
+                    covariance_couple = covariance_couple**2
+
+            #if letter1=='A' or letter2=='A':
+                #covariance_couple = np.exp(covariance_couple)
+                #covariance_couple  = covariance_couple/2
+                #covariance_couple = np.log(covariance_couple)
+                
+                
+           
+            x = np.linspace(mu1 - 3*np.sqrt(variance_x), mu1 + 3*np.sqrt(variance_x),1000)
+            y = np.linspace(mu2 - 3*np.sqrt(variance_y), mu2 + 3*np.sqrt(variance_y),1000)
             
-            style.use('fivethirtyeight')
+            #x = np.linspace(mu1 - 2*np.sqrt(variance_x), mu1 + 2*np.sqrt(variance_x),1000)
+            #y = np.linspace(mu2 - 2*np.sqrt(variance_y), mu2 + 2*np.sqrt(variance_y),1000)
 
-            mu_x = mu1
-            variance_x = variance1
-
-            mu_y = mu2
-            variance_y = variance2
-
-            x = np.linspace(.7213,50,50)
-            y = np.linspace(10,50,50)
             X,Y = np.meshgrid(x,y)
-            
-            pos = np.array([X.flatten(),Y.flatten()]).T
-            
-            
-            
+            #X, Y = np.meshgrid(x,y)
+            pos = np.empty(X.shape + (2,))
+            pos[:, :, 0] = X; pos[:, :, 1] = Y
             rv = multivariate_normal([mu_x, mu_y], [[variance_x, covariance_couple], [covariance_couple, variance_y]])
-            
-            
             fig = plt.figure()
-            ax0 = fig.add_subplot(111)
-            ax0.contour(rv.pdf(pos).reshape(50,50))
-            
-            
-        return 
+
+            ax = fig.gca(projection='3d')
+            ax.plot_surface(X, Y, rv.pdf(pos),cmap='viridis',linewidth=0)
+            ax.set_xlabel(couple[0])
+            ax.set_ylabel(couple[1])
+            ax.set_zlabel('Z axis')
+            plt.show()
+
+
+            Z = rv.pdf(pos)
+            plt.figure()
+            plt.contour(X,Y,Z,20)
+            plt.xlabel(couple[0])
+            plt.ylabel(couple[1])
+            if bool(joint_data_csv):
+                df2 = pd.read_csv(joint_data_csv)
+                #plt.figure()
+                plt.scatter(df2[couple[0]], df2[couple[1]])
                 
-                
+                plt.savefig(self.working_directory+'/'+couple[0]+'_'+couple[1]+'_distribution'+'_.pdf',bbox_inches='tight')
             
+            
+   
+    def difference_plotter(self,
+                           paramter_list,
+                           optimized_cti_file='',
+                           pdf_distribution_file=''):
+                        
+            
+        all_parameters = self.shock_tube_instance.posterior_diag_df['parameter'].tolist()
+        df = self.shock_tube_instance.posterior_diag_df
+        gas_optimized = ct.Solution(optimized_cti_file)
         
+        for parameter in paramter_list:
+            indx = all_parameters.index(parameter)
+            variance = df['value'][indx]
+            letter,number = parameter.split('_')
+            number = int(number)
+            A=gas_optimized.reaction(number).rate.pre_exponential_factor
+            n=gas_optimized.reaction(number).rate.temperature_exponent
+            Ea=gas_optimized.reaction(number).rate.activation_energy
+            
+            if letter =='A':
+                mu = np.log(A*1000)
+                sigma = math.sqrt(variance)
+                sigma = sigma
+                
+            if letter == 'n':
+                mu = n
+                sigma = math.sqrt(variance)
+                #sigma = sigma/2
+            if letter == 'Ea':
+                mu=Ea/1000/4.184            
+                sigma = math.sqrt(variance)
+                sigma = sigma*ct.gas_constant/(1000*4.184)
+                #sigma = sigma/2
+
+            
+            
+            x = np.linspace(mu - 6*sigma, mu + 6*sigma, 100)
+            #plt.figure()
+            #plt.plot(x, stats.norm.pdf(x, mu, sigma))
+           # plt.xlabel(parameter)
+           # plt.ylabel('pdf')
+           # plt.savefig(self.working_directory+'/'+parameter+'_distribution'+'_.pdf',bbox_inches='tight')
+
+            if bool(pdf_distribution_file):
+                df2 = pd.read_csv(pdf_distribution_file)
+                #temp = np.log(np.exp(df2[parameter].values)/9.33e13)
+                #plt.plot(temp,df2['pdf_'+parameter])
+                interp_y = np.interp(df2[parameter],x,stats.norm.pdf(x, mu, sigma))
+                plt.figure()
+                plt.plot(df2[parameter],interp_y)
+                plt.plot(df2[parameter],df2['pdf_'+parameter])
+                interp_x = np.interp(df2['pdf_'+parameter],stats.norm.pdf(x,mu,sigma),x)
+                y_shift = np.divide((df2['pdf_'+parameter] - interp_y),df2['pdf_'+parameter])
+                x_shift = np.divide((df2[parameter] - interp_x),df2[parameter])
+                plt.figure()
+                plt.title('Percent Difference In Y')
+                plt.plot(y_shift)
+                plt.xlabel(parameter)
+                plt.figure()
+                plt.plot(x_shift)
+                plt.title('Percent Difference In X')
+                plt.xlabel(parameter)
                     
                     
                     
