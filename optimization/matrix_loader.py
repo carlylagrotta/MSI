@@ -296,6 +296,18 @@ class OptMatrix(object):
         shape = np.shape(S_matrix)[1]
         #append identy matrix
         identity_matrix = np.identity(shape)
+        
+#        identity_matrix[1,0]=.1
+#        identity_matrix[0,1]=.1
+#        identity_matrix[0,20]=.1
+#        identity_matrix[20,0]=.1
+#        identity_matrix[39,0]=.1
+#        identity_matrix[0,39]=.1
+        
+        ####making edits to this just for masten test 
+        
+        
+        
         S_matrix = np.vstack((S_matrix,identity_matrix))
         self.S_matrix = S_matrix
         S_matrix_wo_k_targets = copy.deepcopy(self.S_matrix)
