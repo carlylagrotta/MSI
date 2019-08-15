@@ -36,7 +36,7 @@ files_to_include = [['Hong_0.yaml'],
 
 
                                                       
-numer_of_iterations = 2
+numer_of_iterations = 15
 cti_file = 'FFCM1_custom.cti'
 working_directory = 'MSI/data/test_data'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty.csv'

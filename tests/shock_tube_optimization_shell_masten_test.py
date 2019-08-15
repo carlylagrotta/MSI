@@ -42,18 +42,26 @@ files_to_include = [['Masten_0.yaml'],
                     ['Masten_26.yaml'],
                     ['Masten_27.yaml'],
                     ['Masten_28.yaml']] 
-
-#files_to_include = [['Masten_0.yaml']]                                                       
-                             
-numer_of_iterations = 3                                         
+#files_to_include = [['Masten_0.yaml'],
+#                    ['Masten_1.yaml'],
+#                    ['Masten_2.yaml'],
+#                    ['Masten_3.yaml'],
+#                    ['Masten_4.yaml'],
+#                    ['Masten_5.yaml'],
+#                    ['Masten_6.yaml'],
+#                    ['Masten_7.yaml'],
+#                    ['Masten_8.yaml'],
+#                    ['Masten_9.yaml']]
+numer_of_iterations = 2                                        
 cti_file = 'masten_paper_gri_thermo.cti'
 working_directory = 'MSI/data/automating_HO2_masten'
 reaction_uncertainty_csv = 'reaction_uncertainty_masten.csv'
 
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
-rate_constant_target_value_data = 'target_reactions_test.csv'
+#rate_constant_target_value_data = 'target_reactions_test.csv'
+rate_constant_target_value_data = ''
 #this would be an empty string '' if you do not want to include it 
-run_with_k_target_values = 'On'
+run_with_k_target_values = 'Off'
 #this could be 'On'
 
 rate_constant_target_value_data_for_plotting = 'target_reactions_test.csv'
@@ -111,6 +119,7 @@ Y_matrix = MSI_st_instance_two.Y_matrix
 S_matrix = MSI_st_instance_two.S_matrix
 
 X = MSI_st_instance_two.X
+Xdf = MSI_st_instance_two.X_data_frame
 covarience = MSI_st_instance_two.covarience
 exp_dict_list_optimized = MSI_st_instance_two.experiment_dictonaries
 parsed_yaml_list = MSI_st_instance_two.list_of_parsed_yamls
@@ -151,7 +160,8 @@ plotting_instance = plotter.Plotting(S_matrix,
                                      target_value_rate_constant_csv= MSI_st_instance_two.data_directory +'/'+'target_reactions_test.csv' ,
                                      k_target_value_S_matrix =k_target_value_S_matrix,
                                      k_target_values=run_with_k_target_values,
-                                     working_directory=working_directory)
+                                     working_directory=working_directory,
+                                     shock_tube_instance = MSI_st_instance_two)
 
 observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
 sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
@@ -172,3 +182,17 @@ plotting_instance.plotting_rate_constants(optimized_cti_file=MSI_st_instance_two
 
 sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
 obs = plotting_instance.plotting_uncertainty_weighted_sens()
+
+plotting_instance.plotting_normal_distributions(['A_1','n_1','Ea_1','A_0'],
+                                                optimized_cti_file=MSI_st_instance_two.new_cti_file,
+                                                pdf_distribution_file='MSI/data/automating_HO2_masten/graph_read_pdf.csv')
+plotting_instance.plotting_joint_normal_distributions([('A_1','n_1'),('A_1','Ea_1'),('n_1','Ea_1'),('A_1','A_0'),('n_1','A_0'),('Ea_1','A_0')],
+                                                       optimized_cti_file=MSI_st_instance_two.new_cti_file,
+                                                       joint_data_csv='MSI/data/automating_HO2_masten/joint_distribution_data.csv')
+
+
+#plotting_instance.difference_plotter(['A_1','n_1','Ea_1','A_0'],
+#                                                optimized_cti_file=MSI_st_instance_two.new_cti_file,
+#                                                pdf_distribution_file='MSI/data/automating_HO2_masten/graph_read_pdf.csv')
+#
+
