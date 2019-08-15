@@ -12,7 +12,7 @@ class Parser(object):
     #config is a dict containing the yaml information
     def load_to_obj(self, path:str = ''):
         with open(path) as f:
-            config = yaml.load(f)
+            config = yaml.load(f,Loader=yaml.FullLoader)
         return config
     
     def parse_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
