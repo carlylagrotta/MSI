@@ -11,6 +11,34 @@ import matplotlib.pyplot as plt
 #
 
 #v1 - v2
+
+def pattern_match(template:np.array, mold:np.array, acc:float=.8):
+    s1 = template.shape
+    s2 = mold.shape
+
+    # None
+    template_pt = [] 
+
+    if(s1 != s2):
+        print("Array shape mismatch error")
+        return
+    
+    for r in range(s1[0]):
+        for c in range(0, s1[1]):
+            if(sum(template[r,c,:] == [255, 255, 255, 255]) != 4):
+                template_pt.append((r, c))
+    
+    match = 0
+    for pt in template_pt:
+        if(sum(template[pt[0], pt[1], :] == mold[pt[0], pt[1], :]) == 4):
+            match += 1
+
+    print(match)
+    if(match/len(template_pt) > acc):
+        return True
+    else:
+        return False
+
 def vsub(v1:tuple, v2:tuple):
     return (v1[0]-v2[0], v1[1]-v2[1])
 
@@ -87,8 +115,13 @@ class Graph_Parser(object):
         else:
             self.color = self.img[self.color_pt[0], self.color_pt[1]]
     
+    def set_pattern(self, pt=None, kernel:int=30):
+        if(pt):
+            self.pattern = self.img[pt[0]:pt[0]+kernel, pt[1]:pt[1]+kernel]
+        else:
+            self.pattern = self.img[self.color_pt[0]:self.color_pt[0]+kernel, self.color_pt[1]:self.color_pt[1]+kernel]
     # Approximate time-series      
-    def get_pts(self, step:int = 1, mode:str='color'):
+    def get_pts(self, step:int = 1, mode:str='color', pattern:bool=False, kernel:int = 30):
         if(mode == 'color'):
             xax = self.hax.get_xcoord()
             yax = self.vax.get_ycoord()
@@ -100,10 +133,16 @@ class Graph_Parser(object):
                 
                 for v in range(yax[0], yax[1]-3):
                     # If color matches
-                    if(np.array_equal(self.img[v, t], self.color)):
-                        vval += self.vax.pt_approx((v, t))
-                        tval += self.hax.pt_approx((v, t))
-                        c += 1
+                    if(pattern):
+                        if((v+kernel<yax[1]-4 and t+kernel < xax[1]-1) and pattern_match(self.pattern, self.img[v:v+kernel, t:t+kernel])):
+                            vval += self.vax.pt_approx((int(v+kernel/2),int(t+kernel/2)))
+                            tval += self.hax.pt_approx((int(v+kernel/2),int(t+kernel/2)))
+                            c += 1
+                    else:
+                        if(np.array_equal(self.img[v, t], self.color)):
+                            vval += self.vax.pt_approx((v, t))
+                            tval += self.hax.pt_approx((v, t))
+                            c += 1
                         
                 if(c != 0): pts.append((tval/c, vval/c)) # Identify colors/average values found and append
             
