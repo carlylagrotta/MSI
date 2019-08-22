@@ -2,53 +2,53 @@ import numpy as np
 import cantera as ct
 import matplotlib.pyplot as plt 
 
-T = [200,
- 300,
- 400,
- 500,
- 600,
- 700,
- 800,
- 900,
- 1000,
- 1100,
- 1200,
- 1300,
- 1400,
- 1500,
- 1600,
- 1700,
- 1800,
- 1900,
- 2000,
- 2100,
- 2200,
- 2300,
- 2400]
-
-k = [3598820205677.96,
- 1384365848680.28,
- 918526746446.366,
- 846020502047.191,
- 913357292578.687,
- 1064137777998.82,
- 1284494707804.24,
- 1572988369463.2,
- 1932557956912.69,
- 2367768739012.29,
- 2883668329436.64,
- 3485232275971.83,
- 4177063735680.52,
- 4963220865761.82,
- 5847118271780.92,
- 6831476911417.45,
- 7918308618829.78,
- 9108926726341.08,
- 10403976846527.2,
- 11803483258920.4,
- 13306907175947.7,
- 14913213735305,
- 16620945014500.6]
+#T = [200,
+# 300,
+# 400,
+# 500,
+# 600,
+# 700,
+# 800,
+# 900,
+# 1000,
+# 1100,
+# 1200,
+# 1300,
+# 1400,
+# 1500,
+# 1600,
+# 1700,
+# 1800,
+# 1900,
+# 2000,
+# 2100,
+# 2200,
+# 2300,
+# 2400]
+#
+#k = [3598820205677.96,
+# 1384365848680.28,
+# 918526746446.366,
+# 846020502047.191,
+# 913357292578.687,
+# 1064137777998.82,
+# 1284494707804.24,
+# 1572988369463.2,
+# 1932557956912.69,
+# 2367768739012.29,
+# 2883668329436.64,
+# 3485232275971.83,
+# 4177063735680.52,
+# 4963220865761.82,
+# 5847118271780.92,
+# 6831476911417.45,
+# 7918308618829.78,
+# 9108926726341.08,
+# 10403976846527.2,
+# 11803483258920.4,
+# 13306907175947.7,
+# 14913213735305,
+# 16620945014500.6]
 
 
 def first_cheby_poly(x, n):
@@ -64,13 +64,14 @@ def first_cheby_poly(x, n):
 
 def reduced_T( T, T_min, T_max):
     '''Calculate the reduced temperature.'''
-    T_tilde = 2. * T ** (-1) - T_min ** (-1) - T_max ** (-1)
-    T_tilde /= (T_max ** (-1) - T_min ** (-1))
+    T = np.array(T)
+    T_tilde = 2. * T ** (-1.0) - T_min ** (-1.0) - T_max ** (-1.0)
+    T_tilde /= (T_max ** (-1.0) - T_min ** (-1.0))
     return T_tilde
     
 def calc_polynomial(T,alpha):
     #calculate rate constants helper function
-    T_reduced_list = reduced_T(T)
+    T_reduced_list = reduced_T(T,200,2400)
     
     values = np.polynomial.chebyshev.chebval(T_reduced_list,alpha)
 
@@ -79,6 +80,7 @@ def calc_polynomial(T,alpha):
 
 
 def fit_cheby_poly_1d(n_T, k, T_ls):
+    #T needs to be a lsit 
     '''Fit the Chebyshev polynominals to rate constants.
        Input rate constants vector k should be arranged based on pressure.'''
     cheb_mat = np.zeros((len(k), n_T))
@@ -103,17 +105,18 @@ def run_cantera_calculate_rate_constant(T,cti_file):
     for Temp in T:
         gas.TPX = Temp,101325,{'Ar':1}
         cantera_k.append(gas.forward_rate_constants[0])
-    return cantera_k*1000
+    return np.array(cantera_k)*1000
 
 def run_fitter(n_T,k,T_ls,cti_file):
-    alpha = fit_cheby_poly_1d(15,k,T)
-    k_calculated = calc_polynomial(T,alpha)
-    cantera_k = run_cantera_calculate_rate_constant(T,cti_file)
+    
+    alpha = fit_cheby_poly_1d(15,k,T_ls)
+    k_calculated = calc_polynomial(T_ls,alpha)
+    cantera_k = run_cantera_calculate_rate_constant(T_ls,cti_file)
     plt.figure()
-    plt.semilogy(T,k,T,k_calculated)
+    plt.semilogy(T_ls,k,T_ls,k_calculated)
     plt.title('k calculated with python')
-    plt.figure()
-    plt.semilogy(T,np.array(cantera_k))
+    #plt.figure()
+    plt.semilogy(T_ls,np.array(cantera_k))
     plt.title('k calculated with cantera')
     
     
