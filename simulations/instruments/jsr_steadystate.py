@@ -11,10 +11,7 @@ from ...cti_core import cti_processor as ctp
 import pandas as pd
 import numpy as np
 import time
-<<<<<<< HEAD
-=======
 import copy
->>>>>>> f1481addf2130afeceaf2e09ed855c3bf1a0fdf0
 
 class JSR_steadystate(sim.Simulation):
     
@@ -30,7 +27,8 @@ class JSR_steadystate(sim.Simulation):
                  processor:ctp.Processor=None,cti_path="", 
                  save_physSensHistories=0,moleFractionObservables:list=[],
                  absorbanceObservables:list=[],concentrationObservables:list=[],
-                 fullParsedYamlFile:dict={},residence_time:float=1.0,pvalveCoefficient:float=0.01,maxpRise:float=0.001,save_timeHistories:int=0):
+                 fullParsedYamlFile:dict={},residence_time:float=1.0,pvalveCoefficient:float=0.01,
+                 maxpRise:float=0.001,save_timeHistories:int=0,rtol:float=1e-6,atol:float=1e-6):
         
         #sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
         #                        conditions,processor,cti_path)
@@ -76,19 +74,15 @@ class JSR_steadystate(sim.Simulation):
             self.physSensHistories = []
         self.setTPX()
         self.dk = 0.01
-        self.rtol=1e-6
-        self.atol=1e-6
+        self.rtol=rtol
+        self.atol=atol
         self.solution=None
-<<<<<<< HEAD
-        
-=======
         
         
     def set_geometry(self,volume=0.1):
         self.reactor_volume=volume
         
         
->>>>>>> f1481addf2130afeceaf2e09ed855c3bf1a0fdf0
     def printVars(self):
         print()
         
@@ -115,37 +109,6 @@ class JSR_steadystate(sim.Simulation):
         #return the thermal and mechanical boundary of the shock tube 
         return energy,mechBoundary
     
-<<<<<<< HEAD
-    
-    
-    def run(self,):
-        
-        gas=processor.solution.P
-        reactorPressure=gas
-        pressureValveCoefficient=pvalveCoefficient
-        maxPressureRiseAllowed=maxPrise
-        
-        
-        #Build the system components for JSR
-        fuelAirMixtureTank=ct.Reservoir(gas)
-        exhaust=ct.Reservoir(gas)
-        
-        stirredReactor=ct.IdealGasReactor(gas,energy=energycon,volume=volume)
-        massFlowController=ct.MassFlowController(upstream=fuelAirMixtureTank,
-                                                 downstream=stirredReactor,mdot=stirredReactor.mass/restime)
-        pressureRegulator=ct.Valve(upstream=stirredReactor,downstream=exhaust,K=pressureValveCoefficient)
-        reactorNetwork=ct.ReactorNet([stirredReactor])
-        
-        if bool(self.moleFractionObservables) and self.kineticSens==1:
-            for i in range(gas.n_reactions):
-                stirredReactor.add_sensitivity_reaction(i)
-            
-        if self.kineticSens and bool(self.moleFractionObservables)==False:
-            except:
-                print('Please supply a non-empty list of observables for sensitivity analysis or set kinetic_sens=0')
-        if self.physicalSens==1 and bool(self.moleFractionObservables)==False:
-            except:
-=======
     def sensitivity_adjustment(self,temp_del:float=0.0,
                                pres_del:float=0.0,
                                spec_pair:(str,float)=('',0.0)):
@@ -184,17 +147,6 @@ class JSR_steadystate(sim.Simulation):
         pressureRegulator=ct.Valve(upstream=stirredReactor,downstream=exhaust,K=pressureValveCoefficient)
         reactorNetwork=ct.ReactorNet([stirredReactor])
         
-        if bool(self.observables) and self.kineticSens==1:
-            for i in range(gas.n_reactions):
-                stirredReactor.add_sensitivity_reaction(i)
-            
-        if self.kineticSens and bool(self.observables)==False:
-            #except:
-                print('Please supply a non-empty list of observables for sensitivity analysis or set kinetic_sens=0')
-        if self.physicalSens==1 and bool(self.observables)==False:
-            #except:
->>>>>>> f1481addf2130afeceaf2e09ed855c3bf1a0fdf0
-                print('Please supply a non-empty list of observables for sensitivity analysis or set physical_sens=0')
         
         # now compile a list of all variables for which we will store data
         columnNames = [stirredReactor.component_name(item) for item in range(stirredReactor.n_vars)]
@@ -205,39 +157,49 @@ class JSR_steadystate(sim.Simulation):
 
         # Start the stopwatch
         tic = time.time()
-        
+        reactorNetwork.rtol_sensitivity = self.rtol
+        reactorNetwork.atol_sensitivity = self.atol
+        if bool(self.observables) and self.kineticSens==1:
+            ###################################################################
+            #Block to create temp reactor network to pre-solve JSR without kinetic sens
+            tempfuelAirMixtureTank=ct.Reservoir(self.processor.solution)
+            tempexhaust=ct.Reservoir(self.processor.solution)
+            tempstirredReactor=ct.IdealGasReactor(self.processor.solution,energy=self.energycon,
+                                                  volume=self.reactor_volume)
+            tempmassFlowController=ct.MassFlowController(upstream=tempfuelAirMixtureTank,
+                                                         downstream=tempstirredReactor,
+                                                         mdot=stirredReactor.mass/self.residence_time)
+            tempPressureRegulator=ct.Valve(upstream=tempstirredReactor,downstream=tempexhaust,
+                                           K=pressureValveCoefficient)
+            tempreactorNetwork=ct.ReactorNet([tempstirredReactor])
+            tempreactorNetwork.advance_to_steady_state()
+            ###################################################################
+            reactorNetwork.advance_to_steady_state()
+            reactorNetwork.reinitialize()
+            for i in range(gas.n_reactions):
+                stirredReactor.add_sensitivity_reaction(i)
+            
+        elif self.kineticSens and bool(self.observables)==False:
+            #except:
+                print('Please supply a non-empty list of observables for sensitivity analysis or set kinetic_sens=0')
+        if self.physicalSens==1 and bool(self.observables)==False:
+            #except:
+                print('Please supply a non-empty list of observables for sensitivity analysis or set physical_sens=0')
         
         #Establish a matrix to hold sensitivities for kinetic parameters, along with tolerances
-<<<<<<< HEAD
-        if self.kineticSens==1 and bool(self.moleFractionObservables):
-            #senscolumnNames = ['Reaction']+observables     
-            senscolumnNames = self.moleFractionObservables
-            #sensArray = pd.DataFrame(columns=senscolumnNames)
-            #senstempArray = np.zeros((gas.n_reactions,len(observables)))
-            dfs = [pd.DataFrame() for x in range(len(self.moleFractionObservables))]
-            tempArray = [np.zeros(self.processor.solution.n_reactions) for x in range(len(self.moleFractionObservables))]
-=======
         if self.kineticSens==1 and bool(self.observables):
             #senscolumnNames = ['Reaction']+observables     
             senscolumnNames = self.observables
             #sensArray = pd.DataFrame(columns=senscolumnNames)
             #senstempArray = np.zeros((gas.n_reactions,len(observables)))
             dfs = [pd.DataFrame() for x in range(len(self.observables))]
-            tempArray = [np.zeros(self.processor.solution.n_reactions) for x in range(len(self.observables))]
->>>>>>> f1481addf2130afeceaf2e09ed855c3bf1a0fdf0
-            
-            reactorNetwork.rtol_sensitivity = self.rtol
-            reactorNetwork.atol_sensitivity = self.atol        
+            #tempArray = [np.zeros(self.processor.solution.n_reactions) for x in range(len(self.observables))]
+            #stirredReactor.thermo.X=tempstirredReactor.thermo.X
+                
         
         
         reactorNetwork.advance_to_steady_state()
         final_pressure=stirredReactor.thermo.P
-<<<<<<< HEAD
-        sens=reactorNetwork.sensitivites()
-        if self.kineticSens==1 and bool(self.moleFractionObservables):
-            for k in range(len(self.moleFractionObservables)):
-                dfs[k] = dfs[k].append(((pd.DataFrame(sens[k,:])).transpose()),ignore_index=True)        
-=======
         sens=reactorNetwork.sensitivities()
         #print(sens)
         if self.kineticSens==1 and bool(self.observables):
@@ -250,7 +212,6 @@ class JSR_steadystate(sim.Simulation):
                 #dfs[k]=pd.DataFrame(sens[k,:]).transpose()
             #print(dfs)  
         toc = time.time()
->>>>>>> f1481addf2130afeceaf2e09ed855c3bf1a0fdf0
         print('Simulation Took {:3.2f}s to compute'.format(toc-tic))
    
         columnNames = []
@@ -264,24 +225,13 @@ class JSR_steadystate(sim.Simulation):
         data=pd.DataFrame(state).transpose()
         data.columns=columnNames
         pressureDifferential = timeHistory['pressure'].max()-timeHistory['pressure'].min()
-<<<<<<< HEAD
-        if(abs(pressureDifferential/reactorPressure) > maxPressureRiseAllowed):
-            except:
-=======
         if(abs(pressureDifferential/self.reactorPressure) > maxPressureRiseAllowed):
             #except:
->>>>>>> f1481addf2130afeceaf2e09ed855c3bf1a0fdf0
                 print("WARNING: Non-trivial pressure rise in the reactor. Adjust K value in valve")
         
         if self.kineticSens==1:
             numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
             self.kineticSensitivities = np.dstack(numpyMatrixsksens)
-<<<<<<< HEAD
-            self.solution=data
-            return (self.solution,self.kineticSensitivities)
-        else:
-            return self.solution
-=======
             #print(np.shape(self.kineticSensitivities))
             self.solution=data
             return (self.solution,self.kineticSensitivities)
@@ -289,18 +239,10 @@ class JSR_steadystate(sim.Simulation):
             self.solution=data
             return (self.solution,[])
         
->>>>>>> f1481addf2130afeceaf2e09ed855c3bf1a0fdf0
         
         
         
         
-<<<<<<< HEAD
-        
-        
-        
-        
-        
-=======
 #class JSR_multiTemp_steadystate2(sim.Simulation):
 #        
 #    def __init__(self,volume:float,pressure:float,temperatures:list,observables:list,
@@ -344,7 +286,8 @@ class JSR_multiTemp_steadystate(sim.Simulation):
                  processor:ctp.Processor=None,cti_path="", 
                  save_physSensHistories=0,moleFractionObservables:list=[],save_timeHistories:int=0,
                  absorbanceObservables:list=[],concentrationObservables:list=[],
-                 fullParsedYamlFile:dict={},residence_time:float=1.0,pvalveCoefficient:float=0.01,maxpRise:float=0.001):
+                 fullParsedYamlFile:dict={},residence_time:float=1.0,pvalveCoefficient:float=0.01,
+                 maxpRise:float=0.001,atol:float=1e-6,rtol:float=1e-6):
         
 #    sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
 #                                conditions,processor,cti_path)
@@ -390,7 +333,8 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         
         #self.setTPX()
         self.dk = [0]
-        
+        self.rtol=rtol
+        self.atol=atol
             
     def run(self):
         
@@ -408,7 +352,10 @@ class JSR_multiTemp_steadystate(sim.Simulation):
                                      thermalBoundary=self.thermalBoundary,
                                      mechanicalBoundary=self.mechanicalBoundary,
                                      processor=self.processor,
-                                     save_physSensHistories=self.save_physSensHistories)
+                                     save_physSensHistories=self.save_physSensHistories,
+                                     residence_time=self.residence_time,
+                                     rtol=self.rtol,
+                                     atol=self.atol)
             temp_jsr.set_geometry(volume=self.volume)
             a,b=temp_jsr.run_single()
             temp=[]
@@ -497,6 +444,5 @@ class JSR_multiTemp_steadystate(sim.Simulation):
                 data =  self.sensitivity_adjustment(spec_pair=(x,spec_del))
 
         return data
->>>>>>> f1481addf2130afeceaf2e09ed855c3bf1a0fdf0
         
         
