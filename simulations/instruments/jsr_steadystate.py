@@ -138,16 +138,54 @@ class JSR_steadystate(sim.Simulation):
         
         print(maxPressureRiseAllowed,self.reactorPressure,pressureValveCoefficient)
         #Build the system components for JSR
+        pretic=time.time()
+        if bool(self.observables) and self.kineticSens==1:
+            ###################################################################
+            #Block to create temp reactor network to pre-solve JSR without kinetic sens
+            ct.suppress_thermo_warnings()
+            tempgas=ct.Solution(self.processor.cti_path)
+            tempgas.TPX=self.processor.solution.TPX
+            tempfuelAirMixtureTank=ct.Reservoir(tempgas)
+            tempexhaust=ct.Reservoir(tempgas)
+            tempstirredReactor=ct.IdealGasReactor(tempgas,energy=self.energycon,
+                                                  volume=self.reactor_volume)
+            tempmassFlowController=ct.MassFlowController(upstream=tempfuelAirMixtureTank,
+                                                         downstream=tempstirredReactor,
+                                                         mdot=tempstirredReactor.mass/self.residence_time)
+            tempPressureRegulator=ct.Valve(upstream=tempstirredReactor,downstream=tempexhaust,
+                                           K=pressureValveCoefficient)
+            
+            tempreactorNetwork=ct.ReactorNet([tempstirredReactor])
+            tempreactorNetwork.rtol_sensitivity = self.rtol
+            tempreactorNetwork.atol_sensitivity = self.atol
+            tempreactorNetwork.advance_to_steady_state()
+            ###################################################################
+            #reactorNetwork.advance_to_steady_state()
+            #reactorNetwork.reinitialize()
+                
+        elif self.kineticSens and bool(self.observables)==False:
+            #except:
+                print('Please supply a non-empty list of observables for sensitivity analysis or set kinetic_sens=0')        
+        pretoc=time.time()    
+        print('Presolving Took {:3.2f}s to compute'.format(pretoc-pretic))        
         fuelAirMixtureTank=ct.Reservoir(self.processor.solution)
         exhaust=ct.Reservoir(self.processor.solution)
-        
-        stirredReactor=ct.IdealGasReactor(self.processor.solution,energy=self.energycon,volume=self.reactor_volume)
+        if bool(self.observables) and self.kineticSens==1:
+            stirredReactor=ct.IdealGasReactor(tempgas,energy=self.energycon,
+                                          volume=self.reactor_volume)
+        else:
+            stirredReactor=ct.IdealGasReactor(self.processor.solution,energy=self.energycon,
+                                          volume=self.reactor_volume)
+        #stirredReactor=ct.IdealGasReactor(self.processor.solution,energy=self.energycon,
+        #                                  volume=self.reactor_volume)    
         massFlowController=ct.MassFlowController(upstream=fuelAirMixtureTank,
-                                                 downstream=stirredReactor,mdot=stirredReactor.mass/self.residence_time)
+                                                 downstream=stirredReactor,
+                                                 mdot=stirredReactor.mass/self.residence_time)
         pressureRegulator=ct.Valve(upstream=stirredReactor,downstream=exhaust,K=pressureValveCoefficient)
         reactorNetwork=ct.ReactorNet([stirredReactor])
-        
-        
+        if bool(self.observables) and self.kineticSens==1:
+            for i in range(gas.n_reactions):
+                stirredReactor.add_sensitivity_reaction(i)
         # now compile a list of all variables for which we will store data
         columnNames = [stirredReactor.component_name(item) for item in range(stirredReactor.n_vars)]
         columnNames = ['pressure'] + columnNames
@@ -158,30 +196,8 @@ class JSR_steadystate(sim.Simulation):
         # Start the stopwatch
         tic = time.time()
         reactorNetwork.rtol_sensitivity = self.rtol
-        reactorNetwork.atol_sensitivity = self.atol
-        if bool(self.observables) and self.kineticSens==1:
-            ###################################################################
-            #Block to create temp reactor network to pre-solve JSR without kinetic sens
-            tempfuelAirMixtureTank=ct.Reservoir(self.processor.solution)
-            tempexhaust=ct.Reservoir(self.processor.solution)
-            tempstirredReactor=ct.IdealGasReactor(self.processor.solution,energy=self.energycon,
-                                                  volume=self.reactor_volume)
-            tempmassFlowController=ct.MassFlowController(upstream=tempfuelAirMixtureTank,
-                                                         downstream=tempstirredReactor,
-                                                         mdot=stirredReactor.mass/self.residence_time)
-            tempPressureRegulator=ct.Valve(upstream=tempstirredReactor,downstream=tempexhaust,
-                                           K=pressureValveCoefficient)
-            tempreactorNetwork=ct.ReactorNet([tempstirredReactor])
-            tempreactorNetwork.advance_to_steady_state()
-            ###################################################################
-            reactorNetwork.advance_to_steady_state()
-            reactorNetwork.reinitialize()
-            for i in range(gas.n_reactions):
-                stirredReactor.add_sensitivity_reaction(i)
-            
-        elif self.kineticSens and bool(self.observables)==False:
-            #except:
-                print('Please supply a non-empty list of observables for sensitivity analysis or set kinetic_sens=0')
+        reactorNetwork.atol_sensitivity = self.atol    
+        
         if self.physicalSens==1 and bool(self.observables)==False:
             #except:
                 print('Please supply a non-empty list of observables for sensitivity analysis or set physical_sens=0')
@@ -197,8 +213,10 @@ class JSR_steadystate(sim.Simulation):
             #stirredReactor.thermo.X=tempstirredReactor.thermo.X
                 
         
-        
+        posttic=time.time()
         reactorNetwork.advance_to_steady_state()
+        posttoc=time.time()
+        print('Main Solver Took {:3.2f}s to compute'.format(posttoc-posttic))
         final_pressure=stirredReactor.thermo.P
         sens=reactorNetwork.sensitivities()
         #print(sens)
