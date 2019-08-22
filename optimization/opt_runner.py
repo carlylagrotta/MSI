@@ -23,7 +23,7 @@ class Optimization_Utility(object):
         
         
     def build_single_exp_dict(self,exp_index:int,
-                              simulation:sim.instruments.shock_tube.shockTube,
+                              simulation,
                               interpolated_kinetic_sens:dict,
                               interpolated_tp_sens:list,
                               interpolated_species_sens:list,
@@ -102,8 +102,38 @@ class Optimization_Utility(object):
         return uncertainty_dict
     
     
-    
-    
+    def running_full_jsr(self,processor=None,
+                             experiment_dictionary:dict={},
+                             kineticSens = 1,
+                             physicalSens = 1,
+                             dk = 0.01,
+                             exp_number = 1):
+        
+        jet_stirred_reactor = jsr.JSR_multiTemp_steadystate(volume=experiment_dictionary['volume'],
+                    pressure=experiment_dictionary['pressure'],
+                    temperatures=experiment_dictionary['temperatures'],
+                    observables=experiment_dictionary['observables'],
+                    kineticSens=kineticSens,
+                    =physicalSens,
+                    conditions=experiment_dictionary['conditions'],
+                    thermalBoundary=experiment_dictionary['thermalBoundary'],
+                    mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
+                    processor=processor,
+                    save_physSensHistories=1,
+                    save_timeHistories=1,
+                    residence_time=experiment_dictionary['residence_time'],
+                    rtol=1e-8,atol=1e-7)
+        
+        jet_stirred_reactor.run()
+        jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)
+        jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)
+        jet_stirred_reactor.species_adjustment(dk)
+        experiment = self.build_single_exp_dict(exp_number,
+                                           jet_stirred_reactor,
+                                           int_ksens_exp_mapped,
+                                           int_tp_psen_against_experimental,
+                                           int_spec_psen_against_experimental,
+                                           experimental_data = exp_data)
     def running_full_shock_tube(self,processor=None,
                                            experiment_dictonary:dict={},
                                            kineticSens = 1,
@@ -133,7 +163,7 @@ class Optimization_Utility(object):
         shock_tube.run()
         ########################################################################
 
-        #check this tomorrow 
+        
         ################################################################################
         int_ksens_exp_mapped= shock_tube.map_and_interp_ksens()#ksens is wiped on rerun so int it before
         shock_tube.sensitivity_adjustment(temp_del = dk)
