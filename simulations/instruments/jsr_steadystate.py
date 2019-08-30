@@ -484,5 +484,16 @@ class JSR_multiTemp_steadystate(sim.Simulation):
                 data =  self.sensitivity_adjustment(spec_pair=(x,spec_del))
 
         return data
+    
+    def importExperimentalData(self,csvFileList):
+        print('Importing shock tube data the following csv files...') 
+        print(csvFileList)
+        experimentalData = [pd.read_csv(csv) for csv in csvFileList]
+        experimentalData = [experimentalData[x].dropna(how='any') for x in range(len(experimentalData))]
+        experimentalData = [experimentalData[x].apply(pd.to_numeric, errors = 'coerce').dropna() for x in range(len(experimentalData))]
+        for x in range(len(experimentalData)):
+            experimentalData[x] = experimentalData[x][~(experimentalData[x][experimentalData[x].columns[1]] < 0)]
+        self.experimentalData = experimentalData
+        return experimentalData
         
         
