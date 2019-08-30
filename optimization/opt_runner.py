@@ -128,12 +128,18 @@ class Optimization_Utility(object):
         jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)
         jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)
         jet_stirred_reactor.species_adjustment(dk)
+        
+        csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
+        exp_data = jsr.importExperimentalData(csv_paths)
+        
         experiment = self.build_single_exp_dict(exp_number,
                                            jet_stirred_reactor,
                                            int_ksens_exp_mapped,
                                            int_tp_psen_against_experimental,
                                            int_spec_psen_against_experimental,
                                            experimental_data = exp_data)
+        return experiment
+        
     def running_full_shock_tube(self,processor=None,
                                            experiment_dictonary:dict={},
                                            kineticSens = 1,
