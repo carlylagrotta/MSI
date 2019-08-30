@@ -156,8 +156,8 @@ class JSR_steadystate(sim.Simulation):
                                            K=pressureValveCoefficient)
             
             tempreactorNetwork=ct.ReactorNet([tempstirredReactor])
-            tempreactorNetwork.rtol_sensitivity = self.rtol
-            tempreactorNetwork.atol_sensitivity = self.atol
+            tempreactorNetwork.rtol = self.rtol
+            tempreactorNetwork.atol = self.atol
             tempreactorNetwork.advance_to_steady_state()
             ###################################################################
             #reactorNetwork.advance_to_steady_state()
@@ -195,9 +195,10 @@ class JSR_steadystate(sim.Simulation):
 
         # Start the stopwatch
         tic = time.time()
-        reactorNetwork.rtol_sensitivity = self.rtol
-        reactorNetwork.atol_sensitivity = self.atol    
-        
+        reactorNetwork.rtol = self.rtol
+        reactorNetwork.atol = self.atol    
+        #reactorNetwork.max_err_test_fails= 10000
+        #print(reactorNetwork.max_err_test_fails)
         if self.physicalSens==1 and bool(self.observables)==False:
             #except:
                 print('Please supply a non-empty list of observables for sensitivity analysis or set physical_sens=0')
@@ -214,6 +215,8 @@ class JSR_steadystate(sim.Simulation):
                 
         
         posttic=time.time()
+#        for steps in range(10):
+#            reactorNetwork.step()
         reactorNetwork.advance_to_steady_state()
         posttoc=time.time()
         print('Main Solver Took {:3.2f}s to compute'.format(posttoc-posttic))
@@ -375,7 +378,26 @@ class JSR_multiTemp_steadystate(sim.Simulation):
                                      rtol=self.rtol,
                                      atol=self.atol)
             temp_jsr.set_geometry(volume=self.volume)
-            a,b=temp_jsr.run_single()
+            try:
+                a,b=temp_jsr.run_single()
+            except Exception as e:
+                print(e)
+                temp_jsr=JSR_steadystate(pressure=self.pressure,
+                                     temperature=self.temperatures[i],
+                                     observables=self.observables,
+                                     kineticSens=self.kineticSens,
+                                     physicalSens=self.physicalSens,
+                                     conditions=self.conditions,
+                                     thermalBoundary=self.thermalBoundary,
+                                     mechanicalBoundary=self.mechanicalBoundary,
+                                     processor=self.processor,
+                                     save_physSensHistories=self.save_physSensHistories,
+                                     residence_time=self.residence_time,
+                                     rtol=self.rtol*10.0,
+                                     atol=self.atol*10.0)
+                temp_jsr.set_geometry(volume=self.volume)
+                a,b=temp_jsr.run_single()
+                print('Completed')
             temp=[]
             temp1=[]
             temp=copy.deepcopy(a)
