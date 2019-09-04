@@ -15,6 +15,10 @@ class Parser(object):
             config = yaml.load(f,Loader=yaml.FullLoader)
         return config
     
+    def get_sim_type(self,loaded_exp:dict{}):
+        simtype = loaded_exp['apparatus']['kind']
+        return simtype
+    
     def parse_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
