@@ -19,6 +19,54 @@ class Parser(object):
         simtype = loaded_exp['apparatus']['kind']
         return simtype
     
+    def parse_jsr_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+        simulation_type = loaded_exp['apparatus']['kind']
+        pressure = loaded_exp['common-properties']
+        temperatures = loaded_exp['common-properties']['temperature']['value-list']
+        mole_fractions = [((concentration['mole-fraction'])) for concentration in loaded_exp['common-properties']['composition']]
+        mole_fractions = [float(elm) for elm in mole_fractions]
+        species_names = [(species['species']) for species in loaded_exp['common-properties']['composition']]
+        conditions = dict(zip(species_names,mole_fractions))
+        thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
+        mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
+        mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
+        species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
+        species_uncertainties = [float(elm) for elm in species_uncertainties]
+        species_uncertainties = dict(zip(species_names,species_uncertainties))
+        observables = [x for x in mole_fraction_observables if x is not None]
+        mole_fraction_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['mole-fraction']]
+        csv_files = [x for x in mole_fraction_csv_files if x is not None]
+        temp_relative_uncertainty = loaded_exp['common-properties']['temperature']['relative-uncertainty']
+        temp_relative_uncertainty = float(temp_relative_uncertainty)
+        pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
+        pressure_relative_uncertainty = float(pressure_relative_uncertainty)
+        mole_fraction_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]
+
+        mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
+        
+        if loaded_absorption == {}:
+            return{
+               'pressure':pressure,
+               'temperatures':temperatures,
+               'conditions':conditions,
+               'speciesUncertaintys':species_uncertainties,
+               'thermalBoundary':thermal_boundary,
+               'mechanicalBoundary':mechanical_boundary,
+               'moleFractionObservables':mole_fraction_observables,
+               'observables':observables,
+               'speciesNames':species_names,
+               'MoleFractions':mole_fractions,
+               'moleFractionCsvFiles':mole_fraction_csv_files,
+               'tempRelativeUncertainty':temp_relative_uncertainty,
+               'pressureRelativeUncertainty': pressure_relative_uncertainty,
+               'moleFractionAbsoluteUncertainty':mole_fraction_absolute_uncertainty,
+               'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
+               'csvFiles': csv_files,
+               'simulationType':  simulation_type
+           }
+        else:
+            print('Placeholder: no JSR absorption')
+    
     def parse_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
