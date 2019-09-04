@@ -184,13 +184,29 @@ class Parser(object):
     
     def parsing_multiple_dictonaries(self,list_of_yaml_objects:list = [],loop_counter=0):
         experiment_dictonaries = []
+        counter=0
         for tup in list_of_yaml_objects:
-            if len(tup)>1:
-                experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0],
-                                                                        loaded_absorption = tup[1]))
-
+            
+            simtype=self.get_sim_type(tup[0])
+            if simtype=='shock tube' or simtype=='Shock Tube' or simtype=='Shock tube':
+                if len(tup)>1:
+                    experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0],
+                                                                            loaded_absorption = tup[1]))
+    
+                else:
+                    
+                    experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0]))
+            if simtype=='jsr' or simtype=='JSR':
+                if len(tup)>1:
+                    experiment_dictonaries.append(self.parse_jsr_obj(loaded_exp = tup[0],
+                                                                            loaded_absorption = tup[1]))
+    
+                else:
+                    
+                    experiment_dictonaries.append(self.parse_jsr_obj(loaded_exp = tup[0]))
             else:
-                experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0]))
+                print('Failed to parse Yaml files- unrecognized simulation type for tuple index: '+str(counter))
+            counter=counter+1
         if loop_counter == 0   :     
             self.original_experimental_conditions = experiment_dictonaries
             
