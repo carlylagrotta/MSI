@@ -382,7 +382,7 @@ class Optimization_Utility(object):
             simulation_type = yamlDict['simulationType']
             
             if re.match('[Ss]hock [Tt]ube',simulation_type):
-                simulation_type = 'shock tube'
+                #simulation_type = 'shock tube'
 
                 if simulation_type == 'shock tube':
                     if 'absorbanceObservables' not in yamlDict.keys():
@@ -393,7 +393,7 @@ class Optimization_Utility(object):
                                            dk = dk,
                                            exp_number=i)
                         experiment_list.append(experiment)
-                        ####FINISH writing this function and start writing main function tomorrow 
+                        
                     elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
                         path = list_of_yaml_paths[i][1]
                         print(path)
@@ -416,7 +416,43 @@ class Optimization_Utility(object):
                                            dk = dk,
                                            exp_number=i)
                         experiment_list.append(experiment)
-                                            
+                        
+            elif re.match('[Jj][Ss][Rr]',simulation_type) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',simulation_type):
+                simulation_type='jsr'
+                if simulation_type=='jsr':
+                    if 'absorbanceObservables' not in yamlDict.keys():
+                        experiment = self.running_full_jsr(processor=processor,
+                                           experiment_dictonary=yamlDict,
+                                           kineticSens = kineticSens,
+                                           physicalSens = physicalSens,
+                                           dk = dk,
+                                           exp_number=i)
+                        experiment_list.append(experiment)
+                        ####FINISH writing this function and start writing main function tomorrow 
+                    elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
+#                        path = list_of_yaml_paths[i][1]
+#                        print(path)
+#                        experiment = self.running_shock_tube_absorption_only(processor=processor,
+#                                                                             experiment_dictonary = yamlDict,
+#                                                                             absorbance_yaml_file_path = path,
+#                                                                             kineticSens = kineticSens,
+#                                                                             physicalSens = physicalSens,
+#                                                                             dk = dk,
+#                                                                             exp_number=i)
+#                        experiment_list.append(experiment)
+                        print('Absorbance currently not enabled for jsr')
+                    else:
+#                        path = list_of_yaml_paths[i][1]
+#                        experiment = self.running_full_shock_tube_absorption(processor=processor,
+#                                           experiment_dictonary=yamlDict,
+#                                           absorbance_yaml_file_path = path,
+#                                           kineticSens = kineticSens,
+#                                           physicalSens = physicalSens,
+#                                           dk = dk,
+#                                           exp_number=i)
+#                        experiment_list.append(experiment)
+                        print('Absorbance currently not enabled for jsr')
+                                       
             else:
                 print('We do not have this simulation installed yet')
             
