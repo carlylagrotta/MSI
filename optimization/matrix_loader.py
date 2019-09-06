@@ -916,24 +916,44 @@ class OptMatrix(object):
         physical_observables_for_Y = []
         if exp_dict_list[0]['simulation'].physicalSens ==1:
             for i,exp_dic in enumerate(exp_dict_list):
-                dic_of_conditions = exp_dic['simulation'].conditions
-                    #subtract out the dilluant 
-                species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
-                    #add two for Temperature and Pressure
-                len_of_phsycial_observables_in_simulation = species_in_simulation + 2 
-                new_value = previous_value + len_of_phsycial_observables_in_simulation
-                single_experiment_physical_observables = X_new[(value1+value2+previous_value):(value1+value2+new_value)]
-                physical_observables_for_Y.append(single_experiment_physical_observables)
-                temp_keys = []
-                    #stacking the zeros onto the Y array 
-                temp_keys.append('T'+'_'+'experiment'+'_'+str(i))
-                temp_keys.append('P'+'_'+'experiment'+'_'+str(i))
-                for variable in range(species_in_simulation):
-                    temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
-                temp_dict = dict(zip(temp_keys,single_experiment_physical_observables))
-                physical_observables.append(temp_dict)
-                ##come back to this and do a test on paper
-                previous_value = new_value
+                if 'shockTube'==exp_dic['simulation'].__class__.__name__:
+                    dic_of_conditions = exp_dic['simulation'].conditions
+                        #subtract out the dilluant 
+                    species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
+                        #add two for Temperature and Pressure
+                    len_of_phsycial_observables_in_simulation = species_in_simulation + 2 
+                    new_value = previous_value + len_of_phsycial_observables_in_simulation
+                    single_experiment_physical_observables = X_new[(value1+value2+previous_value):(value1+value2+new_value)]
+                    physical_observables_for_Y.append(single_experiment_physical_observables)
+                    temp_keys = []
+                        #stacking the zeros onto the Y array 
+                    temp_keys.append('T'+'_'+'experiment'+'_'+str(i))
+                    temp_keys.append('P'+'_'+'experiment'+'_'+str(i))
+                    for variable in range(species_in_simulation):
+                        temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                    temp_dict = dict(zip(temp_keys,single_experiment_physical_observables))
+                    physical_observables.append(temp_dict)
+                    ##come back to this and do a test on paper
+                    previous_value = new_value
+                elif 'jsr_multitemp_steadystate'==exp_dic['simulation'].__class__.__name__:
+                    dic_of_conditions = exp_dic['simulation'].conditions
+                        #subtract out the dilluant 
+                    species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
+                        #add two for Temperature and Pressure
+                    len_of_phsycial_observables_in_simulation = species_in_simulation + len(exp_dic['simulation'].temperatures)+len(np.array(exp_dic['simulation'].pressure)) 
+                    new_value = previous_value + len_of_phsycial_observables_in_simulation
+                    single_experiment_physical_observables = X_new[(value1+value2+previous_value):(value1+value2+new_value)]
+                    physical_observables_for_Y.append(single_experiment_physical_observables)
+                    temp_keys = []
+                        #stacking the zeros onto the Y array 
+                    temp_keys.append('T'+'_'+'experiment'+'_'+str(i))
+                    temp_keys.append('P'+'_'+'experiment'+'_'+str(i))
+                    for variable in range(species_in_simulation):
+                        temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                    temp_dict = dict(zip(temp_keys,single_experiment_physical_observables))
+                    physical_observables.append(temp_dict)
+                    ##come back to this and do a test on paper
+                    previous_value = new_value
                 
         physical_observables_for_Y = [item for sublist in physical_observables_for_Y for item in sublist]   
         X_to_subtract_from_Y['physical_observables'] = physical_observables_for_Y
