@@ -945,8 +945,9 @@ class OptMatrix(object):
                     single_experiment_physical_observables = X_new[(value1+value2+previous_value):(value1+value2+new_value)]
                     physical_observables_for_Y.append(single_experiment_physical_observables)
                     temp_keys = []
-                        #stacking the zeros onto the Y array 
-                    temp_keys.append('T'+'_'+'experiment'+'_'+str(i))
+                        #stacking the zeros onto the Y array
+                    for temperature in exp_dic['simulation'].temperatures:
+                        temp_keys.append('T'+'_'+'experiment'+'_'+str(i)+'_'+str(temperature))
                     temp_keys.append('P'+'_'+'experiment'+'_'+str(i))
                     for variable in range(species_in_simulation):
                         temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
