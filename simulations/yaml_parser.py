@@ -2,6 +2,7 @@ import yaml
 import shutil
 import numpy as np
 import copy
+import re
 
 # subpackage for reading yaml files that describe simulations and absorbance data
 class Parser(object):
@@ -296,6 +297,18 @@ class Parser(object):
     
         return NewName
     
+    def reorder_temps_from_dict(self,phys_updates, temperature_list, yaml_number):
+        '''Function takes the physical_observables_updates_list and ensures that it 
+           returns all the temperature updates in the correct order.  Called in the 
+           yaml_file_updates function'''
+        values=[]
+        strings=[]
+        for i in temperature_list:
+            strings.append('T_experiment_'+str(yaml_number)+'_'+str(i))
+            value=phys_updates[strings[-1]]
+            values.append(value)
+        return values
+    
     def yaml_file_updates(self,file_name_list,
                           parsed_yaml_list,
                           experiment_dict_list,
@@ -319,7 +332,10 @@ class Parser(object):
                 new_file_name = file_name_list[yaml_file][0]
     
             if experiment_dict_list[0]['simulation'].physicalSens ==1 :
-                temp = self.original_experimental_conditions[yaml_file]['temperature']
+                if self.original_experimental_conditions[yaml_file]['simulationType']=='shock tube':
+                    temp = self.original_experimental_conditions[yaml_file]['temperature']
+                elif self.original_experimental_conditions[yaml_file]['simulationType']=='JSR' or self.original_experimental_conditions[yaml_file]['simulationType']=='jsr': 
+                    temps = self.original_experimental_conditions[yaml_file]['temperatures']
                 press = self.original_experimental_conditions[yaml_file]['pressure']
                 mole_fractions = self.original_experimental_conditions[yaml_file]['MoleFractions']
                 conditions = self.original_experimental_conditions[yaml_file]['conditions']
@@ -331,9 +347,15 @@ class Parser(object):
                 print(conditions)
                 print('__________________________________________________________________________')
                 
-                
-                updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
-                updatedTemp = round(updatedTemp,9)
+                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
+                    updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
+                    updatedTemp = round(updatedTemp,9)
+                elif re.match('[Jj][Ss][Rr]',self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Jj][Ss][Rr]',self.original_experimental_conditions[yaml_file]['simulationType']):
+                    X_temperatures=reorder_temps_from_dict(physical_observables_updates_list[yaml_file],self.original_experimental_conditions['temperatures'],yaml_file)
+                    updatedTemps=np.exp(X_temperatures)*temps
+                    for index in range(len(updatedTemps)):
+                        updatedTemps[index]=round(updatedTemps[index],9)
+                        
                 updatedPress = np.exp(physical_observables_updates_list[yaml_file]['P_experiment_'+str(yaml_file)]) * press
                 updatedPress = round(updatedPress,9)
                 
