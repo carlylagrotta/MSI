@@ -12,7 +12,7 @@ data='C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\LeClercMet
 data2='C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\LeClercMethane\\data_08082019.csv'
 
 
-test_p=pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke Group\\Codes\\Mechanisms\\CH4_DME\\chem.cti')
+test_p=pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke Group\\Codes\\Mechanisms\\CH4_DME\\chem_760_762_763.cti')
 jsr1 = jsr.JSR_multiTemp_steadystate(volume=8.5e-5,pressure=1.0520602,
                          temperatures=np.linspace(850,1250,100),
                          observables=['OH','H2O'],

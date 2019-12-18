@@ -28,7 +28,7 @@ class JSR_steadystate(sim.Simulation):
                  save_physSensHistories=0,moleFractionObservables:list=[],
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={},residence_time:float=1.0,pvalveCoefficient:float=0.01,
-                 maxpRise:float=0.001,save_timeHistories:int=0,rtol:float=1e-6,atol:float=1e-6):
+                 maxpRise:float=0.001,save_timeHistories:int=0,rtol:float=1e-14,atol:float=1e-15):
         
         #sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
         #                        conditions,processor,cti_path)
@@ -139,6 +139,7 @@ class JSR_steadystate(sim.Simulation):
         print(maxPressureRiseAllowed,self.reactorPressure,pressureValveCoefficient)
         #Build the system components for JSR
         pretic=time.time()
+        
         if bool(self.observables) and self.kineticSens==1:
             ###################################################################
             #Block to create temp reactor network to pre-solve JSR without kinetic sens
@@ -158,15 +159,17 @@ class JSR_steadystate(sim.Simulation):
             tempreactorNetwork=ct.ReactorNet([tempstirredReactor])
             tempreactorNetwork.rtol = self.rtol
             tempreactorNetwork.atol = self.atol
+            print(self.rtol,self.atol)
             tempreactorNetwork.advance_to_steady_state()
             ###################################################################
             #reactorNetwork.advance_to_steady_state()
             #reactorNetwork.reinitialize()
-                
+        #print(tempgas.TPX)
         elif self.kineticSens and bool(self.observables)==False:
             #except:
                 print('Please supply a non-empty list of observables for sensitivity analysis or set kinetic_sens=0')        
-        pretoc=time.time()    
+        pretoc=time.time()
+        
         print('Presolving Took {:3.2f}s to compute'.format(pretoc-pretic))        
         fuelAirMixtureTank=ct.Reservoir(self.processor.solution)
         exhaust=ct.Reservoir(self.processor.solution)
@@ -233,7 +236,7 @@ class JSR_steadystate(sim.Simulation):
                 #dfs[k]=pd.DataFrame(sens[k,:]).transpose()
             #print(dfs)  
         toc = time.time()
-        print('Simulation Took {:3.2f}s to compute'.format(toc-tic))
+        print('Simulation Took {:3.2f}s to compute'.format(toc-tic)+' at T = '+str(stirredReactor.T))
    
         columnNames = []
         #Store solution to a solution array
@@ -308,7 +311,7 @@ class JSR_multiTemp_steadystate(sim.Simulation):
                  save_physSensHistories=0,moleFractionObservables:list=[],save_timeHistories:int=0,
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={},residence_time:float=1.0,pvalveCoefficient:float=0.01,
-                 maxpRise:float=0.001,atol:float=1e-6,rtol:float=1e-6):
+                 maxpRise:float=0.001,atol:float=1e-15,rtol:float=1e-14):
         
 #    sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
 #                                conditions,processor,cti_path)
@@ -443,7 +446,8 @@ class JSR_multiTemp_steadystate(sim.Simulation):
             self.temperatures=np.array(self.temperatures)+temp_del*np.array(self.temperatures)
             self.pressure=self.pressure+pres_del*self.pressure
             xj=self.conditions[spec_pair[0]]
-            delxj=spec_pair[1]
+            delxj=spec_pair[1]*self.conditions[spec_pair[0]]
+            print(xj,delxj)
             self.conditions[spec_pair[0]]=np.divide(np.multiply(xj+delxj,1-xj),1-xj-delxj)
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                   self.pressure+self.pressure*pres_del,
@@ -458,6 +462,7 @@ class JSR_multiTemp_steadystate(sim.Simulation):
 #                       self.pressure+self.pressure*pres_del)
         
         data,trash = self.run() #Ignore trash, just temp storage for empty kinetic sens array
+        #print(data)
         
         #data = sim.Simulation.sensitivity_adjustment(self,temp_del,pres_del,spec_pair)
         self.temperatures=temptemp
@@ -486,7 +491,7 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         return data
     
     def importExperimentalData(self,csvFileList):
-        print('Importing shock tube data the following csv files...') 
+        print('Importing jsr data the following csv files...') 
         print(csvFileList)
         experimentalData = [pd.read_csv(csv) for csv in csvFileList]
         experimentalData = [experimentalData[x].dropna(how='any') for x in range(len(experimentalData))]
@@ -495,5 +500,22 @@ class JSR_multiTemp_steadystate(sim.Simulation):
             experimentalData[x] = experimentalData[x][~(experimentalData[x][experimentalData[x].columns[1]] < 0)]
         self.experimentalData = experimentalData
         return experimentalData
+    
+    def map_and_interp_ksens(self,temp_history=None):
+        A = self.kineticSensitivities
+        N = np.zeros(A.shape)
+        Ea = np.zeros(A.shape)
+        for i in range(0,A.shape[2]):
+            sheetA = A[:,:,i] #sheet for specific observable
+            for x,column in enumerate(sheetA.T):
+                N[:,x,i]= np.multiply(column,np.log(self.timeHistories[0]['temperature'])) if temp_history is None else np.multiply(column,np.log(time_history['temperature']))
+                #not sure if this mapping is correct, check with burke and also update absorption mapping
+                #to_mult_ea = np.divide(-1,np.multiply(1/ct.gas_constant,self.timeHistories[0]['temperature'])) if time_history is None else np.divide(-1,np.multiply(ct.gas_constant,time_history['temperature']))
+                to_mult_ea = np.divide(-1,np.multiply(1,self.timeHistories[0]['temperature'])) if temp_history is None else np.divide(-1,np.multiply(1,time_history['temperature']))
+                Ea[:,x,i]= np.multiply(column,to_mult_ea)
+                
+        return {'A':self.interpolate_experimental_kinetic(A),
+                'N':self.interpolate_experimental_kinetic(N),
+                'Ea':self.interpolate_experimental_kinetic(Ea)}
         
         

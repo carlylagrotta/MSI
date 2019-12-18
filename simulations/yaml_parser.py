@@ -16,13 +16,13 @@ class Parser(object):
             config = yaml.load(f,Loader=yaml.FullLoader)
         return config
     
-    def get_sim_type(self,loaded_exp:dict{}):
+    def get_sim_type(self,loaded_exp:dict={}):
         simtype = loaded_exp['apparatus']['kind']
         return simtype
     
     def parse_jsr_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         simulation_type = loaded_exp['apparatus']['kind']
-        pressure = loaded_exp['common-properties']
+        pressure = loaded_exp['common-properties']['pressure']['value']
         temperatures = loaded_exp['common-properties']['temperature']['value-list']
         mole_fractions = [((concentration['mole-fraction'])) for concentration in loaded_exp['common-properties']['composition']]
         mole_fractions = [float(elm) for elm in mole_fractions]
@@ -42,9 +42,9 @@ class Parser(object):
         pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
         pressure_relative_uncertainty = float(pressure_relative_uncertainty)
         mole_fraction_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]
-
+        volume=loaded_exp['apparatus']['reactor-volume']['value']
         mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
-        
+        residence_time=loaded_exp['apparatus']['residence-time']['value']
         if loaded_absorption == {}:
             return{
                'pressure':pressure,
@@ -63,7 +63,9 @@ class Parser(object):
                'moleFractionAbsoluteUncertainty':mole_fraction_absolute_uncertainty,
                'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
                'csvFiles': csv_files,
-               'simulationType':  simulation_type
+               'simulationType':  simulation_type,
+               'volume': volume,
+               'residence_time': residence_time
            }
         else:
             print('Placeholder: no JSR absorption')
@@ -222,10 +224,12 @@ class Parser(object):
                    }
             
     def load_yaml_list(self, yaml_list:list = []):
+        #print(yaml_list)
         list_of_yaml_objects = []
         for tup in yaml_list:
             temp = []
             for file in tup:
+                #print(file)
                 temp.append(self.load_to_obj(file))
             list_of_yaml_objects.append(temp) 
         list_of_yaml_objects = [tuple(lst) for lst in list_of_yaml_objects ]               

@@ -5,6 +5,7 @@ import MSI.optimization.matrix_loader as ml
 import MSI.simulations.absorbance.curve_superimpose as csp
 import MSI.simulations.yaml_parser as yp
 import MSI.simulations.instruments.shock_tube as st
+import MSI.simulations.instruments.jsr_steadystate as jsr
 
 
 #acts as front end to the rest of the system
@@ -31,7 +32,8 @@ class Optimization_Utility(object):
                               experimental_data:list =[],
                               absorbance_experimental_data:list=[],
                               time_history_interpolated_against_absorbance_experiment:dict={},
-                              absorbance_calculated_from_model=None):
+                              absorbance_calculated_from_model=None,
+                              yaml_dict:dict={}):
         exp_dict = {}
         exp_dict['index']              = exp_index
         exp_dict['simulation']         = simulation
@@ -56,6 +58,9 @@ class Optimization_Utility(object):
         exp_dict['uncertainty']        = self.build_uncertainty_shock_tube_dict(exp_dict['simulation'].fullParsedYamlFile)
         #decide how we want to build uncertainty dict and if we want to pass in the parsed yaml file?
         
+        if yaml_dict['simulation_type']=='JSR':
+            exp_dict['volume']=yaml_dict['volume']
+            exp_dict['residence_time']=yaml_dict['residence_time']
         if len(interpolated_absorbance) != 0:
             exp_dict['absorbance_model_data'] = interpolated_absorbance[0]
             exp_dict['absorbance_ksens']   = interpolated_absorbance[1]
@@ -114,30 +119,31 @@ class Optimization_Utility(object):
                     temperatures=experiment_dictionary['temperatures'],
                     observables=experiment_dictionary['observables'],
                     kineticSens=kineticSens,
-                    =physicalSens,
+                    physicalSens=physicalSens,
                     conditions=experiment_dictionary['conditions'],
                     thermalBoundary=experiment_dictionary['thermalBoundary'],
                     mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
                     processor=processor,
                     save_physSensHistories=1,
                     save_timeHistories=1,
-                    residence_time=experiment_dictionary['residence_time'],
-                    rtol=1e-8,atol=1e-7)
+                    residence_time=experiment_dictionary['residence_time'])
         
         jet_stirred_reactor.run()
         jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)
         jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)
         jet_stirred_reactor.species_adjustment(dk)
-        
-        csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
-        exp_data = jsr.importExperimentalData(csv_paths)
+        print(jet_stirred_reactor.physicalSens)
+        csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] if x is not None]
+        print(csv_paths)
+        exp_data = jet_stirred_reactor.importExperimentalData(csv_paths)
         
         experiment = self.build_single_exp_dict(exp_number,
                                            jet_stirred_reactor,
                                            int_ksens_exp_mapped,
                                            int_tp_psen_against_experimental,
                                            int_spec_psen_against_experimental,
-                                           experimental_data = exp_data)
+                                           experimental_data = exp_data,
+                                           yaml_dict=experiment_dictionary)
         return experiment
         
     def running_full_shock_tube(self,processor=None,
@@ -422,7 +428,7 @@ class Optimization_Utility(object):
                 if simulation_type=='jsr':
                     if 'absorbanceObservables' not in yamlDict.keys():
                         experiment = self.running_full_jsr(processor=processor,
-                                           experiment_dictonary=yamlDict,
+                                           experiment_dictionary=yamlDict,
                                            kineticSens = kineticSens,
                                            physicalSens = physicalSens,
                                            dk = dk,
