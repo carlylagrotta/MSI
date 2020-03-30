@@ -52,9 +52,9 @@ class Simulation(object):
                     
                     #print(conditions_perturb[x],'these are the perturbed conditions')
                     #conditions_copy[x] = ((conditions_copy[x]+conditions_perturb[x])*(1-conditions_copy[x]))/((1-conditions_copy[x])-(conditions_copy[x]+conditions_perturb[x]))
+                    
                     conditions_copy[x] = ((conditions_copy[x]+conditions_perturb[x])*(1-conditions_copy[x]))/(1 - (conditions_copy[x]+conditions_perturb[x]))
             new_conditions = conditions_copy
-            #print(new_conditions,'these are the new conditions')
         
         self.processor.solution.TPX=temperature,pressure*self.pasc_to_atm, new_conditions
         #print(self.processor.solution.TPX)
