@@ -17,6 +17,7 @@ import MSI.utilities.soln2cti_py3 as ctiw
 
 def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working_directory='',file_name=''):
     #print(MP)
+    
     print(bool(x))
     if not original_cti:
         raise Exception('Please provide a name for the original mechanism file and try again.')
@@ -72,6 +73,7 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
 #            print(master_reactions.reaction(i).rate)
             NewModel.add_reaction(master_reactions.reaction(i))
     
+    #
     #print(master_reactions.reaction(0).rate)
     
 
@@ -107,7 +109,7 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
                    NewModel.reaction(j).rates=NewModel.reaction(j).rates
                elif 'ChebyshevReaction' in str(type(NewModel.reaction(j))):
                    NewModel.reaction(j).set_parameters(NewModel.reaction(j).Tmin,NewModel.reaction(j).Tmax,NewModel.reaction(j).Pmin,NewModel.reaction(j).Pmax,NewModel.reaction(j).coeffs)
-    
+                   
     #Rinv = 1/R #cal/mol*K
     E = 1 #going test for energy
     #T = 4184
@@ -189,9 +191,15 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
                       NewModel.reaction(j).rates=NewModel.reaction(j).rates
                    elif 'ChebyshevReaction' in str(type(NewModel.reaction(j))):
                       NewModel.reaction(j).set_parameters(NewModel.reaction(j).Tmin,NewModel.reaction(j).Tmax,NewModel.reaction(j).Pmin,NewModel.reaction(j).Pmax,NewModel.reaction(j).coeffs)
+    
+
     if MP!={}:   
-        print('insdie the MP if statment')           
+        print('insdie the MP if statment')        
+
+        
         for j in np.arange(original_rxn_count,NewModel.n_reactions):
+               
+               
            
                try:
                    if 'ThreeBodyReaction' in str(type(NewModel.reaction(j))):
@@ -238,9 +246,10 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
                            Ea = NewModel.reaction(j)[number][1].activation_energy
                            NewModel.reaction(j)[number][1] = ct.Arrhenius(A*np.exp(MP['r'+str(j)]['A']),n+MP['r'+str(j)]['n'],Ea+MP['r'+str(j)]['Ea']*E)                      
                        NewModel.reaction(j).rates=NewModel.reaction(j).rates                      
-                   elif 'ChebyshevReaction' in str(type(original_mechanism.reaction(j))):
-                       NewModel.reaction(j).set_parameters(NewModel.reaction(j).Tmin,NewModel.reaction(j).Tmax,NewModel.reaction(j).Pmin,NewModel.reaction(j).Pmax,NewModel.reaction(j).coeffs)
-                       
+                   elif 'ChebyshevReaction' in str(type(NewModel.reaction(j))):
+                       converted = MP['r'+str(j)]/np.log(10)
+                       test = NewModel.reaction(j).coeffs +converted 
+                       NewModel.reaction(j).set_parameters(NewModel.reaction(j).Tmin,NewModel.reaction(j).Tmax,NewModel.reaction(j).Pmin,NewModel.reaction(j).Pmax,(test))
                        
                except:
                    print ('we are in the except statment in marks code',j)
