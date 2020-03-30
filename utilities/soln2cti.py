@@ -644,6 +644,7 @@ def write(solution,filearg):
                 f.write(' Pmax=('+'%s' % float('%.5g' % convertedPressure2)+', \'atm\'),\n')
                 f.write('                   coeffs=([')
                 tempvar=np.arange(len(equation_object.coeffs[:,0]))
+                print(equation_object.coeffs)
                 for i in np.arange(len(equation_object.coeffs[:,0])):
                     if i==0:
                         f.write(str(list(equation_object.coeffs[i,:])))
