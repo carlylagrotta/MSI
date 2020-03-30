@@ -28,17 +28,21 @@ files_to_include = [['Hong_0.yaml'],
                     ['Troe_6.yaml','Troe_6_abs.yaml'],
                     ['Troe_7.yaml','Troe_7_abs.yaml'],
                     ['Troe_8.yaml','Troe_8_abs.yaml'],            
-                    ['Hong_5.yaml','Hong_5_abs.yaml']]
+                    ['Hong_5.yaml','Hong_5_abs.yaml'],
+                    ['Scire_0.yaml'],
+                    ['Scire_1.yaml'],
+                    ['Scire_2.yaml'],
+                    ['Scire_3.yaml'],
+                    ['Scire_4.yaml'],
+                    ['Scire_5.yaml'],
+                    ['Scire_6.yaml'],
+                    ['Scire_7.yaml']]
 
 
-#files_to_include = [['Hong_0.yaml']]
+#files_to_include = [['Scire_0.yaml']]
 numer_of_iterations = 2
 cti_file = 'FFCM1_custom.cti'
-#cti_file = 'FFCM1_custom_1_collider.cti'
-
-
-
-working_directory = 'MSI/data/test_data'
+working_directory = 'MSI/data/scire_rebutt_testing'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty.csv'
 master_reaction_equation_cti_name = 'master_reactions_FFCM1.cti'
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
@@ -63,12 +67,6 @@ master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_f
 rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting.csv'
 rate_constant_target_value_data = 'FFCM1_target_reactions_1.csv'
 rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data.csv'
-
-
-#
-#rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting.csv'
-#rate_constant_target_value_data = 'FFCM1_target_reactions_1_no_weights_for_test.csv'
-#rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data.csv'
 
 #start here 
 

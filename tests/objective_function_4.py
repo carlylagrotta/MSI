@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Sep 27 11:16:51 2019
+
+@author: carly
+"""
+
 
 import sys, os
 sys.path.append('../../') #get rid of this at some point with central test script or when package is built
@@ -18,71 +26,43 @@ import MSI.utilities.post_processor as post_processor
 
 
 
-#
-#files_to_include = [['Hong_0.yaml'],
-#                    ['Hong_2.yaml'],
-#                    ['Hong_3.yaml'],
-#                    ['Hong_1.yaml'],
-#                    ['Troe_4.yaml','Troe_4_abs.yaml'],
-#                    ['Troe_5.yaml','Troe_5_abs.yaml'],
-#                    ['Troe_6.yaml','Troe_6_abs.yaml'],
-#                    ['Troe_7.yaml','Troe_7_abs.yaml'],
-#                    ['Troe_8.yaml','Troe_8_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_0.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_0_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_1.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_1_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_2.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_2_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_3.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_3_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_4.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_4_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_5.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_5_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_6.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_6_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_7.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_7_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_8.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_8_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_9.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_9_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_10.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_10_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_11.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_11_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_12.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_12_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_13.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_13_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_14.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_14_abs.yaml'],
-#                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_15.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_15_abs.yaml']]                     
-#
-#files_to_include = [['Hong_0.yaml'],
-#                    ['Hong_2.yaml'],
-#                    ['Hong_3.yaml'],
-#                    ['Hong_1.yaml'],
-#                    ['Troe_4.yaml','Troe_4_abs.yaml'],
-#                    ['Troe_5.yaml','Troe_5_abs.yaml'],
-#                    ['Troe_6.yaml','Troe_6_abs.yaml'],
-#                    ['Troe_7.yaml','Troe_7_abs.yaml'],
-#                    ['Troe_8.yaml','Troe_8_abs.yaml'],
-#                    ['Hong_HO2_fake_data_0.yaml','Hong_HO2_fake_data_0_abs.yaml'],
-#                    ['Hong_HO2_fake_data_1.yaml','Hong_HO2_fake_data_1_abs.yaml'],
-#                    ['Hong_HO2_fake_data_2.yaml','Hong_HO2_fake_data_2_abs.yaml'],
-#                    ['Hong_HO2_fake_data_3.yaml','Hong_HO2_fake_data_3_abs.yaml'],
-#                    ['Hong_HO2_fake_data_4.yaml','Hong_HO2_fake_data_4_abs.yaml'],
-#                    ['Hong_HO2_fake_data_5.yaml','Hong_HO2_fake_data_5_abs.yaml'],
-#                    ['Hong_HO2_fake_data_6.yaml','Hong_HO2_fake_data_6_abs.yaml'],
-#                    ['Hong_HO2_fake_data_7.yaml','Hong_HO2_fake_data_7_abs.yaml'],
-#                    ['Hong_HO2_fake_data_8.yaml','Hong_HO2_fake_data_8_abs.yaml'],
-#                    ['Hong_HO2_fake_data_9.yaml','Hong_HO2_fake_data_9_abs.yaml'],
-#                    ['Hong_HO2_fake_data_10.yaml','Hong_HO2_fake_data_10_abs.yaml'],
-#                    ['Hong_HO2_fake_data_11.yaml','Hong_HO2_fake_data_11_abs.yaml'],
-#                    ['Hong_HO2_fake_data_12.yaml','Hong_HO2_fake_data_12_abs.yaml'],
-#                    ['Hong_HO2_fake_data_13.yaml','Hong_HO2_fake_data_13_abs.yaml'],
-#                    ['Hong_HO2_fake_data_14.yaml','Hong_HO2_fake_data_14_abs.yaml'],
-#                    ['Hong_HO2_fake_data_15.yaml','Hong_HO2_fake_data_15_abs.yaml']] 
-##
-#
-#files_to_include = [['Hong_0.yaml'],
-#                    ['Hong_2.yaml'],
-#                    ['Hong_3.yaml'],
-#                    ['Hong_1.yaml'],
-#                    ['Troe_4.yaml','Troe_4_abs.yaml'],
-#                    ['Troe_5.yaml','Troe_5_abs.yaml'],
-#                    ['Troe_6.yaml','Troe_6_abs.yaml'],
-#                    ['Troe_7.yaml','Troe_7_abs.yaml'],
-#                    ['Troe_8.yaml','Troe_8_abs.yaml']]
 
+files_to_include = [['Hong_0.yaml'],
+                    ['Hong_2.yaml'],
+                    ['Hong_3.yaml'],
+                    ['Hong_1.yaml'],
+                    ['Troe_4.yaml','Troe_4_abs.yaml'],
+                    ['Troe_5.yaml','Troe_5_abs.yaml'],
+                    ['Troe_6.yaml','Troe_6_abs.yaml'],
+                    ['Troe_7.yaml','Troe_7_abs.yaml'],
+                    ['Troe_8.yaml','Troe_8_abs.yaml']] 
 
+files_to_include = [['Hong_0_updated.yaml'],
+                    ['Hong_2_updated.yaml'],
+                    ['Hong_3_updated.yaml'],
+                    ['Hong_1_updated.yaml'],
+                    ['Troe_4_updated.yaml','Troe_4_abs_updated.yaml'],
+                    ['Troe_5_updated.yaml','Troe_5_abs_updated.yaml'],
+                    ['Troe_6_updated.yaml','Troe_6_abs_updated.yaml'],
+                    ['Troe_7_updated.yaml','Troe_7_abs_updated.yaml'],
+                    ['Troe_8_updated.yaml','Troe_8_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_0.yaml','Hong_HO2_fake_data_0_abs.yaml'],
+                    ['Hong_HO2_fake_data_1.yaml','Hong_HO2_fake_data_1_abs.yaml'],
+                    ['Hong_HO2_fake_data_2.yaml','Hong_HO2_fake_data_2_abs.yaml'],
+                    ['Hong_HO2_fake_data_3.yaml','Hong_HO2_fake_data_3_abs.yaml'],
+                    ['Hong_HO2_fake_data_4.yaml','Hong_HO2_fake_data_4_abs.yaml'],
+                    ['Hong_HO2_fake_data_5.yaml','Hong_HO2_fake_data_5_abs.yaml'],
+                    ['Hong_HO2_fake_data_6.yaml','Hong_HO2_fake_data_6_abs.yaml'],
+                    ['Hong_HO2_fake_data_7.yaml','Hong_HO2_fake_data_7_abs.yaml'],
+                    ['Hong_HO2_fake_data_8.yaml','Hong_HO2_fake_data_8_abs.yaml'],
+                    ['Hong_HO2_fake_data_9.yaml','Hong_HO2_fake_data_9_abs.yaml'],
+                    ['Hong_HO2_fake_data_10.yaml','Hong_HO2_fake_data_10_abs.yaml'],
+                    ['Hong_HO2_fake_data_11.yaml','Hong_HO2_fake_data_11_abs.yaml'],
+                    ['Hong_HO2_fake_data_12.yaml','Hong_HO2_fake_data_12_abs.yaml'],
+                    ['Hong_HO2_fake_data_13.yaml','Hong_HO2_fake_data_13_abs.yaml'],
+                    ['Hong_HO2_fake_data_14.yaml','Hong_HO2_fake_data_14_abs.yaml'],
+                    ['Hong_HO2_fake_data_15.yaml','Hong_HO2_fake_data_15_abs.yaml']] 
+#
 #files_to_include = [['Hong_0.yaml'],
 #                    ['Hong_2.yaml'],
 #                    ['Hong_3.yaml'],
@@ -92,6 +72,8 @@ import MSI.utilities.post_processor as post_processor
 #                    ['Troe_6.yaml','Troe_6_abs.yaml'],
 #                    ['Troe_7.yaml','Troe_7_abs.yaml'],
 #                    ['Troe_8.yaml','Troe_8_abs.yaml'],
+#                    ['Hong_4.yaml','Hong_4_abs.yaml'],
+#                    ['Hong_5.yaml','Hong_5_abs.yaml'],
 #                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_0.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_0_abs.yaml'],
 #                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_1.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_1_abs.yaml'],
 #                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_2.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_2_abs.yaml'],
@@ -109,39 +91,38 @@ import MSI.utilities.post_processor as post_processor
 #                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_14.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_14_abs.yaml'],
 #                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_15.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_15_abs.yaml']] 
 
-files_to_include = [['Hong_0.yaml'],
-                    ['Hong_2.yaml'],
-                    ['Hong_3.yaml'],
-                    ['Hong_1.yaml'],
-                    ['Troe_4.yaml','Troe_4_abs.yaml'],
-                    ['Troe_5.yaml','Troe_5_abs.yaml'],
-                    ['Troe_6.yaml','Troe_6_abs.yaml'],
-                    ['Troe_7.yaml','Troe_7_abs.yaml'],
-                    ['Troe_8.yaml','Troe_8_abs.yaml'],
-                    ['Hong_HO2_fake_data_0.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_1.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_2.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_3.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_4.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_5.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_6.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_7.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_8.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_9.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_10.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_11.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_12.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_13.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_14.yaml','Hong_fake_data_fitted_abs.yaml'],
-                    ['Hong_HO2_fake_data_15.yaml','Hong_fake_data_fitted_abs.yaml']]                                                        
-numer_of_iterations = 10
-cti_file = 'FFCM1_custom_extra_reaction.cti'
+#files_to_include = [['Hong_0.yaml'],
+#                    ['Hong_2.yaml'],
+#                    ['Hong_3.yaml'],
+#                    ['Hong_1.yaml'],
+#                    ['Troe_4.yaml','Troe_4_abs.yaml'],
+#                    ['Troe_5.yaml','Troe_5_abs.yaml'],
+#                    ['Troe_6.yaml','Troe_6_abs.yaml'],
+#                    ['Troe_7.yaml','Troe_7_abs.yaml'],
+#                    ['Troe_8.yaml','Troe_8_abs.yaml'],
+#                    ['Hong_4.yaml','Hong_4_abs.yaml'],
+#                    ['Hong_5.yaml','Hong_5_abs.yaml'],
+#                    ['Hong_HO2_fake_data_0.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_1.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_2.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_3.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_4.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_5.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_6.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_7.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_8.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_9.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_10.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_11.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_12.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_13.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_14.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml'],
+#                    ['Hong_HO2_fake_data_15.yaml','large_uncertainty_yaml/Hong_fake_data_fitted_abs.yaml']]                                                        
+numer_of_iterations = 1
+cti_file = 'FFCM1_custom_extra_reaction_updated_temp.cti'
 working_directory = 'MSI/data/klip_optimization'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_extra_reaction.csv'
-############################################################################################
-#reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_extra_reaction_no_kinetics.csv'
-##########################################################################################
-master_reaction_equation_cti_name = 'master_reactions_FFCM1.cti'
+master_reaction_equation_cti_name = 'master_reactions_FFCM1_updated_temp.cti'
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
 
 #this would be an empty string '' if you do not want to include it 
@@ -156,9 +137,6 @@ master_equation_reactions = ['H2O2 + OH <=> H2O + HO2',
 master_index = [2,3,4,5,6]
 
 master_equation_uncertainty_df = pd.read_csv('MSI/data/klip_optimization/six_parameter_fit_uncertainty_df.csv')
-##########################################################################################
-#master_equation_uncertainty_df = pd.read_csv('MSI/data/klip_optimization/six_parameter_fit_uncertainty_df_no_kinetics.csv')
-##########################################################################################
 #this could be 'On'
 
 rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting_extra_reaction.csv'
@@ -257,26 +235,6 @@ MSI_st_instance_one.deltaXAsNsEas
 
 
 
-
-#need to fix this and return _s_matrix and y_matrix
-
-
-
-MSI_st_instance_two = stMSIspf.MSI_shocktube_optimization_six_parameter_fit(cti_file,
-                                                   .01,
-                                                   1,
-                                                   1,
-                                                   working_directory,
-                                                   files_to_include,                 
-                                                   reaction_uncertainty_csv,rate_constant_target_value_data,
-                                                   master_equation_reactions = master_equation_reactions,
-                                                   molecular_parameter_sensitivities = molecular_parameter_sensitivities,
-                                                   six_parameter_fit_sensitivities = six_parameter_fit_sensitivities,
-                                                   master_reaction_equation_cti_name = master_reaction_equation_cti_name,
-                                                   master_index = master_index,
-                                                   master_equation_uncertainty_df = master_equation_uncertainty_df,
-                                                   six_paramter_fit_nominal_parameters_dict = six_parameter_fit_nominal_parameters_dict)
-                                                   
                                                  
 #
 #
@@ -284,44 +242,42 @@ MSI_st_instance_two = stMSIspf.MSI_shocktube_optimization_six_parameter_fit(cti_
 #
 #
 #ALL OF THIS STUFF CAN PROBABLY GO INTO SOME SORT OF CLASS
-delta_X_list = MSI_st_instance_two.multiple_shock_tube_runs(numer_of_iterations)
 
+deltaXAsNsEas = MSI_st_instance_one.deltaXAsNsEas
+physical_obervable_updates_list = MSI_st_instance_one.physical_obervable_updates_list
+absorbance_observables_updates_list = MSI_st_instance_one.absorbance_coef_update_dict
+Ydf = MSI_st_instance_one.Y_data_frame
+Zdf = MSI_st_instance_one.z_data_frame
+experimental_dicts = MSI_st_instance_one.experiment_dictonaries
+z_matrix = MSI_st_instance_one.z_matrix
+s_matrix = MSI_st_instance_one.s_matrix
+y = MSI_st_instance_one.y_matrix
+Y_matrix = MSI_st_instance_one.Y_matrix
+S_matrix = MSI_st_instance_one.S_matrix
 
-deltaXAsNsEas = MSI_st_instance_two.deltaXAsNsEas
-physical_obervable_updates_list = MSI_st_instance_two.physical_obervable_updates_list
-absorbance_observables_updates_list = MSI_st_instance_two.absorbance_coef_update_dict
-Ydf = MSI_st_instance_two.Y_data_frame
-Zdf = MSI_st_instance_two.z_data_frame
-experimental_dicts = MSI_st_instance_two.experiment_dictonaries
-z_matrix = MSI_st_instance_two.z_matrix
-s_matrix = MSI_st_instance_two.s_matrix
-y = MSI_st_instance_two.y_matrix
-Y_matrix = MSI_st_instance_two.Y_matrix
-S_matrix = MSI_st_instance_two.S_matrix
-
-X = MSI_st_instance_two.X
-Xdf = MSI_st_instance_two.X_data_frame
-covarience = MSI_st_instance_two.covarience
-exp_dict_list_optimized_extra_reaction = MSI_st_instance_two.experiment_dictonaries
-parsed_yaml_list = MSI_st_instance_two.list_of_parsed_yamls
-sigma = MSI_st_instance_two.sigma
-X = MSI_st_instance_two.X
-delta_X = MSI_st_instance_two.delta_X
-molecular_parameter_updates = MSI_st_instance_two.delta_x_molecular_params_by_reaction_dict
-nominal_dict_six_p_fit  = MSI_st_instance_two.six_paramter_fit_nominal_parameters_dict
+X = MSI_st_instance_one.X
+Xdf = MSI_st_instance_one.X_data_frame
+covarience = MSI_st_instance_one.covarience
+exp_dict_list_optimized_extra_reaction = MSI_st_instance_one.experiment_dictonaries
+parsed_yaml_list = MSI_st_instance_one.list_of_parsed_yamls
+sigma = MSI_st_instance_one.sigma
+X = MSI_st_instance_one.X
+delta_X = MSI_st_instance_one.delta_X
+molecular_parameter_updates = MSI_st_instance_one.delta_x_molecular_params_by_reaction_dict
+nominal_dict_six_p_fit  = MSI_st_instance_one.six_paramter_fit_nominal_parameters_dict
 original_diag = np.diag(original_covariance)
 
 
 
 
 #target_value_rate_constant_csv = 'MSI/data/test_data/FFCM1_custom_target_value_test.csv'
-original_cti_file = MSI_st_instance_two.data_directory +'/'+ MSI_st_instance_two.cti_file_name
+original_cti_file = MSI_st_instance_one.data_directory +'/'+ MSI_st_instance_one.cti_file_name
 
-experiment_dict_uncertainty = MSI_st_instance_two.experiment_dict_uncertainty_original
-target_value_csv = MSI_st_instance_two.data_directory +'/'+ MSI_st_instance_two.k_target_values_csv
-six_parameter_fit_dict_optimized = MSI_st_instance_two.updated_six_parameter_fits_dict
+experiment_dict_uncertainty = MSI_st_instance_one.experiment_dict_uncertainty_original
+target_value_csv = MSI_st_instance_one.data_directory +'/'+ MSI_st_instance_one.k_target_values_csv
+six_parameter_fit_dict_optimized = MSI_st_instance_one.updated_six_parameter_fits_dict
 if run_with_k_target_values == 'On' or run_with_k_target_values == 'on':
-    k_target_value_S_matrix = MSI_st_instance_two.k_target_values_for_s
+    k_target_value_S_matrix = MSI_st_instance_one.k_target_values_for_s
 else:
     k_target_value_S_matrix = None
 
@@ -346,63 +302,11 @@ plotting_instance = plotter.Plotting(S_matrix,
                                      exp_dict_list_original,
                                      parsed_yaml_list,
                                      Ydf,
-                                     target_value_rate_constant_csv= MSI_st_instance_two.data_directory +'/'+ rate_constant_target_value_data_for_plotting ,
-                                     target_value_rate_constant_csv_extra_values = MSI_st_instance_two.data_directory +'/'+rate_constant_target_value_data_extra,
+                                     target_value_rate_constant_csv= MSI_st_instance_one.data_directory +'/'+ rate_constant_target_value_data_for_plotting ,
+                                     target_value_rate_constant_csv_extra_values = MSI_st_instance_one.data_directory +'/'+rate_constant_target_value_data_extra,
                                      k_target_value_S_matrix =k_target_value_S_matrix,
                                      k_target_values=run_with_k_target_values,
                                      working_directory = working_directory,
-                                     sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma,
-                                     shock_tube_instance=MSI_st_instance_two)
-#csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_updated.csv'
-observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
-sigmas_optimized_extra_reaction,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
-sigmas_original_extra_reaction,test2 = plotting_instance.calculating_sigmas(S_matrix_original,original_covariance)
-plotting_instance.plotting_observables(sigmas_original = sigmas_original_extra_reaction,sigmas_optimized= sigmas_optimized_extra_reaction)
-diag = plotting_instance.getting_matrix_diag(covarience)
+                                     sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma)
 
-
-#plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
-
-#
-#
-#plotting_instance.plotting_rate_constants(optimized_cti_file=MSI_st_instance_two.new_cti_file,
-#                                original_cti_file=original_cti_file,
-#                                initial_temperature=250,
-#                                final_temperature=2500)
-                                
-
-
-sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
-obs = plotting_instance.plotting_uncertainty_weighted_sens()
-
-plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MSI_st_instance_two.new_cti_file,
-                                original_cti_file=original_cti_file,
-                               initial_temperature=250,
-                                final_temperature=2500,
-                                master_equation_reactions = master_equation_reactions,
-                                six_parameter_fit_dict_optimized = six_parameter_fit_dict_optimized,
-                                six_parameter_fit_dict_nominal = six_parameter_fit_nominal_parameters_dict,
-                                six_parameter_fit_sensitivity_dict =six_parameter_fit_sensitivities )
-
-#plotting_instance.plotting_histograms_of_individual_observables([9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24],directory_to_save_images=working_directory+'/objective_functions_4')
-#plotting_instance.plotting_normal_distributions(MSI_st_instance_two.posterior_diag_df['parameter'].tolist()[889:],
-                                                #optimized_cti_file=MSI_st_instance_two.new_cti_file,
-                                                #pdf_distribution_file='',
-                                                #shock_tube_instance=MSI_st_instance_two)
-
-#plotting_instance.plotting_joint_normal_distributions([('A_2','A_0')],optimized_cti_file=MSI_st_instance_two.new_cti_file)
-
-#plotting_instance.plotting_X_itterations(list_of_X_values_to_plot = [0,1,2,3,4,5,50],list_of_X_array=X_list,number_of_iterations=numer_of_iterations)
-#post_processor_instance = post_processor.post_processing(optimized_cti_file = MSI_st_instance_two.new_cti_file,
-#                                                    original_cti_file = original_cti_file,
-#                                                    kinetic_paramter_dictonary = MSI_st_instance_two.kinetic_paramter_dict,
-#                                                    master_equation_reactions=master_equation_reactions,
-#                                                    six_parameter_fit_nominal_parameters_dict = six_parameter_fit_nominal_parameters_dict,
-#                                                    six_parameter_fit_optimized_paramter_dict = six_parameter_fit_dict_optimized,
-#                                                    exp_dict_list_optimized = exp_dict_list_optimized_extra_reaction,
-#                                                    exp_dict_list_original = exp_dict_list_original,
-#                                                    parsed_yaml_list = parsed_yaml_list)
-#
-#kinetic_paramters_dict = post_processor_instance.create_active_kinetic_paramter_dictonary()
-#physical_params_dict = post_processor_instance.create_active_physical_paramter_dictonary()
 

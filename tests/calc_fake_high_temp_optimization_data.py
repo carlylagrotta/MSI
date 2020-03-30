@@ -1,3 +1,4 @@
+
 import sys
 sys.path.append('.') #get rid of this at some point with central test script or when package is built
 
@@ -9,16 +10,16 @@ import cantera as ct
 import pandas as pd 
 import matplotlib.pyplot as plt
 
-test_p = pr.Processor('MSI/data/hong_H2O2_fake_data/Hong_new_half_temperature_dep_new_approach.cti')
+test_p = pr.Processor('MSI/data/hong_H2O2_fake_data/Hong_new_full_temperature_dep_new_approach_high_temperature.cti')
 
 
 
-test_tube = st.shockTube(pressure=1.676,
-                         temperature=1182,
+test_tube = st.shockTube(pressure=1.635,
+                         temperature=1283,
                          observables=['OH','H2O'],
                          kineticSens=0,
                          physicalSens=0,
-                         conditions={'H2O2':0.002046 ,'H2O':0.001113,
+                         conditions={'H2O2':0.003049 ,'H2O':0.001113,
                                      'O2':0.000556,'Ar':0.995212},
                          initialTime=0,
                          finalTime=0.001,
@@ -95,7 +96,7 @@ abs_instance = csp.Absorb()
 
 
 #exp_loaded = parser.load_to_obj('MSI/data/test_data/Hong_4.yaml')
-abs_loaded = parser.load_to_obj('MSI/data/hong_H2O2_fake_data/Hong_HO2_fake_data_3_abs.yaml')
+abs_loaded = parser.load_to_obj('MSI/data/hong_H2O2_fake_data/Hong_HO2_fake_data_15_abs.yaml')
 abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,15.2,kinetic_sens=0)
 
 #abs_loaded2 = parser2.load_to_obj('MSI/data/hong_H2O2_fake_data/Hong_HO2_fake_data_3_abs.yaml')

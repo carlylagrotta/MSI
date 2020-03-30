@@ -31,16 +31,12 @@ files_to_include = [['Hong_0.yaml'],
                     ['Hong_5.yaml','Hong_5_abs.yaml']]
 
 
-#files_to_include = [['Hong_0.yaml']]
-numer_of_iterations = 2
-cti_file = 'FFCM1_custom.cti'
-#cti_file = 'FFCM1_custom_1_collider.cti'
 
-
-
-working_directory = 'MSI/data/test_data'
-reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty.csv'
-master_reaction_equation_cti_name = 'master_reactions_FFCM1.cti'
+numer_of_iterations = 25
+cti_file = 'METCALF.cti'
+working_directory = 'MSI/data/Aramco_test'
+reaction_uncertainty_csv = 'METCALF_reaction_uncertainty.csv'
+master_reaction_equation_cti_name = 'master_reactions_METCALF.cti'
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
 
 #this would be an empty string '' if you do not want to include it 
@@ -56,19 +52,11 @@ master_equation_reactions = ['H2O2 + OH <=> H2O + HO2',
 master_index = [2,3,4,5,6,7]
 
 master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df.csv')
-#master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df_rebuttle_uncertainty.csv')
-
 #this could be 'On'
 
 rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting.csv'
 rate_constant_target_value_data = 'FFCM1_target_reactions_1.csv'
 rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data.csv'
-
-
-#
-#rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting.csv'
-#rate_constant_target_value_data = 'FFCM1_target_reactions_1_no_weights_for_test.csv'
-#rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data.csv'
 
 #start here 
 
@@ -168,8 +156,7 @@ exp_dict_list_original = MSI_st_instance_one.experiment_dictonaries
 original_covariance = MSI_st_instance_one.covarience
 X_one_itteration = MSI_st_instance_one.X
 MSI_st_instance_one.deltaXAsNsEas
-Ydf_original = MSI_st_instance_one.Y_data_frame
-Zdf_original = MSI_st_instance_one.z_data_frame
+
 
 
 
@@ -277,8 +264,12 @@ diag = plotting_instance.getting_matrix_diag(covarience)
 
 #plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
 
-
-
+#
+#
+#plotting_instance.plotting_rate_constants(optimized_cti_file=MSI_st_instance_two.new_cti_file,
+#                                original_cti_file=original_cti_file,
+#                                initial_temperature=250,
+#                                final_temperature=2500)
                                 
 
 

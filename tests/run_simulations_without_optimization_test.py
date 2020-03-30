@@ -10,6 +10,7 @@ import numpy as np
 
 #start here 
 
+
 files_to_include = [['Hong_0_updated.yaml'],
                     ['Hong_2_updated.yaml'],
                     ['Hong_3_updated.yaml'],
@@ -19,15 +20,31 @@ files_to_include = [['Hong_0_updated.yaml'],
                     ['Troe_6_updated.yaml','Troe_6_abs_updated.yaml'],
                     ['Troe_7_updated.yaml','Troe_7_abs_updated.yaml'],
                     ['Troe_8_updated.yaml','Troe_8_abs_updated.yaml'],
-                    ['Hong_4_updated.yaml','Hong_4_abs_updated.yaml'],
-                    ['Hong_5_updated.yaml','Hong_5_abs_updated.yaml'],
-                    ['Hong_6_high_temp_large_uncertainty_updated.yaml', 'Hong_6_high_temp_abs_updated.yaml']] 
-
+                    ['Hong_HO2_fake_data_0_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_1_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_2_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_3_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_4_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_5_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_6_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_7_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_8_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_9_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_10_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_11_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_12_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_13_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_14_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],
+                    ['Hong_HO2_fake_data_15_updated.yaml','Hong_fake_data_fitted_abs_updated.yaml'],    
+                    ['Farooq_0.yaml'],
+                    ['Farooq_1.yaml'],
+                    ['Farooq_2.yaml'],
+                    ['Farooq_3.yaml']]   
                                                       
                                                       
 numer_of_iterations = 1
-cti_file = 'FFCM1_custom_updated_extra_reaction.cti'
-working_directory = 'MSI/data/data_extra_reaction'
+cti_file = 'FFCM1_custom_extra_reaction_updated.cti'
+working_directory = 'MSI/data/hong_H2O2_fake_data'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_extra_reaction.csv'
 master_reaction_equation_cti_name = 'master_reactions_FFCM1_optimized_extra_reaction.cti'
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
@@ -41,13 +58,13 @@ master_equation_reactions = ['H2O2 + OH <=> H2O + HO2',
                              'CH3 + HO2 <=> CH4 + O2',
                              'CH3 + HO2 <=> CH3O + OH']
 
+#master_index = [2,3,4,5,6]
 #master_index = [2,3,4,5,6,7]
-master_index = [2,3,4,5,6,7]
 
-master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df.csv')
+#master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df.csv')
 #this could be 'On'
 
-rate_constant_target_value_data = 'FFCM1_target_reactions_1_extra_reaction.csv'
+#rate_constant_target_value_data = 'FFCM1_target_reactions_1_extra_reaction.csv'
 
 #start here  
 
@@ -140,4 +157,4 @@ MSI_st_instance_one = rswo.running_simulations_without_optimization(cti_file,
                                                    master_equation_uncertainty_df = master_equation_uncertainty_df,
                                                    six_paramter_fit_nominal_parameters_dict = six_parameter_fit_nominal_parameters_dict)
 MSI_st_instance_one.multiple_shock_tube_runs(1)
-experimental_dict_extra_reaction = MSI_st_instance_one.experiment_dictonaries
+experimental_dict_two_klip_reactions = MSI_st_instance_one.experiment_dictonaries

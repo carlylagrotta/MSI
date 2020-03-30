@@ -11,7 +11,7 @@ test_tube = st.shockTube(pressure=1.74,
                          observables=['OH','H2O'],
                          kineticSens=1,
                          physicalSens=0,
-                         conditions={'H2O':.013,'O2':.0099,'H':.0000007,'Ar':0.9770993},
+                         conditions={'CH4':.063,'O2':.063,'Ar':0.874},
                          initialTime=0,
                          finalTime=0.5,
                          thermalBoundary='Adiabatic',
@@ -41,3 +41,4 @@ int_spec_psen_against_experimental = test_tube.interpolate_experimental(pre_inte
 time_histories = test_tube.timeHistories
 dk = test_tube.dk
 
+                         #conditions={'H2O':.013,'O2':.0099,'H':.0000007,'Ar':0.9770993},
