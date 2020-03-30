@@ -1,6 +1,7 @@
 import sys
-sys.path.append('.') #get rid of this at some point with central test script or when package is built
-
+import sys, os
+sys.path.append('../../') #get rid of this at some point with central test script or when package is built
+os.chdir('../../')
 import MSI.simulations.instruments.shock_tube as st
 import MSI.cti_core.cti_processor as pr
 import MSI.optimization.matrix_loader as ml
@@ -10,7 +11,7 @@ import MSI.simulations.yaml_parser as yp
 import cantera as ct
 #
 
-test_p = pr.Processor('MSI/data/test_data/FFCM1.cti')
+test_p = pr.Processor('/Users/carlylagrotta/Desktop/MSI/data/test_data/FFCM1_custom.cti')
 yaml_file_list = [('MSI/data/test_data/Hong_4.yaml','MSI/data/test_data/Hong_4_abs.yaml'),('MSI/data/test_data/Hong_1.yaml',),
                   ('MSI/data/test_data/Troe_6.yaml','MSI/data/test_data/Troe_6_abs.yaml'),
                   ('MSI/data/test_data/Hong_4.yaml','MSI/data/test_data/Hong_4_abs.yaml')]

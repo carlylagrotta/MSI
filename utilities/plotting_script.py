@@ -13,6 +13,8 @@ from scipy.stats import norm
 import matplotlib.mlab as mlab
 import matplotlib.cm as cm
 import MSI.master_equation.master_equation as meq 
+import re
+import os
 
 
 
@@ -82,14 +84,19 @@ class Plotting(object):
                 if observable == None:
                     continue
                 if observable in exp['mole_fraction_observables']:
-                    length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Time'].shape[0])
-                    observable_counter+=1
-                    
+                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                        length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Time'].shape[0])
+                        observable_counter+=1
+                    if re.match('[Jj][Ss][Rr]',exp['simulation_type']):
+                        length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Temperature'].shape[0])
+                        observable_counter+=1
                 if observable in exp['concentration_observables']:
-                    length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Time'].shape[0])
-                    observable_counter+=1
-                    
-
+                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                        length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Time'].shape[0])
+                        observable_counter+=1
+                    if re.match('[Jj][Ss][Rr]',exp['simulation_type']):
+                        length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Temperature'].shape[0])
+                        observable_counter+=1
             if 'perturbed_coef' in exp.keys():
                 wavelengths = self.parsed_yaml_list[i]['absorbanceCsvWavelengths']
                 absorbance_wl=0
@@ -143,43 +150,72 @@ class Plotting(object):
                 plt.figure()
                 
                 if observable in exp['mole_fraction_observables']:
-                    plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable],'b',label='MSI')
-                    plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original['simulation'].timeHistories[0][observable],'r',label= "$\it{A priori}$ model")
-                    plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable],'o',color='black',label='Experimental Data')
-                    plt.xlabel('Time (ms)')
-                    plt.ylabel('Mole Fraction'+''+str(observable))
-                    plt.title('Experiment_'+str(i+1))
-                    
-                    
-                    
-                    
-
-                    
-                    if bool(sigmas_optimized) == True:
-                        
-                        high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
-                        high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
-                        low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
-                        low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
-                        plt.figure()
-                        plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
-                        plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--')
+                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                        plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable],'b',label='MSI')
+                        plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original['simulation'].timeHistories[0][observable],'r',label= "$\it{A priori}$ model")
+                        plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable],'o',color='black',label='Experimental Data')
+                        plt.xlabel('Time (ms)')
+                        plt.ylabel('Mole Fraction '+''+str(observable))
+                        plt.title('Experiment_'+str(i+1))
                         
                         
                         
-                        high_error_original = np.exp(sigmas_original[i][observable_counter])
-                        high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
-                        low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
-                        low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
-                        plt.figure()
-                        plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
-                        plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
-                    
-                    plt.savefig(self.working_directory+'/'+'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf', bbox_inches='tight',dpi=1000)
-                    
-
-                    observable_counter+=1
-                    
+                        
+    
+                        
+                        if bool(sigmas_optimized) == True:
+                            
+                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                            high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
+                            low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
+                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--')
+                            
+                            
+                            
+                            high_error_original = np.exp(sigmas_original[i][observable_counter])
+                            high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
+                            low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            
+                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
+                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                        
+                        plt.savefig(self.working_directory+'/'+'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf', bbox_inches='tight',dpi=1000)
+                        
+    
+                        observable_counter+=1
+                    elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
+                        plt.plot(exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0][observable],'b',label='MSI')
+                        plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable],'r',label= "$\it{A priori}$ model")
+                        plt.plot(exp['experimental_data'][observable_counter]['Temperature'],exp['experimental_data'][observable_counter][observable],'o',color='black',label='Experimental Data')
+                        plt.xlabel('Temperature (K)')
+                        plt.ylabel('Mole Fraction '+''+str(observable))
+                        plt.title('Experiment_'+str(i+1))
+                        
+                        if bool(sigmas_optimized) == True:
+                            
+                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                            high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values)
+                            low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
+                            low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values)
+                            #plt.figure()
+                            plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'b--')
+                            plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'b--')
+                            
+                            
+                            
+                            #high_error_original = np.exp(sigmas_original[i][observable_counter])
+                           # high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            #low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
+                            #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            #plt.figure()
+                           # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
+                            #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                        
+                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
+                        observable_counter+=1
                 if observable in exp['concentration_observables']:
                     plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
                     plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
@@ -835,16 +871,23 @@ class Plotting(object):
                 if observable == None:
                     continue                                
                 if observable in exp['mole_fraction_observables']:
-                    time_profiles[i].append(exp['experimental_data'][observable_counter]['Time']*1e3)
-                    observables[i].append(observable)
-                    observable_counter+=1
-                    
+                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                        time_profiles[i].append(exp['experimental_data'][observable_counter]['Time']*1e3)
+                        observables[i].append(observable)
+                        observable_counter+=1
+                    elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
+                        time_profiles[i].append(exp['experimental_data'][observable_counter]['Temperature'])
+                        observables[i].append(observable)
+                        observable_counter+=1
                 if observable in exp['concentration_observables']:
-                    time_profiles[i].append(exp['experimental_data'][observable_counter]['Time']*1e3)        
-                    observables[i].append(observable)                                
-                    observable_counter+=1
-                    
-
+                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                        time_profiles[i].append(exp['experimental_data'][observable_counter]['Time']*1e3)        
+                        observables[i].append(observable)                                
+                        observable_counter+=1
+                    elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
+                        time_profiles[i].append(exp['experimental_data'][observable_counter]['Temperature'])        
+                        observables[i].append(observable)                                
+                        observable_counter+=1
             if 'perturbed_coef' in exp.keys():
                 wavelengths = self.parsed_yaml_list[i]['absorbanceCsvWavelengths']
                 for k,wl in enumerate(wavelengths):
@@ -1291,8 +1334,9 @@ class Plotting(object):
                 plt.title(reaction_list_from_mechanism[reaction])
                 plt.tick_params(axis ='both', direction ='in') 
                 plt.tick_params(axis ='both', direction ='in',which='minor') 
-                plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.pdf', bbox_inches='tight')
-                plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.svg', bbox_inches='tight')
+
+                #plt.savefig(os.path.join(self.working_directory,reaction_list_from_mechanism[reaction]+'.pdf'), bbox_inches='tight')
+                #plt.savefig(os.path.join(self.working_directory,reaction_list_from_mechanism[reaction]+'.svg'), bbox_inches='tight')
 
         elif bool(self.target_value_rate_constant_csv) and self.k_target_values=='Off':
             
@@ -1671,6 +1715,7 @@ class Plotting(object):
                 
                 plt.savefig(self.working_directory+'/'+couple[0]+'_'+couple[1]+'_distribution'+'_.pdf',bbox_inches='tight')
 
+
     def difference_plotter(self,
                            paramter_list,
                            optimized_cti_file='',
@@ -1733,136 +1778,8 @@ class Plotting(object):
                 plt.plot(x_shift)
                 plt.title('Percent Difference In X')
                 plt.xlabel(parameter)
-        
-                    
-                    
-    def plotting_physical_model_parameter_distributions(self,
-                           paramter_list,
-                           shock_tube_instance,
-                           optimized_X,
-                           original_experimental_conditions,
-                           T_uncertainty=.005,
-                           P_uncertainty=.01,
-                           X_uncertainty=.025,
-                           directory_to_save_images='',
-                           experiments_want_to_plot_data_from=[]):
-        
-        if bool(experiments_want_to_plot_data_from)==False:
-            experiments_want_to_plot_data_from = np.arange(0,len(self.exp_dict_list_optimized))
-        try:
-            all_parameters = shock_tube_instance.posterior_diag_df['parameter'].tolist()
-        except:
-            all_parameters = shock_tube_instance.prior_diag_df['parameter'].tolist()
-
-        parameter_groups = ['T','P']
-
-        list_of_species = []
-        for parameter in all_parameters:
-            if parameter[0] == 'X':
-                list_of_species.append(parameter.split('_')[1])
-        
-        output = []
-        for x in list_of_species:
-            if x not in output:
-                output.append(x)
-        parameter_groups = parameter_groups + output
-        
-        for parameter in parameter_groups:
-            temp_list = []
-            parameter_counter = 0
-            for i,p in enumerate(all_parameters):
-                if parameter == 'T':
-                    if p[0] == 'T':
-                        yaml_file = int(p.split('_')[2])
-                        if parameter_counter in experiments_want_to_plot_data_from: 
-                            temp_list.append(optimized_X[i][0])
-                            prior_sigma=T_uncertainty
-                        parameter_counter+=1
-                        
-                elif parameter == 'P':        
-                    if p[0] == 'P':
-                        yaml_file = int(p.split('_')[2])
-                        pressure_original = original_experimental_conditions[yaml_file]['pressure']
-                        #temp_list.append(temp_original*np.exp(optimized_X[i]) - temp_original) 
-                        if parameter_counter in experiments_want_to_plot_data_from: 
-                            temp_list.append(optimized_X[i][0])  
-                            prior_sigma = P_uncertainty
-                        parameter_counter+=1
-
-                elif parameter =='H2O':
-                    if p[0] == 'X' and p[2:5] == 'H2O' and p[5]== '_':
-                        yaml_file = int(p.split('_')[3])
-                        specie_original = original_experimental_conditions[yaml_file]['conditions']['H2O'] 
-                        if parameter_counter in experiments_want_to_plot_data_from:                            
-                            temp_list.append(optimized_X[i][0])     
-                            prior_sigma=X_uncertainty
-                        parameter_counter+=1
-   
-                elif parameter =='H2O2':
-                    if p[0] == 'X' and p[2:6] == 'H2O2' and p[6]== '_':
-                        yaml_file = int(p.split('_')[3])
-                        specie_original = original_experimental_conditions[yaml_file]['conditions']['H2O2']                            
-                        if parameter_counter in experiments_want_to_plot_data_from:                            
-                            temp_list.append(optimized_X[i][0])     
-                            prior_sigma=X_uncertainty
-                        parameter_counter+=1
-
-                elif parameter =='O2':
-                    if p[0] == 'X' and p[2:4] == 'O2' and p[4]== '_':
-                        yaml_file = int(p.split('_')[3])
-                        specie_original = original_experimental_conditions[yaml_file]['conditions']['O2']                            
-                        if parameter_counter in experiments_want_to_plot_data_from:                            
-                            temp_list.append(optimized_X[i][0])     
-                            prior_sigma=X_uncertainty
-                        parameter_counter+=1
-                            
-                elif parameter =='H':
-                    if p[0] == 'X' and p[2:3] == 'H' and p[3]== '_':
-                        yaml_file = int(p.split('_')[3])
-                        specie_original = original_experimental_conditions[yaml_file]['conditions']['H']                            
-                        if parameter_counter in experiments_want_to_plot_data_from:                            
-                            temp_list.append(optimized_X[i][0])     
-                            prior_sigma=X_uncertainty
-                        parameter_counter+=1
-                        
-                elif parameter =='CH4':
-                    if p[0] == 'X' and p[2:5] == 'CH4' and p[5]== '_':
-                        yaml_file = int(p.split('_')[3])
-                        specie_original = original_experimental_conditions[yaml_file]['conditions']['CH4']                            
-                        if parameter_counter in experiments_want_to_plot_data_from:                            
-                            temp_list.append(optimized_X[i][0])     
-                            prior_sigma=X_uncertainty                         
-                        parameter_counter+=1
-                else:
-                    parameter_counter+=1
-                
-
-            plt.figure()
-            mu2=0 
-            sigma2=prior_sigma
-            n, bins, patches=plt.hist(temp_list,bins='auto',density=True,color='g') 
-            (mu, sigma) = norm.fit(temp_list)
-            #y = mlab.normpdf( bins, mu, sigma)
-            y = norm.pdf(bins,mu,sigma)
-            x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
-            l = plt.plot(bins, y, 'b--', linewidth=2)
-            plt.plot(x, stats.norm.pdf(x, mu, sigma),'b')
-            x2 = np.linspace(mu2 - 3*sigma2, mu2 + 3*sigma2, 100)
-            plt.plot(x2, stats.norm.pdf(x2, mu2, sigma2),'r')
-
-    #plot
-            plt.xlabel(parameter)
-            #plt.ylabel('Probability')
-            plt.title(r'$\mathrm{Histogram\ of\ physical\ model\ parameter:}\ \mu=%.3f,\ \sigma=%.3f$' %(mu, sigma))
-            plt.grid(True)
-            plt.savefig(directory_to_save_images+'/'+'Including Experiments_'+ str(experiments_want_to_plot_data_from)+parameter+'_.pdf',dpi=1000,bbox_inches='tight')
-
-            
-                
-            
-
-        return
-    def plotting_histograms_of_MSI_simulations(self,experiments_want_to_plot_data_from=[],bins='auto',directory_to_save_images=''):
+              
+     def plotting_histograms_of_MSI_simulations(self,experiments_want_to_plot_data_from=[],bins='auto',directory_to_save_images=''):
         s_shape = self.S_matrix.shape[1]
         if self.k_target_value_S_matrix.any():
             target_values_for_s = self.k_target_value_S_matrix
@@ -2293,6 +2210,36 @@ class Plotting(object):
                     
                     
                     
+                    #plotting two fold plots 
+                    plt.figure()            
+                    plt.subplot(2,1,1)
+                    plt.title(str(observables_unique[i])+'_Including Experiments_'+ str(experiments_want_to_plot_data_from))
+        
+                    n, bins2, patches = plt.hist(Y_values,bins=bins ,align='mid')
+                    plt.xlabel('Y')
+                    #plt.xlim([-1,1])
+        
+                    plt.subplot(2,1,2)
+                    plt.hist(y_values,bins=bins,align='mid')
+                    plt.xlabel('y')
+                    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=.5, hspace=.5)
+                    #plt.savefig(directory_to_save_images+'/'+str(observables_unique[i])+'_Including Experiments_'+ str(experiments_want_to_plot_data_from)+'_Yy_hist_2.pdf',dpi=1000,bbox_inches='tight')
+        
+        #plotting normalized values
+                    plt.figure()            
+                    plt.subplot(2,1,1)
+                    n, bins2, patches = plt.hist(Y_values,bins=bins ,align='mid',density=True)
+                    plt.xlabel('Y')
+                    plt.title(str(observables_unique[i])+'_Including Experiments_'+ str(experiments_want_to_plot_data_from))
+                    plt.ylabel('normalized')
+        
+                    plt.subplot(2,1,2)
+                    plt.hist(y_values,bins=bins,align='mid',density=True)
+                    plt.xlabel('y')
+                    plt.ylabel('normalized')
+                    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=.5, hspace=.5)
+                    
+
                     #plotting two fold plots 
                     plt.figure()            
                     plt.subplot(2,1,1)

@@ -2,14 +2,14 @@
 import sys
 sys.path.append('.') #get rid of this at some point with central test script or when package is built
 
-import MSI.simulations.instruments.shock_tube as st
-import MSI.cti_core.cti_processor as pr
-import MSI.optimization.matrix_loader as ml
-import MSI.optimization.opt_runner as opt
-import MSI.simulations.absorbance.curve_superimpose as csp
-import MSI.simulations.yaml_parser as yp
-import MSI.master_equation.master_equation_six_parameter_fit as mespf
-import MSI.cti_core.cti_combine as ctic
+import MSI_2.simulations.instruments.shock_tube as st
+import MSI_2.cti_core.cti_processor as pr
+import MSI_2.optimization.matrix_loader as ml
+import MSI_2.optimization.opt_runner as opt
+import MSI_2.simulations.absorbance.curve_superimpose as csp
+import MSI_2.simulations.yaml_parser as yp
+import MSI_2.master_equation.master_equation_six_parameter_fit as mespf
+import MSI_2.cti_core.cti_combine as ctic
 import copy
 import cantera as ct
 import numpy as np
@@ -35,7 +35,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
         copy.deepcopy(self.cti_file_name)
         self.perturbment = perturbment
         self.kineticSens = kineticSens
-        self.physicalSens = physicalSens
+        self.physicalSens = physicalSens 
         self.data_directory = data_directory
         self.yaml_file_list = yaml_file_list
         self.yaml_file_list_with_working_directory = None
@@ -120,7 +120,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
             
         
         return
-    #change this to just running a simulation 
+    
     def running_shock_tube_simulations(self,loop_counter=0):
         optimization_instance = opt.Optimization_Utility()
         if loop_counter == 0:
@@ -293,8 +293,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
             self.posterior_diag_df = posterior_diag_df
             self.sorted_posterior_diag = sorted_posterior_diag
             self.covariance_posterior_df = covariance_posterior_df
-            #self.posterior_over_prior = pd.concat([self.prior_diag_df, self.posterior_diag_df], axis=1, join_axes=[self.prior_diag_df.index])
-            self.posterior_over_prior = pd.concat([self.prior_diag_df, self.posterior_diag_df], axis=1, join='outer')
+            self.posterior_over_prior = pd.concat([self.prior_diag_df, self.posterior_diag_df], axis=1, join_axes=[self.prior_diag_df.index])
             self.posterior_over_prior['posterior/prior'] = (self.posterior_diag_df['value'] / self.prior_diag_df['value'])
             self.posterior_over_prior = self.posterior_over_prior.sort_values(by=['posterior/prior'])
             self.posterior_sigmas_df = posterior_sigmas_df
@@ -442,7 +441,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
         
         return
      
-    def one_run_optimization(self,loop_counter=0):
+    def one_run_shock_tube_optimization(self,loop_counter=0):
         self.append_working_directory()
         #every loop run this, probably not?
         self.establish_processor(loop_counter=loop_counter)
@@ -452,15 +451,15 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
         if loop_counter == 0:
             original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
             self.original_experimental_conditions_local = original_experimental_conditions_local
+            #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
         
         
-        self.running_simulations(loop_counter=loop_counter)
+        self.running_shock_tube_simulations(loop_counter=loop_counter)
         
         if self.master_equation_flag == True:
             self.master_equation_s_matrix_building(loop_counter=loop_counter)
             #need to add functionality to update with the surgate model or drop out of loop
         self.building_matrices(loop_counter=loop_counter)
-        
         if bool(self.k_target_values_csv):
             self.adding_k_target_values(loop_counter=loop_counter)
             
@@ -476,7 +475,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
     def multiple_shock_tube_runs(self,loops):
         delta_X_list = []
         for loop in range(loops):            
-            self.one_run_optimization(loop_counter=loop)
+            self.one_run_shock_tube_optimization(loop_counter=loop)
             delta_x_df = pd.DataFrame(self.delta_X)
             delta_x_df = pd.concat([self.X_data_frame,delta_x_df],axis=1)
             delta_x_df.columns = ['parameter', 'X_values','delta_X_values']

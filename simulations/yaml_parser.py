@@ -2,6 +2,7 @@ import yaml
 import shutil
 import numpy as np
 import copy
+import re
 
 # subpackage for reading yaml files that describe simulations and absorbance data
 class Parser(object):
@@ -14,6 +15,60 @@ class Parser(object):
         with open(path) as f:
             config = yaml.load(f,Loader=yaml.FullLoader)
         return config
+    
+    def get_sim_type(self,loaded_exp:dict={}):
+        simtype = loaded_exp['apparatus']['kind']
+        return simtype
+    
+    def parse_jsr_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+        simulation_type = loaded_exp['apparatus']['kind']
+        pressure = loaded_exp['common-properties']['pressure']['value']
+        temperatures = loaded_exp['common-properties']['temperature']['value-list']
+        mole_fractions = [((concentration['mole-fraction'])) for concentration in loaded_exp['common-properties']['composition']]
+        mole_fractions = [float(elm) for elm in mole_fractions]
+        species_names = [(species['species']) for species in loaded_exp['common-properties']['composition']]
+        conditions = dict(zip(species_names,mole_fractions))
+        thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
+        mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
+        mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
+        species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
+        species_uncertainties = [float(elm) for elm in species_uncertainties]
+        species_uncertainties = dict(zip(species_names,species_uncertainties))
+        observables = [x for x in mole_fraction_observables if x is not None]
+        mole_fraction_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['mole-fraction']]
+        csv_files = [x for x in mole_fraction_csv_files if x is not None]
+        temp_relative_uncertainty = loaded_exp['common-properties']['temperature']['relative-uncertainty']
+        temp_relative_uncertainty = float(temp_relative_uncertainty)
+        pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
+        pressure_relative_uncertainty = float(pressure_relative_uncertainty)
+        mole_fraction_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]
+        volume=loaded_exp['apparatus']['reactor-volume']['value']
+        mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
+        residence_time=loaded_exp['apparatus']['residence-time']['value']
+        if loaded_absorption == {}:
+            return{
+               'pressure':pressure,
+               'temperatures':temperatures,
+               'conditions':conditions,
+               'speciesUncertaintys':species_uncertainties,
+               'thermalBoundary':thermal_boundary,
+               'mechanicalBoundary':mechanical_boundary,
+               'moleFractionObservables':mole_fraction_observables,
+               'observables':observables,
+               'speciesNames':species_names,
+               'MoleFractions':mole_fractions,
+               'moleFractionCsvFiles':mole_fraction_csv_files,
+               'tempRelativeUncertainty':temp_relative_uncertainty,
+               'pressureRelativeUncertainty': pressure_relative_uncertainty,
+               'moleFractionAbsoluteUncertainty':mole_fraction_absolute_uncertainty,
+               'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
+               'csvFiles': csv_files,
+               'simulationType':  simulation_type,
+               'volume': volume,
+               'residence_time': residence_time
+           }
+        else:
+            print('Placeholder: no JSR absorption')
     
     def parse_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         simulation_type = loaded_exp['apparatus']['kind']
@@ -169,10 +224,12 @@ class Parser(object):
                    }
             
     def load_yaml_list(self, yaml_list:list = []):
+        #print(yaml_list)
         list_of_yaml_objects = []
         for tup in yaml_list:
             temp = []
             for file in tup:
+                #print(file)
                 temp.append(self.load_to_obj(file))
             list_of_yaml_objects.append(temp) 
         list_of_yaml_objects = [tuple(lst) for lst in list_of_yaml_objects ]               
@@ -180,13 +237,29 @@ class Parser(object):
     
     def parsing_multiple_dictonaries(self,list_of_yaml_objects:list = [],loop_counter=0):
         experiment_dictonaries = []
+        counter=0
         for tup in list_of_yaml_objects:
-            if len(tup)>1:
-                experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0],
-                                                                        loaded_absorption = tup[1]))
-
+            
+            simtype=self.get_sim_type(tup[0])
+            if simtype=='shock tube' or simtype=='Shock Tube' or simtype=='Shock tube':
+                if len(tup)>1:
+                    experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0],
+                                                                            loaded_absorption = tup[1]))
+    
+                else:
+                    
+                    experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0]))
+            if simtype=='jsr' or simtype=='JSR':
+                if len(tup)>1:
+                    experiment_dictonaries.append(self.parse_jsr_obj(loaded_exp = tup[0],
+                                                                            loaded_absorption = tup[1]))
+    
+                else:
+                    
+                    experiment_dictonaries.append(self.parse_jsr_obj(loaded_exp = tup[0]))
             else:
-                experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0]))
+                print('Failed to parse Yaml files- unrecognized simulation type for tuple index: '+str(counter))
+            counter=counter+1
         if loop_counter == 0   :     
             self.original_experimental_conditions = experiment_dictonaries
             
@@ -228,6 +301,18 @@ class Parser(object):
     
         return NewName
     
+    def reorder_temps_from_dict(self,phys_updates, temperature_list, yaml_number):
+        '''Function takes the physical_observables_updates_list and ensures that it 
+           returns all the temperature updates in the correct order.  Called in the 
+           yaml_file_updates function'''
+        values=[]
+        strings=[]
+        for i in temperature_list:
+            strings.append('T_experiment_'+str(yaml_number)+'_'+str(i))
+            value=phys_updates[strings[-1]]
+            values.append(value)
+        return values
+    
     def yaml_file_updates(self,file_name_list,
                           parsed_yaml_list,
                           experiment_dict_list,
@@ -251,9 +336,12 @@ class Parser(object):
                 new_file_name = file_name_list[yaml_file][0]
     
             if experiment_dict_list[0]['simulation'].physicalSens ==1 :
-                temp = self.original_experimental_conditions[yaml_file]['temperature']
+                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
+                    temp = self.original_experimental_conditions[yaml_file]['temperature']
+                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
+                    temp = self.original_experimental_conditions[yaml_file]['temperatures']
                 press = self.original_experimental_conditions[yaml_file]['pressure']
-                mole_fractions = self.original_experimental_conditions[yaml_file]['MoleFractions']
+                #mole_fractions = self.original_experimental_conditions[yaml_file]['MoleFractions']
                 conditions = self.original_experimental_conditions[yaml_file]['conditions']
                 
                 print('__________________________________________________________________________')
@@ -263,9 +351,14 @@ class Parser(object):
                 print(conditions)
                 print('__________________________________________________________________________')
                 
-                
-                updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
-                updatedTemp = round(updatedTemp,9)
+                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
+                    updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
+                    updatedTemp = round(updatedTemp,9)
+                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
+                    updatedTemp=[]
+                    for i,T in enumerate(temp):
+                        updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))
+                        
                 updatedPress = np.exp(physical_observables_updates_list[yaml_file]['P_experiment_'+str(yaml_file)]) * press
                 updatedPress = round(updatedPress,9)
                 
@@ -296,8 +389,10 @@ class Parser(object):
                     config2 = yaml.safe_load(f)
                 
                 config2['common-properties']['pressure']['value']=float(updatedPress)
-                config2['common-properties']['temperature']['value']=float(updatedTemp)
-                    
+                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
+                    config2['common-properties']['temperature']['value']=float(updatedTemp)
+                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):    
+                    config2['common-properties']['temperature']['value-list']=updatedTemp
                 for i,moleFraction in enumerate(updated_mole_fraction_list):
                     config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)
                     

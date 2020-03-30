@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
-import MSI.master_equation.master_equation as meq 
+import MSI_2.master_equation.master_equation as meq 
 import copy
+import re
+import cantera as ct
 
 class OptMatrix(object):
     def __init__(self):
@@ -15,309 +17,321 @@ class OptMatrix(object):
         self.sigma = None
  
 #    #loads one experiment into self.matrix. Decides padding based on previous matrix or handle based on total exp num?
-    def load_S(self, exp_dict_list:list,parsed_yaml_list:list,
-               dk=.01,
-               master_equation_reactions = [],
-               mapped_master_equation_sensitivites=np.array(()),
-               master_equation_uncertainty_df = None,
-               master_equation_flag = False):
-        
-        
 
-        
-        #preprocessing for padding
-        num_exp = len(exp_dict_list)
-        pert_coef = {} #build a dict matching pert_coef to their experiment and wavelength.
-                       #length of the dict gives padding information
-        list_to_keep_order_of_coef = []
-        for exp in exp_dict_list:
-            if 'perturbed_coef' not in exp.keys():
-                continue
-            perturbed_for_exp = exp['perturbed_coef']
-            for x in perturbed_for_exp:
-                if x[0][2] not in pert_coef.keys():
-                    pert_coef[x[0][2]] = [x[1]]
-                else:
-
-                    pert_coef[x[0][2]].append(x[1])
-
-                    
-                if x[0][2] not in list_to_keep_order_of_coef:
-                    list_to_keep_order_of_coef.append(x[0][2])
-            
-        num_ind_pert_coef = len(pert_coef)
-        #print(pert_coef.keys())
-        
-        #print(num_ind_pert_coef," sigmas")
-        #establish # of independent pert before hand, to proper pad the observables, put in list, make a dict of cc,
-        # values will be a list of tabs data?
-        # use the list to get the padding size
-        k_sens_for_whole_simulation = []
-        p_sens_for_whole_simulation = []
-        abs_coef_sens_for_whole_simulation = []
-        
-        temps = []
-        for i,exp in enumerate(exp_dict_list):
-            ttl_kinetic_observables_for_exp = []
-            obs_counter =0
-            for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables']):
-                if observable == None:
-                    continue
-                
-                single_obs_matrix = np.hstack((exp['ksens']['A'][obs_counter],
-                                        exp['ksens']['N'][obs_counter],
-                                        exp['ksens']['Ea'][obs_counter]))
-                
-               
-                ttl_kinetic_observables_for_exp.append(single_obs_matrix)
-                obs_counter +=1
-                
-            if 'perturbed_coef' in exp.keys():
-                wavelengths = parsed_yaml_list[i]['absorbanceCsvWavelengths']
-                for k,wl in enumerate(wavelengths):
-                    single_obs_matrix = np.hstack((exp['absorbance_ksens'][wl][0],
-                                                   exp['absorbance_ksens'][wl][1],
-                                                   exp['absorbance_ksens'][wl][2]))
-                    
-                    ttl_kinetic_observables_for_exp.append(single_obs_matrix)
-                                       
-            ttl_kinetic_observables_for_exp = np.vstack((ttl_kinetic_observables_for_exp))              
-            k_sens_for_whole_simulation.append(ttl_kinetic_observables_for_exp)
-            ####vstack  ttl_kinetic_observables_for_exp   and append somwehre else
-            if exp['simulation'].physicalSens ==1:
-                ttl_phsycal_obs_for_exp = []
-                for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables']):
-                    obs_counter = 0
-                    if observable == None:
-                        continue
-                    temperature_sensitivity = exp['temperature'][observable].dropna().values
-                    temperature_sensitivity = temperature_sensitivity.reshape((temperature_sensitivity.shape[0],
-                                                          1))
-                    
-                    pressure_sensitivity = exp['pressure'][observable].dropna().values
-                    pressure_sensitivity = pressure_sensitivity.reshape((pressure_sensitivity.shape[0],
-                                                          1))
-                    species_sensitivty = []
-                    for df in exp['species']:
-                        single_species_sensitivty = df[observable].dropna().values
-                        single_species_sensitivty = single_species_sensitivty.reshape((single_species_sensitivty.shape[0]
-                                                           ,1))
-                        species_sensitivty.append(single_species_sensitivty)
-                        
-                    species_sensitivty = np.hstack((species_sensitivty))
-                        
-                    
-                    single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty))
-                    ttl_phsycal_obs_for_exp.append(single_obs_physical)
-                    obs_counter +=1
-                if 'perturbed_coef' in exp.keys():
-                    wavelengths = parsed_yaml_list[i]['absorbanceCsvWavelengths']                    
-                    for k,wl in enumerate(wavelengths):
-                        physical_sens = []
-                        for p_sens in exp['absorbance_psens']:                            
-                            array = p_sens[wl]
-                            array = array.reshape((array.shape[0],1))
-                            physical_sens.append(array)
-                        physical_sens = np.hstack((physical_sens))
-                        ttl_phsycal_obs_for_exp.append(physical_sens)
-                    
-                ttl_phsycal_obs_for_exp = np.vstack((ttl_phsycal_obs_for_exp))
-                p_sens_for_whole_simulation.append(ttl_phsycal_obs_for_exp)
-#######################################################################################################################################################               
-
-            
-            
-            if 'perturbed_coef' in exp.keys():
-                ttl_absorbance_obs_for_exp = []
-                wavelengths = parsed_yaml_list[i]['absorbanceCsvWavelengths']
-                for k,wl in enumerate(wavelengths):
-                    perturbed_coefficeints = []
-                    index_list = []
-                    for xx in range(len(parsed_yaml_list[i]['coupledCoefficients'])):
-                        for yy in range(len(parsed_yaml_list[i]['coupledCoefficients'][xx])):
-                            ff = parsed_yaml_list[i]['functionalForm'][xx][yy]
-                            #temp = list(parsed_yaml_list[i]['coupledCoefficients'][xx][yy])
-                            for zz in range(len(parsed_yaml_list[i]['coupledCoefficients'][xx][yy])):
-                                temp = list(parsed_yaml_list[i]['coupledCoefficients'][xx][yy])
-                                coefficent = parsed_yaml_list[i]['coupledCoefficients'][xx][yy][zz]    
-                                if coefficent!=0:
-                                    perturbed_coefficent=coefficent+coefficent*dk
-                                    if zz==1 and ff =='F':
-                                        #change back tab
-                                        perturbed_coefficent = coefficent + .01*coefficent
-                                    temp[zz] = perturbed_coefficent
-
-                                    key = tuple(temp)
-
-                                    indx = list_to_keep_order_of_coef.index(key)
-                                    
-                                    index_list.append(indx)
-                                    
-                                    exp_index_sigma = temps.count(key)
-                                    temps.append(key)
-
-                                    array = pert_coef[key][exp_index_sigma][wl]
-                                    
-                                    array = array.reshape((array.shape[0],1))
-                                    perturbed_coefficeints.append(array)
-
-                                
-                    
-                    
-                    missing_sigmas = []  
-                    for indp_sigma in range(len(list_to_keep_order_of_coef)):
-                        if indp_sigma not in index_list:
-                            missing_sigmas.append(indp_sigma)
-                            
-                    perturbed_coefficents_padded_with_zeros = []
-                    count_sigma=0
-                    for indp_sigma in range(len(list_to_keep_order_of_coef)):
-                        if indp_sigma in missing_sigmas:
-                            zero_array = np.zeros((perturbed_coefficeints[0].shape[0],1))
-                            perturbed_coefficents_padded_with_zeros.append(zero_array)                            
-                        else:
-                            perturbed_coefficents_padded_with_zeros.append(perturbed_coefficeints[count_sigma])
-                            count_sigma +=1
-                    
-                    
-                        
-                        
-                        
-                        
-                    
-                    perturbed_coefficents_padded_with_zeros = np.hstack((perturbed_coefficents_padded_with_zeros))
-                    ttl_absorbance_obs_for_exp.append(perturbed_coefficents_padded_with_zeros) 
-                    
-                ttl_absorbance_obs_for_exp = np.vstack((ttl_absorbance_obs_for_exp))
-                abs_coef_sens_for_whole_simulation.append(ttl_absorbance_obs_for_exp)
-            
-                #vstack ttl_absorbance_obs_for_exp and append somehwere else 
+    def build_Z(self, exp_dict_list:list,
+                parsed_yaml_file_list:list,
+                loop_counter:int = 0,
+                reaction_uncertainty=None,
+                master_equation_uncertainty_df=None,
+                master_equation_reaction_list=[],
+                master_equation_flag = False):
+        Z = []
+        Z_data_Frame = [] 
+        sigma = []
+        def jsr_temp_uncertainties(experiment_dict):
+            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns):
+                temp_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
             else:
-                 abs_coef_sens_for_whole_simulation.append(0)
+                temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['Temperature'].values))
+                temp_uncertainties = list(temp_uncertainties)
+            return temp_uncertainties
+        #need to append to sigma
+        def uncertainty_calc(relative_uncertainty,absolute_uncertainty,data,experimental_data):
+
+            if 'W' in list(experimental_data.columns):
+                weighting_factor = experimental_data['W'].values
+                if 'Relative_Uncertainty' in list(experimental_data.columns):
+                    x_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
+                    un_weighted_uncertainty = copy.deepcopy(x_dependent_uncertainty)
+                    total_uncertainty = x_dependent_uncertainty/weighting_factor
+                    
+                else:
+                    length_of_data = data.shape[0]
+                    relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty) 
+                    un_weighted_uncertainty = copy.deepcopy(relative_uncertainty_array)
+                    total_uncertainty = un_weighted_uncertainty/weighting_factor
                 
+            
+            
+            elif 'Relative_Uncertainty' in list(experimental_data.columns):  
+                
+                x_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
+                #do we need to take the natrual log of this?
+                x_dependent_uncertainty = np.log(x_dependent_uncertainty+1)
+                #do we need to take the natrual log of this?
+                length_of_data = data.shape[0]
+                un_weighted_uncertainty = copy.deepcopy(x_dependent_uncertainty)
+                total_uncertainty = np.divide(x_dependent_uncertainty,(1/length_of_data**.5) )
+#                
+
                
-######################################################################################################################################################
-
+            else:
+                length_of_data = data.shape[0]
+                relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty)
                 
-        #assembling the S matrix from the individual experiments 
-        #master_equation = False
-        if master_equation_flag == True:
-            S_ksens = np.vstack((k_sens_for_whole_simulation))           
-            A_k = np.hsplit(S_ksens,3)[0]
-            N_k = np.hsplit(S_ksens,3)[1]
-            Ea_k  = np.hsplit(S_ksens,3)[2]
-            
-            number_of_master_equation_reactions = len(master_equation_reactions)
-            
-            A_k = A_k[:,:-number_of_master_equation_reactions]
-            N_k = N_k[:,:-number_of_master_equation_reactions]
-            Ea_k = Ea_k[:,:-number_of_master_equation_reactions]
-            
-           
-            S_ksens = np.hstack((A_k,N_k,Ea_k))
-            #print(np.shape(S_ksens),'this is the shape of the S matrix before MP')
-            S_ksens = np.hstack((S_ksens,mapped_master_equation_sensitivites))
-            
+                if absolute_uncertainty != 0:
+                #check if this weighting factor is applied in the correct place 
+                #also check if want these values to be the natural log values 
+                    print(data,absolute_uncertainty)
+                    absolute_uncertainty_array = np.divide(data,absolute_uncertainty)
+                    total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array)))
+                    un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
+                     #weighting factor
+                    total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
+                
+                else:
+                    #total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array)))
+                    total_uncertainty = relative_uncertainty_array
+                    #weighting factor
+                    
+                    un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
+                    total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
 
-        else:
-            S_ksens = np.vstack((k_sens_for_whole_simulation))
+            #make this return a tuple 
+            return total_uncertainty,un_weighted_uncertainty
+        #tab, start working here tomorrow with how we want to read in csv file     
+        for i,exp_dic in enumerate(exp_dict_list):
+            counter = 0
+            for j,observable in enumerate((exp_dic['mole_fraction_observables']+
+                                           exp_dic['concentration_observables'])):
+                if observable == None:
+                    pass
+                elif observable in exp_dic['mole_fraction_observables']:
+                    ## add ppm statment here ? check if it exists? and add concentration statment below just for parcing 
+                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['mole_fraction_relative_uncertainty'][counter],
+                        exp_dic['uncertainty']['mole_fraction_absolute_uncertainty'][counter],
+                        exp_dic['experimental_data'][counter][observable].values,exp_dic['experimental_data'][counter])
+                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
+                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
+                elif observable in exp_dic['concentration_observables'] and '_ppm' in exp_dic['experimental_data'][counter].columns[1]:
+                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
+                         exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
+                         exp_dic['experimental_data'][counter][observable+'_ppm'].values,exp_dic['experimental_data'][counter])
+                   
+                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0], 1))
+                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
+                elif observable in exp_dic['concentration_observables'] and '_mol/cm^3' in exp_dic['experimental_data'][counter].columns[1]:
+                     total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
+                         exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
+                         exp_dic['experimental_data'][counter][observable+'_mol/cm^3'].values,exp_dic['experimental_data'][counter])
+                   
+                     total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
+                     un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))               
+
+                else: 
+                    raise Exception('We Do Not Have This Unit Installed, Please Use Mole Fraction, ppm, or mol/cm^3!')               
+
+                    
+                    
+                    
+                    
+                    
+                    
+                Z.append(total_uncertainty)
+                sigma.append(un_weighted_uncertainty)
+                tempList = [observable+'_'+'experiment'+str(i)]*np.shape(total_uncertainty)[0]
+                Z_data_Frame.extend(tempList)
+                counter+=1
+            if 'absorbance_observables' in list(exp_dic.keys()):
+                wavelengths = parsed_yaml_file_list[i]['absorbanceCsvWavelengths']
+                    
+                for k,wl in enumerate(wavelengths):
+                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['absorbance_relative_uncertainty'][k],
+                                                             exp_dic['uncertainty']['absorbance_absolute_uncertainty'][k],
+                                                             exp_dic['absorbance_experimental_data'][k]['Absorbance_'+str(wl)].values,exp_dic['absorbance_experimental_data'][k])
+                        
+                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0], 1))
+                    
+                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
+                    
+                    tempList = [str(wl)+'_'+'experiment'+'_'+str(i)]*np.shape(total_uncertainty)[0]
+                    Z_data_Frame.extend(tempList)                   
+                    Z.append(total_uncertainty)
+                    sigma.append(un_weighted_uncertainty)
+                        
+        Z = np.vstack((Z))
+        
+        sigma = np.vstack((sigma))
+        
+        #Here we are adding A,n,and Ea uncertainty
+        #we go do not through an additional step to make sure that the A,N and Ea 
+        #values are paired with the correct reactions as in the old code,
+        #because we wrote a function to make the excel sheet which will arrange things in the correct order 
+        #We also need to decide if we want to put this in as ln values or not in the spreadsheet 
+        active_parameters = []
+        reaction_uncertainty = pd.read_csv(reaction_uncertainty)
+        
+        if master_equation_flag:
+            for reaction in master_equation_reaction_list:
+                index = reaction_uncertainty.loc[reaction_uncertainty['Reaction'] == reaction].index[0]
+                reaction_uncertainty = reaction_uncertainty.drop([index])
+                
+                
+                
+                
+
+        #tab fix this correctly, this unit needs to be fixed when we make a decision what the spreadsheet looks like
+
+        uncertainty_As = reaction_uncertainty['Uncertainty A (unit)'].values 
+        uncertainty_As = uncertainty_As.reshape((uncertainty_As.shape[0],
+                                                  1))
         
         
-        def sum_of_zeros(idx,array,column_list):
-            rows_behind = array.shape[0]
-            rows_infront = array.shape[0]
-            columns_behind = sum(column_list[:idx])
-            columns_infront = sum(column_list[idx+1:])  
-            behind_tuple = (rows_behind,columns_behind)
-            infront_tuple = (rows_infront,columns_infront)
+        
+        #uncertainty_As = np.log(uncertainty_As)
+        Z = np.vstack((Z,uncertainty_As))
+        sigma = np.vstack((sigma,uncertainty_As))
+        for variable in range(uncertainty_As.shape[0]):
+            Z_data_Frame.append('A'+'_'+str(variable))
+            active_parameters.append('A'+'_'+str(variable))
+        
+        
+        
+        uncertainty_ns = reaction_uncertainty['Uncertainty N (unit)'].values
+        uncertainty_ns = uncertainty_ns.reshape((uncertainty_ns.shape[0],
+                                                  1))
+        Z = np.vstack((Z,uncertainty_ns))
+        sigma = np.vstack((sigma,uncertainty_ns))
+        for variable in range(uncertainty_ns.shape[0]):
+            Z_data_Frame.append('n'+'_'+str(variable))
+            active_parameters.append('n'+'_'+str(variable))
+        
+        
+        uncertainty_Eas = reaction_uncertainty['Uncertainty Ea (unit)'].values
+        uncertainty_Eas = uncertainty_Eas.reshape((uncertainty_Eas.shape[0],
+                                                  1))
+     
+        
+        Z = np.vstack((Z,uncertainty_Eas))
+        
+        sigma = np.vstack((sigma,uncertainty_Eas))
+        for variable in range(uncertainty_Eas.shape[0]):
+            Z_data_Frame.append('Ea'+'_'+str(variable))
+            active_parameters.append('Ea'+'_'+str(variable))
+        
+
+        
+        
+        if master_equation_flag ==True:
+            master_equation_uncertainty = []
+            for col in master_equation_uncertainty_df:
+                master_equation_uncertainty.append(list(master_equation_uncertainty_df[col].dropna().values))
+                
+                
+            for i,reaction in enumerate(master_equation_uncertainty):
+                for j,uncer in enumerate(reaction):
+                    Z_data_Frame.append('R'+'_'+str(i)+'_'+'P'+str(j))
+                    active_parameters.append(master_equation_reaction_list[i]+'_P_'+str(j))
+                    #active_parameters.append('R'+'_'+str(i)+'_'+'P'+str(j))
+            ##check this 
             
-            return (behind_tuple,infront_tuple)
-        
-        
+            master_equation_uncertainty = [item for sublist in master_equation_uncertainty for item in sublist]
+            master_equation_uncertainty = np.array(master_equation_uncertainty)
+            master_equation_uncertainty = master_equation_uncertainty.reshape((master_equation_uncertainty.shape[0],
+                                                  1))
+            Z = np.vstack((Z,master_equation_uncertainty))
+            sigma = np.vstack((sigma,master_equation_uncertainty))
+            
+            
+        #This is going to have to be simulation specific 
         if exp_dict_list[0]['simulation'].physicalSens ==1:
-            number_of_columns_in_psens_arrays = []
-            number_of_rows_in_psens_arrays=[]
-            for i,array in enumerate(p_sens_for_whole_simulation):                
-                number_of_rows_in_psens_arrays.append(array.shape[0])
-                number_of_columns_in_psens_arrays.append(array.shape[1])
-                
-            p_sens_whole_simulation_with_padding = []
-            for i,array in enumerate(p_sens_for_whole_simulation):
-                zero_array_behind = np.zeros(sum_of_zeros(i,array,number_of_columns_in_psens_arrays)[0])
-                if zero_array_behind.shape[1] != 0:
-                    array = np.hstack((zero_array_behind,array))
-                zero_array_infront = np.zeros(sum_of_zeros(i,array,number_of_columns_in_psens_arrays)[1])
-                if zero_array_infront.shape[1] != 0:
-                    array = np.hstack((array,zero_array_infront))
-                
-                p_sens_whole_simulation_with_padding.append(array)
-            
-            S_psens = np.vstack((p_sens_whole_simulation_with_padding))
-            
-            
-            
-##############################################################################################         
-        absorb_coef_whole_simulation_with_padding = []
-        
-        for i,exp in enumerate(exp_dict_list):
-            single_experiment_absorption = []
-            if exp['mole_fraction_observables'][0] != None or exp['concentration_observables'][0] != None:                
-                if 'perturbed_coef' not in exp.keys():
-                    zero_array_for_observables_padding = np.zeros((number_of_rows_in_psens_arrays[i],
-                                           num_ind_pert_coef))    
+           for i, exp_dic in enumerate(exp_dict_list):
+               if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+               #for i,exp_dic in enumerate(exp_dict_list):
+                    experiment_physical_uncertainty = []
+                    #Temperature Uncertainty 
+                    experiment_physical_uncertainty.append(exp_dic['uncertainty']['temperature_relative_uncertainty'])
+                    Z_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
+                    active_parameters.append('T'+'_'+'experiment'+'_'+str(i))
+                    #Pressure Uncertainty
+                    experiment_physical_uncertainty.append(exp_dic['uncertainty']['pressure_relative_uncertainty'])
+                    Z_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
+                    active_parameters.append('P'+'_'+'experiment'+'_'+str(i))
+                    #Species Uncertainty
+                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                    species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
+                    dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
+                    for specie in species_to_loop:
+                        if specie in dilluant:
+                            continue
+                        experiment_physical_uncertainty.append(species_uncertainties[specie])
+                        Z_data_Frame.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
+                        active_parameters.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
+
+                    experiment_physical_uncertainty = np.array(experiment_physical_uncertainty)
+                    experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],
+                                                      1))
+                    Z = np.vstack((Z,experiment_physical_uncertainty))
+                    sigma = np.vstack((sigma,experiment_physical_uncertainty))
                     
-                    single_experiment_absorption.append(zero_array_for_observables_padding)
+               if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
+                #for i,exp_dic in enumerate(exp_dict_list):
+                    experiment_physical_uncertainty = []
+                    #Temperature Uncertainty 
+                    temp_uncertainties=jsr_temp_uncertainties(exp_dic)
+                    experiment_physical_uncertainty=experiment_physical_uncertainty+temp_uncertainties
                     
+                    #experiment_physical_uncertainty.append(exp_dic['uncertainty']['temperature_relative_uncertainty'])
+                    Z_data_Frame=Z_data_Frame+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+                    active_parameters=active_parameters+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+                    #Pressure Uncertainty
+                    experiment_physical_uncertainty.append(exp_dic['uncertainty']['pressure_relative_uncertainty'])
+                    Z_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
+                    active_parameters.append('P'+'_'+'experiment'+'_'+str(i))
+                    #Species Uncertainty
+                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                    species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
+                    dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
+                    for specie in species_to_loop:
+                        if specie in dilluant:
+                            continue
+                        experiment_physical_uncertainty.append(species_uncertainties[specie])
+                        Z_data_Frame.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
+                        active_parameters.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
+
+                    experiment_physical_uncertainty = np.array(experiment_physical_uncertainty)
+                    experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],
+                                                      1))
+                    Z = np.vstack((Z,experiment_physical_uncertainty))
+                    sigma = np.vstack((sigma,experiment_physical_uncertainty))
+        #building dictonary to keep track of independtend coupled coefficients 
+        count = 0
+        coef_dict = {} 
+        
+        uncertainties_of_coefficents = []
+        for i,exp_dic in enumerate(exp_dict_list):
+            if 'perturbed_coef' not in exp_dic.keys():
+                continue
+            dictonary_of_coef_and_uncertainty = exp_dic['uncertainty']['coupled_coef_and_uncertainty']
+            
+            for x in dictonary_of_coef_and_uncertainty:
+                if x not in coef_dict.keys():
+                    coef_dict[x] = dictonary_of_coef_and_uncertainty[x]
                     
-            if 'perturbed_coef' in exp.keys():  
-                zero_padded_aborption_coef_array = abs_coef_sens_for_whole_simulation[i]   
-                combined = abs_coef_sens_for_whole_simulation[i] 
-
-                if exp['mole_fraction_observables'][0] != None or exp['concentration_observables'][0] != None:
-                    zero_array_for_observables_padding = np.zeros((number_of_rows_in_psens_arrays[i]-zero_padded_aborption_coef_array.shape[0],
-                                       num_ind_pert_coef))  
-                    combined = np.vstack((zero_array_for_observables_padding,zero_padded_aborption_coef_array))
-                
-                
-                
-                single_experiment_absorption.append(combined)     
-            
-            single_experiment_absorption = np.vstack((single_experiment_absorption))
-            absorb_coef_whole_simulation_with_padding.append(single_experiment_absorption) 
-            
+        for x in coef_dict:       
+            for y in coef_dict[x]:
+                if y[0]!=0:                            #this might cause a problem in the future
+                        count+=1
+                        uncertainties_of_coefficents.append(y)
+                        Z_data_Frame.append('Sigma'+'_'+str(count))
+                        active_parameters.append('Sigma'+'_'+str(count))
+                        
+        uncertainties_of_coefficents = np.array(uncertainties_of_coefficents)
         
+       
+        if uncertainties_of_coefficents.any() == True:
+            uncertainties_of_coefficents =  uncertainties_of_coefficents.reshape((uncertainties_of_coefficents.shape[0],
+                                                  1))
+            Z = np.vstack((Z,uncertainties_of_coefficents))            
+            sigma = np.vstack((sigma,uncertainties_of_coefficents))
         
-        absorb_coef_whole_simulation_with_padding = np.vstack((absorb_coef_whole_simulation_with_padding))  
-        S_abs_coef  = absorb_coef_whole_simulation_with_padding
-
-        
-
-        S_matrix = np.hstack((S_ksens,S_psens,S_abs_coef))
-        shape = np.shape(S_matrix)[1]
-        #append identy matrix
-        identity_matrix = np.identity(shape)
-        
-#        identity_matrix[1,0]=.1
-#        identity_matrix[0,1]=.1
-#        identity_matrix[0,20]=.1
-#        identity_matrix[20,0]=.1
-#        identity_matrix[39,0]=.1
-#        identity_matrix[0,39]=.1
-        
-        ####making edits to this just for masten test 
-        
-        
-        
-        S_matrix = np.vstack((S_matrix,identity_matrix))
-        self.S_matrix = S_matrix
-        S_matrix_wo_k_targets = copy.deepcopy(self.S_matrix)
-        self.S_matrix_wo_k_targets = S_matrix_wo_k_targets
-        S_matrix_df = pd.DataFrame(S_matrix)
-        return S_matrix 
-
-                                
+        Z_data_Frame = pd.DataFrame({'value': Z_data_Frame,'Uncertainty': Z.reshape((Z.shape[0],))})       
+        self.z_matrix = Z
+        self.sigma = sigma
+        return Z,Z_data_Frame,sigma,active_parameters
 
 
+    
     def load_Y(self, exp_dict_list:list,parsed_yaml_file_list:list,
                loop_counter:int = 0,
                X:dict={},
@@ -327,7 +341,7 @@ class OptMatrix(object):
         
         
         def natural_log_difference(experiment,model):
-            natural_log_diff = np.log(experiment) - np.log(model)
+            natural_log_diff = np.log(np.array(experiment)) - np.log(np.array(model))
             return natural_log_diff
         
         Y = []
@@ -341,20 +355,50 @@ class OptMatrix(object):
                 else:
                     #if you need to add something with concentration add it here 
                     if 'ppm' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
-                        natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_ppm'].values,
+                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+                            natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_ppm'].values,
                                                                   (exp_dic['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)*1e6)
                         
                         
-                        natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0],
-                                                          1))
-
+                            natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0],1))
+                        if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
+                            natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_ppm'].values,
+                                                                  (exp_dic['simulation'].timeHistories[0][observable].dropna().values)*1e6)
+                        
+                        
+                            natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0],1))
 
                         
+                    elif 'mol/cm^3' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
+                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+                            
+                            concentration = np.true_divide(1,exp_dic['simulation'].pressureAndTemperatureToExperiment[counter]['temperature'].to_numpy())*exp_dic['simulation'].pressureAndTemperatureToExperiment[counter]['pressure'].to_numpy()
+                           
+                            concentration *= (1/(8.314e6))*exp_dic['simulation'].timeHistoryInterpToExperiment[observable].dropna().to_numpy()
+                            
+                            natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_mol/cm^3'].to_numpy(),concentration)
+                            
+                            
+                            natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
+                        if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
+                            concentration = np.true_divide(1.0,exp_dic['simulation'].pressure*ct.one_atm)*np.array(exp_dic['simulation'].temperatures)
+                           
+                            concentration *= (1/(8.314e6))*exp_dic['simulation'].timeHistories[0][observable].dropna().to_numpy()
+                            
+                            natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_mol/cm^3'].to_numpy(),concentration)
+                            
+                            
+                            natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
+                        
                     else:
-                        natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable].values,
+                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+                            natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable].values,
                                                                   exp_dic['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
-                        natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0],
-                                                          1))
+                            natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
+                        if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
+                            natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable].values,
+                                                                  exp_dic['simulation'].timeHistories[0][observable])
+                            natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
                 
                     tempList = [observable+'_'+'experiment'+str(i)]*np.shape(natural_log_diff)[0]
                     Y_data_Frame.extend(tempList)
@@ -451,44 +495,71 @@ class OptMatrix(object):
                 temp_array = temp_array.reshape((temp_array.shape[0],
                                                       1))
                 Y = np.vstack((Y,temp_array))
-                
-            
-           
-    #Assembling the phsycial portion of the Y matrix 
+    
+
+     #Assembling the phsycial portion of the Y matrix 
         if exp_dict_list[0]['simulation'].physicalSens ==1:
-            if loop_counter == 0:
-                for i,exp_dic in enumerate(exp_dict_list):
-                    dic_of_conditions = exp_dic['simulation'].conditions
-                    #subtract out the dilluant 
-                    species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
-                    
-                    #add two for Temperature and Pressure
-                    len_of_phsycial_observables_in_simulation = species_in_simulation + 2 
-                    temp_zeros = np.zeros((len_of_phsycial_observables_in_simulation,1))
-                    #stacking the zeros onto the Y array 
-                    Y = np.vstack((Y,temp_zeros))
-                    Y_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
-                    Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
-                    for variable in range(species_in_simulation):
-                        Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
-            else:
-                for i,exp_dic in enumerate(exp_dict_list):
-                    dic_of_conditions = exp_dic['simulation'].conditions
-                    #subtract out the dilluant 
-                    species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
-                    
-                    Y_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
-                    Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
-                    for variable in range(species_in_simulation):
-                        Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+            #print(exp_dict_list)
+            for i,exp_dic in enumerate(exp_dict_list):
                 
-                
-                
-                temp_array = np.array(X['physical_observables'])*-1
-                temp_array = temp_array.reshape((temp_array.shape[0],
+                if loop_counter ==0:
+                    if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+                        dic_of_conditions = exp_dic['simulation'].conditions
+                        #subtract out the dilluant 
+                        species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
+                        
+                        #add two for Temperature and Pressure
+                        len_of_phsycial_observables_in_simulation = species_in_simulation + 2 
+                        temp_zeros = np.zeros((len_of_phsycial_observables_in_simulation,1))
+                        #stacking the zeros onto the Y array 
+                        Y = np.vstack((Y,temp_zeros))
+                        Y_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
+                        Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
+                        for variable in range(species_in_simulation):
+                            Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                    if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
+                        dict_of_conditions = exp_dic['simulation'].conditions
+                        species_in_simulation = len(set(dict_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
+                        temperatures_in_simulation = len(exp_dic['simulation'].temperatures)
+                        pressure_in_simulation = 1
+                        len_of_phsycial_observables_in_simulation = species_in_simulation+temperatures_in_simulation+pressure_in_simulation
+                        temp_zeros = np.zeros((len_of_phsycial_observables_in_simulation,1))
+                        
+                        Y = np.vstack((Y,temp_zeros))
+                        for value in range(temperatures_in_simulation):
+                            Y_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
+                        Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
+                        for variable in range(species_in_simulation):
+                            Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                else:
+                    if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+                        dic_of_conditions = exp_dic['simulation'].conditions
+                        #subtract out the dilluant 
+                        species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
+                        
+                        Y_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
+                        Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
+                        for variable in range(species_in_simulation):
+                            Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+
+                    if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
+                        dict_of_conditions = exp_dic['simulation'].conditions
+                        species_in_simulation = len(set(dict_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
+                        temperatures_in_simulation = len(exp_dic['simulation'].temperatures)
+                        pressure_in_simulation = 1
+                        len_of_phsycial_observables_in_simulation = species_in_simulation+temperatures_in_simulation+pressure_in_simulation    
+                        for value in range(temperatures_in_simulation):
+                            Y_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
+                        Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
+                        for variable in range(species_in_simulation):
+                            Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+
+                    if i==len(exp_dict_list)-1:
+                        temp_array = np.array(X['physical_observables'])*-1
+                        temp_array = temp_array.reshape((temp_array.shape[0],
                                                       1))
-                
-                Y = np.vstack((Y,temp_array))
+                        Y = np.vstack((Y,temp_array))
+
             
         #Assembling the portion of the Y matrix for the absorbance coefficient sensitiviteis 
         pert_coef = {} #build a dict matching pert_coef to their experiment and wavelength.             
@@ -530,280 +601,311 @@ class OptMatrix(object):
  
         Y_data_Frame = pd.DataFrame({'value': Y_data_Frame,'ln_difference': Y.reshape((Y.shape[0],))})  
         self.Y_matrix = Y
-        return Y, Y_data_Frame
-        
-      
+        return Y, Y_data_Frame       
 
-    def build_Z(self, exp_dict_list:list,
-                parsed_yaml_file_list:list,
-                loop_counter:int = 0,
-                reaction_uncertainty=None,
-                master_equation_uncertainty_df=None,
-                master_equation_reaction_list=[],
-                master_equation_flag = False):
-        Z = []
-        Z_data_Frame = [] 
-        sigma = []
-        #need to append to sigma
-        def uncertainty_calc(relative_uncertainty,absolute_uncertainty,data,experimental_data):
-
-            if 'W' in list(experimental_data.columns):
-                weighting_factor = experimental_data['W'].values
-                if 'Relative_Uncertainty' in list(experimental_data.columns):
-                    time_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
-                    un_weighted_uncertainty = copy.deepcopy(time_dependent_uncertainty)
-                    total_uncertainty = time_dependent_uncertainty/weighting_factor
-                    
-                else:
-                    length_of_data = data.shape[0]
-                    relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty) 
-                    un_weighted_uncertainty = copy.deepcopy(relative_uncertainty_array)
-                    total_uncertainty = un_weighted_uncertainty/weighting_factor
-                
-            
-            
-            elif 'Relative_Uncertainty' in list(experimental_data.columns):  
-                
-                time_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
-                #do we need to take the natrual log of this?
-                time_dependent_uncertainty = np.log(time_dependent_uncertainty+1)
-                #do we need to take the natrual log of this?
-                length_of_data = data.shape[0]
-                un_weighted_uncertainty = copy.deepcopy(time_dependent_uncertainty)
-                total_uncertainty = np.divide(time_dependent_uncertainty,(1/length_of_data**.5) )
-#                
-
-               
-            else:
-                length_of_data = data.shape[0]
-                relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty)
-                
-                if absolute_uncertainty != 0:
-                #check if this weighting factor is applied in the correct place 
-                #also check if want these values to be the natural log values 
-                    absolute_uncertainty_array = np.divide(data,absolute_uncertainty)
-                    total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array)))
-                    un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
-                     #weighting factor
-                    total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
-                
-                else:
-                    #total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array)))
-                    total_uncertainty = relative_uncertainty_array
-                    #weighting factor
-                    
-                    un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
-                    total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
-
-            #make this return a tuple 
-            return total_uncertainty,un_weighted_uncertainty
-        #tab, start working here tomorrow with how we want to read in csv file     
-        for i,exp_dic in enumerate(exp_dict_list):
-            counter = 0
-            for j,observable in enumerate((exp_dic['mole_fraction_observables']+
-                                           exp_dic['concentration_observables'])):
-                if observable == None:
-                    pass
-                elif observable in exp_dic['mole_fraction_observables']:
-                    ## add ppm statment here ? check if it exists? and add concentration statment below just for parcing 
-                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['mole_fraction_relative_uncertainty'][counter],
-                        exp_dic['uncertainty']['mole_fraction_absolute_uncertainty'][counter],
-                        exp_dic['experimental_data'][counter][observable].values,exp_dic['experimental_data'][counter])
-                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],
-                                                      1))
-                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0],
-                                                                               1))
-                    
-                else:                
-                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
-                         exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
-                         exp_dic['experimental_data'][counter][observable+'_ppm'].values,exp_dic['experimental_data'][counter])
-                   
-                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],
-                                                      1))
-                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0],
-                                                                               1))
-                    
-                    
-                    
-                    
-                    
-                    #THIS SHOULD PROBABLY BE MOVED OUTSIDE THE STATEMNT 
-                    Z.append(total_uncertainty)
-                    sigma.append(un_weighted_uncertainty)
-                    tempList = [observable+'_'+'experiment'+str(i)]*np.shape(total_uncertainty)[0]
-                    Z_data_Frame.extend(tempList)
-                    counter+=1
-            if 'absorbance_observables' in list(exp_dic.keys()):
-                wavelengths = parsed_yaml_file_list[i]['absorbanceCsvWavelengths']
-                    
-                for k,wl in enumerate(wavelengths):
-                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['absorbance_relative_uncertainty'][k],
-                                                             exp_dic['uncertainty']['absorbance_absolute_uncertainty'][k],
-                                                             exp_dic['absorbance_experimental_data'][k]['Absorbance_'+str(wl)].values,exp_dic['absorbance_experimental_data'][k])
-                        
-                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],
-                                                  1))
-                    
-                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0],
-                                                                               1))
-                    
-                    tempList = [str(wl)+'_'+'experiment'+'_'+str(i)]*np.shape(total_uncertainty)[0]
-                    Z_data_Frame.extend(tempList)                   
-                    Z.append(total_uncertainty)
-                    sigma.append(un_weighted_uncertainty)
-                        
-        Z = np.vstack((Z))
-        
-        sigma = np.vstack((sigma))
-        
-        #Here we are adding A,n,and Ea uncertainty
-        #we go do not through an additional step to make sure that the A,N and Ea 
-        #values are paired with the correct reactions as in the old code,
-        #because we wrote a function to make the excel sheet which will arrange things in the correct order 
-        #We also need to decide if we want to put this in as ln values or not in the spreadsheet 
-        active_parameters = []
-        reaction_uncertainty = pd.read_csv(reaction_uncertainty)
-        
-        if master_equation_flag ==True:
-            for reaction in master_equation_reaction_list:
-                index = reaction_uncertainty.loc[reaction_uncertainty['Reaction'] == reaction].index[0]
-                reaction_uncertainty = reaction_uncertainty.drop([index])
-                
-                
-                
-                
-
-        #tab fix this correctly
-        uncertainty_As = reaction_uncertainty['Uncertainty A (unit)'].values 
-        uncertainty_As = uncertainty_As.reshape((uncertainty_As.shape[0],
-                                                  1))
-        
-        
-        
-        #uncertainty_As = np.log(uncertainty_As)
-        Z = np.vstack((Z,uncertainty_As))
-        sigma = np.vstack((sigma,uncertainty_As))
-        for variable in range(uncertainty_As.shape[0]):
-            Z_data_Frame.append('A'+'_'+str(variable))
-            active_parameters.append('A'+'_'+str(variable))
-        
-        
-        
-        uncertainty_ns = reaction_uncertainty['Uncertainty N (unit)'].values
-        uncertainty_ns = uncertainty_ns.reshape((uncertainty_ns.shape[0],
-                                                  1))
-        #print(uncertainty_ns)
-        Z = np.vstack((Z,uncertainty_ns))
-        sigma = np.vstack((sigma,uncertainty_ns))
-        for variable in range(uncertainty_ns.shape[0]):
-            Z_data_Frame.append('n'+'_'+str(variable))
-            active_parameters.append('n'+'_'+str(variable))
-        
-        
-        uncertainty_Eas = reaction_uncertainty['Uncertainty Ea (unit)'].values
-        uncertainty_Eas = uncertainty_Eas.reshape((uncertainty_Eas.shape[0],
-                                                  1))
-     
-        
-        Z = np.vstack((Z,uncertainty_Eas))
-        
-        sigma = np.vstack((sigma,uncertainty_Eas))
-        for variable in range(uncertainty_Eas.shape[0]):
-            Z_data_Frame.append('Ea'+'_'+str(variable))
-            active_parameters.append('Ea'+'_'+str(variable))
+    def load_S(self, exp_dict_list:list,parsed_yaml_list:list,
+               dk=.01,
+               master_equation_reactions = [],
+               mapped_master_equation_sensitivites=np.array(()),
+               master_equation_uncertainty_df = None,
+               master_equation_flag = False):
         
 
         
-        
-        if master_equation_flag ==True:
-            master_equation_uncertainty = []
-            for col in master_equation_uncertainty_df:
-                master_equation_uncertainty.append(list(master_equation_uncertainty_df[col].dropna().values))
-                
-                
-            for i,reaction in enumerate(master_equation_uncertainty):
-                for j,uncer in enumerate(reaction):
-                    Z_data_Frame.append('R'+'_'+str(i)+'_'+'P'+str(j))
-                    active_parameters.append(master_equation_reaction_list[i]+'_P_'+str(j))
-                    #active_parameters.append('R'+'_'+str(i)+'_'+'P'+str(j))
-            ##check this 
-            
-            master_equation_uncertainty = [item for sublist in master_equation_uncertainty for item in sublist]
-            master_equation_uncertainty = np.array(master_equation_uncertainty)
-            master_equation_uncertainty = master_equation_uncertainty.reshape((master_equation_uncertainty.shape[0],
-                                                  1))
-            Z = np.vstack((Z,master_equation_uncertainty))
-            sigma = np.vstack((sigma,master_equation_uncertainty))
-            
-            
-        if exp_dict_list[0]['simulation'].physicalSens ==1:
-            for i,exp_dic in enumerate(exp_dict_list):
-                experiment_physical_uncertainty = []
-                #Temperature Uncertainty 
-                experiment_physical_uncertainty.append(exp_dic['uncertainty']['temperature_relative_uncertainty'])
-                Z_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
-                active_parameters.append('T'+'_'+'experiment'+'_'+str(i))
-                #Pressure Uncertainty
-                experiment_physical_uncertainty.append(exp_dic['uncertainty']['pressure_relative_uncertainty'])
-                Z_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
-                active_parameters.append('P'+'_'+'experiment'+'_'+str(i))
-                #Species Uncertainty
-                species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
-                species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
-                dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
-                for specie in species_to_loop:
-                    if specie in dilluant:
-                        continue
-                    experiment_physical_uncertainty.append(species_uncertainties[specie])
-                    Z_data_Frame.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
-                    active_parameters.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
-
-                experiment_physical_uncertainty = np.array(experiment_physical_uncertainty)
-                experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],
-                                                  1))
-                Z = np.vstack((Z,experiment_physical_uncertainty))
-                sigma = np.vstack((sigma,experiment_physical_uncertainty))
-        #building dictonary to keep track of independtend coupled coefficients 
-        count = 0
-        coef_dict = {} 
-        
-        uncertainties_of_coefficents = []
-        for i,exp_dic in enumerate(exp_dict_list):
-            if 'perturbed_coef' not in exp_dic.keys():
+        #preprocessing for padding
+        num_exp = len(exp_dict_list)
+        pert_coef = {} #build a dict matching pert_coef to their experiment and wavelength.
+                       #length of the dict gives padding information
+        list_to_keep_order_of_coef = []
+        for exp in exp_dict_list:
+            if 'perturbed_coef' not in exp.keys():
                 continue
-            dictonary_of_coef_and_uncertainty = exp_dic['uncertainty']['coupled_coef_and_uncertainty']
-            
-            for x in dictonary_of_coef_and_uncertainty:
-                if x not in coef_dict.keys():
-                    coef_dict[x] = dictonary_of_coef_and_uncertainty[x]
+            perturbed_for_exp = exp['perturbed_coef']
+            for x in perturbed_for_exp:
+                if x[0][2] not in pert_coef.keys():
+                    pert_coef[x[0][2]] = [x[1]]
+                else:
+
+                    pert_coef[x[0][2]].append(x[1])
+
                     
-        for x in coef_dict:       
-            for y in coef_dict[x]:
-                if y[0]!=0:                            #this might cause a problem in the future
-                        count+=1
-                        uncertainties_of_coefficents.append(y)
-                        Z_data_Frame.append('Sigma'+'_'+str(count))
-                        active_parameters.append('Sigma'+'_'+str(count))
+                if x[0][2] not in list_to_keep_order_of_coef:
+                    list_to_keep_order_of_coef.append(x[0][2])
+            
+        num_ind_pert_coef = len(pert_coef)
+        #print(pert_coef.keys())
+        
+        #print(num_ind_pert_coef," sigmas")
+        #establish # of independent pert before hand, to proper pad the observables, put in list, make a dict of cc,
+        # values will be a list of tabs data?
+        # use the list to get the padding size
+        k_sens_for_whole_simulation = []
+        p_sens_for_whole_simulation = []
+        abs_coef_sens_for_whole_simulation = []
+        
+        temps = []
+        for i,exp in enumerate(exp_dict_list):
+            ttl_kinetic_observables_for_exp = []
+            obs_counter =0
+            for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables']):
+                if observable == None:
+                    continue
+                #return exp['ksens']['A']
+                #print(np.shape(exp['ksens']['A'][obs_counter]))
+                #print(np.shape(exp['ksens']['N'][obs_counter]))
+                #print(np.shape(exp['ksens']['Ea'][obs_counter]))
+
+                single_obs_matrix = np.hstack((exp['ksens']['A'][obs_counter],
+                                        exp['ksens']['N'][obs_counter],
+                                        exp['ksens']['Ea'][obs_counter]))
+                
+                #print(single_obs_matrix)
+                ttl_kinetic_observables_for_exp.append(single_obs_matrix)
+                obs_counter +=1
+                
+            if 'perturbed_coef' in exp.keys():
+                wavelengths = parsed_yaml_list[i]['absorbanceCsvWavelengths']
+                for k,wl in enumerate(wavelengths):
+                    single_obs_matrix = np.hstack((exp['absorbance_ksens'][wl][0],
+                                                   exp['absorbance_ksens'][wl][1],
+                                                   exp['absorbance_ksens'][wl][2]))
+                    
+                    ttl_kinetic_observables_for_exp.append(single_obs_matrix)
+                                       
+            ttl_kinetic_observables_for_exp = np.vstack((ttl_kinetic_observables_for_exp))              
+            k_sens_for_whole_simulation.append(ttl_kinetic_observables_for_exp)
+            #print(np.shape(k_sens_for_whole_simulation))
+            ####vstack  ttl_kinetic_observables_for_exp   and append somwehre else
+            if exp['simulation'].physicalSens ==1:
+                ttl_phsycal_obs_for_exp = []
+                for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables']):
+                    obs_counter = 0
+                    if observable == None:
+                        continue
+                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                        temperature_sensitivity = exp['temperature'][observable].dropna().values
+                        temperature_sensitivity = temperature_sensitivity.reshape((temperature_sensitivity.shape[0], 1))
+                    elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
+                        temperature_sensitivity=np.array(exp['temperature'][observable])*np.identity(len(exp['simulation'].temperatures))
+                    
+                    pressure_sensitivity = exp['pressure'][observable].dropna().values
+                    pressure_sensitivity = pressure_sensitivity.reshape((pressure_sensitivity.shape[0], 1))
+                    species_sensitivty = []
+                    for df in exp['species']:
+                        single_species_sensitivty = df[observable].dropna().values
+                        single_species_sensitivty = single_species_sensitivty.reshape((single_species_sensitivty.shape[0]
+                                                           ,1))
+                        species_sensitivty.append(single_species_sensitivty)
                         
-        uncertainties_of_coefficents = np.array(uncertainties_of_coefficents)
+                    species_sensitivty = np.hstack((species_sensitivty))
+                        
+                    
+                    single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty))
+                    ttl_phsycal_obs_for_exp.append(single_obs_physical)
+                    obs_counter +=1
+                if 'perturbed_coef' in exp.keys():
+                    wavelengths = parsed_yaml_list[i]['absorbanceCsvWavelengths']                    
+                    for k,wl in enumerate(wavelengths):
+                        physical_sens = []
+                        for p_sens in exp['absorbance_psens']:                            
+                            array = p_sens[wl]
+                            array = array.reshape((array.shape[0],1))
+                            physical_sens.append(array)
+                        physical_sens = np.hstack((physical_sens))
+                        ttl_phsycal_obs_for_exp.append(physical_sens)
+                    
+                ttl_phsycal_obs_for_exp = np.vstack((ttl_phsycal_obs_for_exp))
+                p_sens_for_whole_simulation.append(ttl_phsycal_obs_for_exp)
+#######################################################################################################################################################               
+
+            
+            
+            if 'perturbed_coef' in exp.keys():
+                ttl_absorbance_obs_for_exp = []
+                wavelengths = parsed_yaml_list[i]['absorbanceCsvWavelengths']
+                for k,wl in enumerate(wavelengths):
+                    perturbed_coefficeints = []
+                    index_list = []
+                    for xx in range(len(parsed_yaml_list[i]['coupledCoefficients'])):
+                        for yy in range(len(parsed_yaml_list[i]['coupledCoefficients'][xx])):
+                            ff = parsed_yaml_list[i]['functionalForm'][xx][yy]
+                            #temp = list(parsed_yaml_list[i]['coupledCoefficients'][xx][yy])
+                            for zz in range(len(parsed_yaml_list[i]['coupledCoefficients'][xx][yy])):
+                                temp = list(parsed_yaml_list[i]['coupledCoefficients'][xx][yy])
+                                coefficent = parsed_yaml_list[i]['coupledCoefficients'][xx][yy][zz]    
+                                if coefficent!=0:
+                                    perturbed_coefficent=coefficent+coefficent*dk
+                                    if zz==1 and ff =='F':
+                                        #change back tab
+                                        perturbed_coefficent = coefficent + .01*coefficent
+                                    temp[zz] = perturbed_coefficent
+
+                                    key = tuple(temp)
+
+                                    indx = list_to_keep_order_of_coef.index(key)
+                                    
+                                    index_list.append(indx)
+                                    
+                                    exp_index_sigma = temps.count(key)
+                                    temps.append(key)
+
+                                    array = pert_coef[key][exp_index_sigma][wl]
+                                    
+                                    array = array.reshape((array.shape[0],1))
+                                    perturbed_coefficeints.append(array)
+
         
-       
-        if uncertainties_of_coefficents.any() == True:
-            uncertainties_of_coefficents =  uncertainties_of_coefficents.reshape((uncertainties_of_coefficents.shape[0],
-                                                  1))
-            Z = np.vstack((Z,uncertainties_of_coefficents))            
-            sigma = np.vstack((sigma,uncertainties_of_coefficents))
+                    missing_sigmas = []  
+                    for indp_sigma in range(len(list_to_keep_order_of_coef)):
+                        if indp_sigma not in index_list:
+                            missing_sigmas.append(indp_sigma)
+                            
+                    perturbed_coefficents_padded_with_zeros = []
+                    count_sigma=0
+                    for indp_sigma in range(len(list_to_keep_order_of_coef)):
+                        if indp_sigma in missing_sigmas:
+                            zero_array = np.zeros((perturbed_coefficeints[0].shape[0],1))
+                            perturbed_coefficents_padded_with_zeros.append(zero_array)                            
+                        else:
+                            perturbed_coefficents_padded_with_zeros.append(perturbed_coefficeints[count_sigma])
+                            count_sigma +=1
+                    
+                    
+                        
+                        
+                        
+                        
+                    
+                    perturbed_coefficents_padded_with_zeros = np.hstack((perturbed_coefficents_padded_with_zeros))
+                    ttl_absorbance_obs_for_exp.append(perturbed_coefficents_padded_with_zeros) 
+                    
+                ttl_absorbance_obs_for_exp = np.vstack((ttl_absorbance_obs_for_exp))
+                abs_coef_sens_for_whole_simulation.append(ttl_absorbance_obs_for_exp)
+            
+                #vstack ttl_absorbance_obs_for_exp and append somehwere else 
+            else:
+                 abs_coef_sens_for_whole_simulation.append(0)
+                
+               
+######################################################################################################################################################
+
+                
+        #assembling the S matrix from the individual experiments 
+        #master_equation = False
+        if master_equation_flag == True:
+            S_ksens = np.vstack((k_sens_for_whole_simulation))           
+            A_k = np.hsplit(S_ksens,3)[0]
+            N_k = np.hsplit(S_ksens,3)[1]
+            Ea_k  = np.hsplit(S_ksens,3)[2]
+            
+            number_of_master_equation_reactions = len(master_equation_reactions)
+            
+            A_k = A_k[:,:-number_of_master_equation_reactions]
+            N_k = N_k[:,:-number_of_master_equation_reactions]
+            Ea_k = Ea_k[:,:-number_of_master_equation_reactions]
+            
+           
+            S_ksens = np.hstack((A_k,N_k,Ea_k))
+            #print(np.shape(S_ksens),'this is the shape of the S matrix before MP')
+            S_ksens = np.hstack((S_ksens,mapped_master_equation_sensitivites))
+            
+
+        else:
+            S_ksens = np.vstack((k_sens_for_whole_simulation))
         
-        Z_data_Frame = pd.DataFrame({'value': Z_data_Frame,'Uncertainty': Z.reshape((Z.shape[0],))})       
-        self.z_matrix = Z
-        self.sigma = sigma
-        return Z,Z_data_Frame,sigma,active_parameters
-    
-    
-    
-    
-    
+        
+        def sum_of_zeros(idx,array,column_list):
+            rows_behind = array.shape[0]
+            rows_infront = array.shape[0]
+            columns_behind = sum(column_list[:idx])
+            columns_infront = sum(column_list[idx+1:])  
+            behind_tuple = (rows_behind,columns_behind)
+            infront_tuple = (rows_infront,columns_infront)
+            
+            return (behind_tuple,infront_tuple)
+        
+        
+        if exp_dict_list[0]['simulation'].physicalSens ==1:
+            number_of_columns_in_psens_arrays = []
+            number_of_rows_in_psens_arrays=[]
+            for i,array in enumerate(p_sens_for_whole_simulation):                
+                number_of_rows_in_psens_arrays.append(array.shape[0])
+                number_of_columns_in_psens_arrays.append(array.shape[1])
+                
+            p_sens_whole_simulation_with_padding = []
+            for i,array in enumerate(p_sens_for_whole_simulation):
+                zero_array_behind = np.zeros(sum_of_zeros(i,array,number_of_columns_in_psens_arrays)[0])
+                if zero_array_behind.shape[1] != 0:
+                    array = np.hstack((zero_array_behind,array))
+                zero_array_infront = np.zeros(sum_of_zeros(i,array,number_of_columns_in_psens_arrays)[1])
+                if zero_array_infront.shape[1] != 0:
+                    array = np.hstack((array,zero_array_infront))
+                
+                p_sens_whole_simulation_with_padding.append(array)
+            
+            S_psens = np.vstack((p_sens_whole_simulation_with_padding))
+            
+            
+            
+            
+##############################################################################################         
+        absorb_coef_whole_simulation_with_padding = []
+        
+        for i,exp in enumerate(exp_dict_list):
+            single_experiment_absorption = []
+            if exp['mole_fraction_observables'][0] != None or exp['concentration_observables'][0] != None:                
+                if 'perturbed_coef' not in exp.keys():
+                    zero_array_for_observables_padding = np.zeros((number_of_rows_in_psens_arrays[i],
+                                           num_ind_pert_coef))    
+                    
+                    single_experiment_absorption.append(zero_array_for_observables_padding)
+                    
+                    
+            if 'perturbed_coef' in exp.keys():  
+                zero_padded_aborption_coef_array = abs_coef_sens_for_whole_simulation[i]   
+                combined = abs_coef_sens_for_whole_simulation[i] 
+
+                if exp['mole_fraction_observables'][0] != None or exp['concentration_observables'][0] != None:
+                    zero_array_for_observables_padding = np.zeros((number_of_rows_in_psens_arrays[i]-zero_padded_aborption_coef_array.shape[0],
+                                       num_ind_pert_coef))  
+                    combined = np.vstack((zero_array_for_observables_padding,zero_padded_aborption_coef_array))
+                
+                
+                
+                single_experiment_absorption.append(combined)     
+            
+            single_experiment_absorption = np.vstack((single_experiment_absorption))
+            absorb_coef_whole_simulation_with_padding.append(single_experiment_absorption) 
+            
+        
+        
+        absorb_coef_whole_simulation_with_padding = np.vstack((absorb_coef_whole_simulation_with_padding))  
+        S_abs_coef  = absorb_coef_whole_simulation_with_padding
+
+        
+        #return((S_ksens,S_psens,S_abs_coef))
+        S_matrix = np.hstack((S_ksens,S_psens,S_abs_coef))
+        shape = np.shape(S_matrix)[1]
+        #append identy matrix
+        identity_matrix = np.identity(shape)
+        
+#        identity_matrix[1,0]=.1
+#        identity_matrix[0,1]=.1
+#        identity_matrix[0,20]=.1
+#        identity_matrix[20,0]=.1
+#        identity_matrix[39,0]=.1
+#        identity_matrix[0,39]=.1
+        
+        ####making edits to this just for masten test 
+        
+        
+        
+        S_matrix = np.vstack((S_matrix,identity_matrix))
+        self.S_matrix = S_matrix
+        S_matrix_wo_k_targets = copy.deepcopy(self.S_matrix)
+        self.S_matrix_wo_k_targets = S_matrix_wo_k_targets
+        S_matrix_df = pd.DataFrame(S_matrix)
+        return S_matrix 
     def breakup_X(self, X, 
                         exp_dict_list:list, 
                         exp_uncertainty_dict_list_original:list,
@@ -933,25 +1035,47 @@ class OptMatrix(object):
         physical_observables_for_Y = []
         if exp_dict_list[0]['simulation'].physicalSens ==1:
             for i,exp_dic in enumerate(exp_dict_list):
-                dic_of_conditions = exp_dic['simulation'].conditions
-                    #subtract out the dilluant 
-                species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
-                    #add two for Temperature and Pressure
-                len_of_phsycial_observables_in_simulation = species_in_simulation + 2 
-                new_value = previous_value + len_of_phsycial_observables_in_simulation
-                single_experiment_physical_observables = X_new[(value1+value2+previous_value):(value1+value2+new_value)]
-                physical_observables_for_Y.append(single_experiment_physical_observables)
-                temp_keys = []
-                    #stacking the zeros onto the Y array 
-                temp_keys.append('T'+'_'+'experiment'+'_'+str(i))
-                temp_keys.append('P'+'_'+'experiment'+'_'+str(i))
-                for variable in range(species_in_simulation):
-                    temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
-                temp_dict = dict(zip(temp_keys,single_experiment_physical_observables))
-                physical_observables.append(temp_dict)
-                ##come back to this and do a test on paper
-                previous_value = new_value
-                
+                if re.match('[Ss]hock [Tt]ube',exp_dic['simulation_type']):
+                    dic_of_conditions = exp_dic['simulation'].conditions
+                        #subtract out the dilluant 
+                    species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
+                        #add two for Temperature and Pressure
+                    len_of_phsycial_observables_in_simulation = species_in_simulation + 2 
+                    new_value = previous_value + len_of_phsycial_observables_in_simulation
+                    single_experiment_physical_observables = X_new[(value1+value2+previous_value):(value1+value2+new_value)]
+                    physical_observables_for_Y.append(single_experiment_physical_observables)
+                    temp_keys = []
+                        #stacking the zeros onto the Y array 
+                    temp_keys.append('T'+'_'+'experiment'+'_'+str(i))
+                    temp_keys.append('P'+'_'+'experiment'+'_'+str(i))
+                    for variable in range(species_in_simulation):
+                        temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                    temp_dict = dict(zip(temp_keys,single_experiment_physical_observables))
+                    physical_observables.append(temp_dict)
+                    ##come back to this and do a test on paper
+                    previous_value = new_value
+                if re.match('[Jj][Ss][Rr]',exp_dic['simulation_type']):
+                    dic_of_conditions = exp_dic['simulation'].conditions
+                        #subtract out the dilluant 
+                    species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
+                        #add two for Temperature and Pressure
+                    len_of_phsycial_observables_in_simulation = species_in_simulation + 1+len(exp_dic['simulation'].temperatures) 
+                    #print(len_of_phsycial_observables_in_simulation)
+                    new_value = previous_value + len_of_phsycial_observables_in_simulation
+                    single_experiment_physical_observables = X_new[(value1+value2+previous_value):(value1+value2+new_value)]
+                    #print(len(single_experiment_physical_observables))
+                    physical_observables_for_Y.append(single_experiment_physical_observables)
+                    temp_keys = []
+                        #stacking the zeros onto the Y array 
+                    for j in range(len(exp_dic['simulation'].temperatures)):
+                        temp_keys.append('T'+str(j+1)+'_'+'experiment'+'_'+str(i))
+                    temp_keys.append('P'+'_'+'experiment'+'_'+str(i))
+                    for variable in range(species_in_simulation):
+                        temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                    temp_dict = dict(zip(temp_keys,single_experiment_physical_observables))
+                    physical_observables.append(temp_dict)
+                    ##come back to this and do a test on paper
+                    previous_value = new_value
         physical_observables_for_Y = [item for sublist in physical_observables_for_Y for item in sublist]   
         X_to_subtract_from_Y['physical_observables'] = physical_observables_for_Y
         
@@ -1046,54 +1170,56 @@ class OptMatrix(object):
 
         
         
-        try:
-            if runCounter==0:
+        #try:
+        if runCounter==0:
               
                 c = np.dot(np.transpose(identity_matrix),identity_matrix)
                 c = np.linalg.inv(c)
                 prior_diag = np.diag(c)
                 prior_sigmas = np.sqrt(prior_diag)
                 covariance_prior_df = pd.DataFrame(c)
-                covariance_prior_df.columns = active_parameters
-                covariance_prior_df.reindex(labels = active_parameters)
-                prior_diag_df = pd.DataFrame({'parameter': active_parameters,'value': prior_diag.reshape((prior_diag.shape[0],))})
-                sorted_prior_diag = prior_diag_df.sort_values(by=['value'])
-                prior_sigmas_df = pd.DataFrame({'parameter': active_parameters,'value': prior_sigmas.reshape((prior_sigmas.shape[0],))})
-            else:
+                if active_parameters:
+                    covariance_prior_df.columns = active_parameters
+                    covariance_prior_df.reindex(labels = active_parameters)
+                    prior_diag_df = pd.DataFrame({'parameter': active_parameters,'value': prior_diag.reshape((prior_diag.shape[0],))})
+                    sorted_prior_diag = prior_diag_df.sort_values(by=['value'])
+                    prior_sigmas_df = pd.DataFrame({'parameter': active_parameters,'value': prior_sigmas.reshape((prior_sigmas.shape[0],))})
+        else:
                 c = np.dot(np.transpose(s_matrix),s_matrix)
                 c = np.linalg.inv(c)
                 
                 covariance_posterior_df = pd.DataFrame(c)
-                covariance_posterior_df.columns = active_parameters
-                covariance_posterior_df.reindex(labels = active_parameters)
-                posterior_diag = np.diag(c)
-                posterior_sigmas = np.sqrt(posterior_diag)
-                posterior_sigmas_df = pd.DataFrame({'parameter': active_parameters,'value': posterior_sigmas.reshape((posterior_sigmas.shape[0],))})
-                posterior_diag_df =  pd.DataFrame({'parameter': active_parameters,'value': posterior_diag.reshape((posterior_diag.shape[0],))})
-                sorted_posterior_diag  = posterior_diag_df.sort_values(by=['value'])
-        except:
-            #stub
-            print('WE ARE IN THE EXCEPT STATMENT')
-            if runCounter==0:
+                if active_parameters:
+                    covariance_posterior_df.columns = active_parameters
+                    covariance_posterior_df.reindex(labels = active_parameters)
+                    posterior_diag = np.diag(c)
+                    posterior_sigmas = np.sqrt(posterior_diag)
+                    posterior_sigmas_df = pd.DataFrame({'parameter': active_parameters,'value': posterior_sigmas.reshape((posterior_sigmas.shape[0],))})
+                    posterior_diag_df =  pd.DataFrame({'parameter': active_parameters,'value': posterior_diag.reshape((posterior_diag.shape[0],))})
+                    sorted_posterior_diag  = posterior_diag_df.sort_values(by=['value'])
+        # except:
+        #     #stub
+        #     print('WE ARE IN THE EXCEPT STATMENT')
+        #     if runCounter==0:
               
-                c = -1
-                c = -1
-                prior_diag = -1
-                prior_sigmas = -1
-                covariance_prior_df = -1
-                prior_diag_df = -1
-                sorted_prior_diag = -1
-                prior_sigmas_df = -1
-            else:
-                c = -1
-                c =-1
+        #         c = -1
+        #         c = -1
+        #         prior_diag = -1
+        #         prior_sigmas = -1
+        #         covariance_prior_df = -1
+        #         prior_diag_df = -1
+        #         sorted_prior_diag = -1
+        #         prior_sigmas_df = -1
+        #     else:
+        #         c = -1
+        #         c =-1
                 
-                covariance_posterior_df = -1
-                posterior_diag = -1
-                posterior_sigmas = -1
-                posterior_sigmas_df = -1
-                posterior_diag_df =  -1
-                sorted_posterior_diag  = -1
+        #         covariance_posterior_df = -1
+        #         posterior_diag = -1
+        #         posterior_sigmas = -1
+        #         posterior_sigmas_df = -1
+        #         posterior_diag_df =  -1
+        #         sorted_posterior_diag  = -1
         
         
         self.covariance = c
@@ -1132,11 +1258,7 @@ class OptMatrix(object):
             return X,c,s_matrix,y_matrix,delta_X,z_matrix,X_data_frame,prior_diag,prior_diag_df,sorted_prior_diag,covariance_prior_df,prior_sigmas_df
         else:
             return X,c,s_matrix,y_matrix,delta_X,z_matrix,X_data_frame,posterior_diag,posterior_diag_df,sorted_posterior_diag,covariance_posterior_df,posterior_sigmas_df
-            
-    
-    
-    
-        
+
 class Adding_Target_Values(meq.Master_Equation):
     def __init__(self,S_matrix,Y_matrix,z_matrix,sigma,Y_data_Frame,z_data_Frame):
         self.S_matrix = S_matrix
@@ -1366,15 +1488,6 @@ class Adding_Target_Values(meq.Master_Equation):
         return S_matrix,Y_matrix,z_matrix,sigma
     
 
-    
-
-    
-
-        
-
-
-    
-                
                 
        
             
