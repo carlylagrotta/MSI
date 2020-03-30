@@ -549,12 +549,10 @@ class OptMatrix(object):
 
             if 'W' in list(experimental_data.columns):
                 weighting_factor = experimental_data['W'].values
-                
                 if 'Relative_Uncertainty' in list(experimental_data.columns):
                     time_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
                     un_weighted_uncertainty = copy.deepcopy(time_dependent_uncertainty)
                     total_uncertainty = time_dependent_uncertainty/weighting_factor
-                    
                     
                 else:
                     length_of_data = data.shape[0]
@@ -630,7 +628,7 @@ class OptMatrix(object):
                     
                     
                     
-                    
+                    #THIS SHOULD PROBABLY BE MOVED OUTSIDE THE STATEMNT 
                     Z.append(total_uncertainty)
                     sigma.append(un_weighted_uncertainty)
                     tempList = [observable+'_'+'experiment'+str(i)]*np.shape(total_uncertainty)[0]
@@ -838,7 +836,26 @@ class OptMatrix(object):
         #X = X.reshape(X.shape[0],1)
         
         ################################################################
+
+        ##################################################################
+#        print('RUNNING TEST')
+#        X_new[846] = -0.28572334167542013
+#        X_new[847] = -0.007258986471821074
+#        X_new[848] = -0.07160891432785314
+#        X_new[849] = -0.038747789992729584
+#        X_new[850] = -0.09184808671928052
+#        X_new[851] = -0.13343314153597205
+#        X_new[852] = 0.0046931837946472
+#        X_new[853] = -0.007191276020250346
+
+        #X= X['Burke_Value'].values
+        #X = X.reshape(X.shape[0],1)
+        #zeros = np.zeros((X_new.shape))
+        #X_new = zeros
+       # X_new[873,0] = .01
+       # print("X_NEW")
         
+        ################################################################        
         
         X_new = list(X_new.flatten())            
         if exp_dict_list[0]['simulation'].kineticSens ==1:
@@ -995,7 +1012,25 @@ class OptMatrix(object):
     
     def matrix_manipulation(self,runCounter,S_matrix,Y_matrix,z_matrix,XLastItteration = np.array(()),active_parameters=[]):
 
-    
+        #RUnning test to link up to paramters 
+    ##################################################
+        #s_temp = np.zeros((1,S_matrix.shape[1]))
+        #s_temp[0,886]=1
+        #s_temp[0,888]=-1
+        #y_temp = np.zeros((1,1))
+        #y_temp[0,0]=0
+        #z_temp=np.zeros((1,1))
+        #z_temp[0,0]=.00001
+        
+        #S_matrix=np.vstack((S_matrix,s_temp))
+        #Y_matrix = np.vstack((Y_matrix,y_temp))
+        #z_matrix = np.vstack((z_matrix,z_temp))
+        
+        ##################################################
+       # print("ONLY CONSIDERING RATE CONSTANT TARGETS")
+       # for value in np.arange(0,401):
+        #    z_matrix[value,0] =1000000 
+        ##################################################
 
         one_over_z = np.true_divide(1,z_matrix)
         y_matrix = Y_matrix * one_over_z
@@ -1005,15 +1040,10 @@ class OptMatrix(object):
         sTimesZ = S_matrix * (z_matrix.flatten())[:,np.newaxis]
         #calculate covariance matrix 
         shape = np.shape(self.S_matrix_wo_k_targets)
-        #print(shape,'shape of s matrix wo k targets')
-        #print(shape[0]-len(active_parameters))
-        
-        #print(S_matrix.shape,'shape of s matrix')
-        
+
         s_wo_k_targets = s_matrix[:shape[0],:shape[1]]
         identity_matrix = s_wo_k_targets[shape[0]-len(active_parameters):,:]
-        #print(identity_matrix.shape)
-        #print(len(active_parameters),'number of active parameters')
+
         
         
         try:
@@ -1086,7 +1116,11 @@ class OptMatrix(object):
             XlastItteration = XLastItteration
 
         X = XlastItteration + delta_X
-
+        #STUB THIS IS FOR A TESTING ITTERATION 
+        #####################################################################
+        #X = np.zeros(np.shape(delta_X))
+       # X[564] = .01
+        #####################################################################
         self.X = X
        
         #STUB THIS
@@ -1115,10 +1149,11 @@ class Adding_Target_Values(meq.Master_Equation):
         
          
         
-    def target_values_Y(self,target_value_csv,exp_dict_list:list):
+    def target_values_Y(self,target_value_csv,exp_dict_list:list,Y_data_Frame):
         import cantera as ct
         Y_df_list = []
         Y_values = []
+        
         #make sure we put the reactions into the file in the units cantera uses
         target_value_csv = pd.read_csv(target_value_csv)
         target_reactions = target_value_csv['Reaction']
@@ -1128,6 +1163,7 @@ class Adding_Target_Values(meq.Master_Equation):
         bath_gas = target_value_csv['M']
         reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
         gas = ct.Solution(exp_dict_list[0]['simulation'].processor.cti_path)
+        #print(gas.rea)
         diff_in_ks_for_Y = []
         for i,reaction in enumerate(target_reactions): 
                 #ask about the mixture composition
@@ -1142,8 +1178,10 @@ class Adding_Target_Values(meq.Master_Equation):
                 gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
             reaction_number_in_cti = reactions_in_cti_file.index(reaction)
             k = gas.forward_rate_constants[reaction_number_in_cti]
+            k = k*1000
             
                 #check and make sure we are subtracting in the correct order 
+
             difference = np.log(target_k[i]) - np.log(k) 
 
             diff_in_ks_for_Y.append(difference)
@@ -1155,11 +1193,13 @@ class Adding_Target_Values(meq.Master_Equation):
         Y_values = np.array(Y_values)
         
         Y_df_temp = pd.DataFrame({'value': Y_df_list,'ln_difference': Y_values.reshape((Y_values.shape[0],))}) 
-        self.Y_data_Frame = self.Y_data_Frame.append(Y_df_temp, ignore_index=True)
+        Y_data_Frame = Y_data_Frame.append(Y_df_temp, ignore_index=True)
         
-        return k_targets_for_y,self.Y_data_Frame
+
+        
+        return k_targets_for_y,Y_data_Frame
     
-    def target_values_for_Z(self,target_value_csv):
+    def target_values_for_Z(self,target_value_csv,z_data_Frame):
         z_over_w = []
         sigma = []
         target_value_csv = pd.read_csv(target_value_csv)
@@ -1181,133 +1221,142 @@ class Adding_Target_Values(meq.Master_Equation):
         z_values = np.array(z_values)
         k_targets_for_z = k_targets_for_z.reshape((k_targets_for_z.shape[0],1))
         Z_data_Frame_temp = pd.DataFrame({'value': z_df_list,'Uncertainty': z_values.reshape((z_values.shape[0],))})
-        self.z_data_Frame = self.z_data_Frame.append(Z_data_Frame_temp, ignore_index=True)    
-        return k_targets_for_z,sigma,self.z_data_Frame
+        z_data_Frame = z_data_Frame.append(Z_data_Frame_temp, ignore_index=True)    
+        return k_targets_for_z,sigma,z_data_Frame
     
 
-
-
-
-    
     def target_values_for_S(self,target_value_csv,
                             exp_dict_list,
+                            S_matrix,
                             master_equation_reaction_list = [],
                             master_equation_sensitivites = {}):
-            
-            
-            
-            
-        target_value_csv = pd.read_csv(target_value_csv)
-        target_reactions = target_value_csv['Reaction']
-        target_temp = target_value_csv['temperature']
-        target_press = target_value_csv['pressure']
-        target_k = target_value_csv['k']
-        reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
-        number_of_reactions_in_cti = len(reactions_in_cti_file)
-        As = []
-        Ns =  []
-        Eas = []
-            
-        Number_of_MP = []
-        nested_reaction_list = [[] for x in range(len(master_equation_reaction_list))]
-            
-        for reaction in master_equation_reaction_list:
-            for MP in master_equation_reaction_list[reaction]:
-                nested_reaction_list[reaction].append(0)
-                Number_of_MP.append(MP)
-        copy.deepcopy(nested_reaction_list)            
-        Number_of_MP = len(Number_of_MP)
-              
-        MP_stack = []
-        target_values_to_stack =  []
-        for i,reaction in enumerate(target_reactions):
-            #temp_array = np.zeros((1,Number_of_MP))
-            if reaction in master_equation_reaction_list:
-                indx = master_equation_reaction_list.index(reaction)
-                MP_sens_array_list = master_equation_sensitivites[reaction]
-                copy.deepcopy(MP_sens_array_list)
-                MP_sens_array_list_copy = MP_sens_array_list
-                for j, MP_array in MP_sens_array_list:
-                    #alpha_array = np.zeros(MP_array.shape)
-                    for sensitivity in np.nditer(MP_array,order='F'):
-                        k,l= np.where(MP_array == sensitivity)
-                            #need to add reduced p and t, and check these units were using to map
-                            
-                            #these might not work
-                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(k[0],meq.Master_Equation.calc_reduced_T(target_temp[i]))
-                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(l[0],meq.Master_Equation.calc_reduced_P(target_press[i]))
-                        
-                        #these might nowt work 
-                        alpha = t_alpha*p_alpha
-                        MP_sens_array_list_copy[j][k,l] = alpha
-                        
-                        #needt to figure out how to put this in the correct spot un the array of zeros 
-                    multiplied = np.multiply(MP_sens_array_list_copy[j],MP_sens_array_list[j])
-                    array_sum = sum(multiplied)
-                    temp = nested_reaction_list
-                    temp[indx][j] = array_sum
-                    MP_stack.append(temp)
-                    flat_list = [item for sublist in temp for item in sublist]
-                    flat_list = np.array(flat_list)
-                    flat_list = flat_list.reshape((1,flat_list.shape[1]))                                                         
-                    target_values_to_stack.append(flat_list)
-                        
-                        
-                            
-                        
-                    
-            else:
-                A_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
+                
+                
+                
+            target_value_csv = pd.read_csv(target_value_csv)
+            target_reactions = target_value_csv['Reaction']
+            target_temp = target_value_csv['temperature']
+            target_press = target_value_csv['pressure']
+            target_k = target_value_csv['k']
+            reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
+            number_of_reactions_in_cti = len(reactions_in_cti_file)
+            As = []
+            Ns =  []
+            Eas = []
+                
 
-                N_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
-                Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
-                    #decide if this mapping is correct             
-                A_temp[0,reactions_in_cti_file.index(reaction)] = 1
-                N_temp [0,reactions_in_cti_file.index(reaction)] = np.log(target_temp[i])
-                Ea_temp[0,reactions_in_cti_file.index(reaction)] = (-1/target_temp[i])
-                
-                As.append(A_temp)
-                Ns.append(N_temp)
-                Eas.append(Ea_temp)
-                A_temp = A_temp.reshape((1,A_temp.shape[1]))
-                N_temp = N_temp.reshape((1,N_temp.shape[1]))
-                Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
-                target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp)))
-                
-                
             
-        S_matrix = self.S_matrix
-        shape_s = S_matrix.shape
-        S_target_values = []
-        for i,row in enumerate(target_values_to_stack):
-            if target_reactions[i] in master_equation_reaction_list:
-                zero_to_append_infront = np.zeros((1,(number_of_reactions_in_cti-len(master_equation_reaction_list)*3)))
-                zero_to_append_behind = np.zeros((1, shape_s[1] - (number_of_reactions_in_cti-len(master_equation_reaction_list)*3) - np.shape(row)[1] ))                
-                temp_array = np.hstack((zero_to_append_infront,row,zero_to_append_behind))
-                S_target_values.append(temp_array)
-            else:
-                zero_to_append_behind = np.zeros((1,shape_s[1]-np.shape(row)[1]))
-                temp_array = np.hstack((row,zero_to_append_behind))
-                S_target_values.append(temp_array)
+            def create_empty_nested_reaction_list():
                 
                 
-                
+                nested_reaction_list = [[] for x in range(len(master_equation_reaction_list))]
+                for reaction in master_equation_reaction_list:
+                    for i,MP in enumerate(master_equation_sensitivites[reaction]):
+                        nested_reaction_list[master_equation_reaction_list.index(reaction)].append(0)
+                return nested_reaction_list      
             
             
-        
-        S_target_values = np.vstack((S_target_values))    
-        return  S_target_values
+            def create_tuple_list(array_of_sensitivities):
+                tuple_list = []
+                for ix,iy in np.ndindex(array_of_sensitivities.shape):
+                    tuple_list.append((ix,iy))
+                return tuple_list
+                
+            MP_stack = []
+            target_values_to_stack =  []
+            for i,reaction in enumerate(target_reactions):
+                if reaction in master_equation_reaction_list:
+                    nested_reaction_list = create_empty_nested_reaction_list()
+                    for j, MP_array in enumerate(master_equation_sensitivites[reaction]):
+                        tuple_list = create_tuple_list(MP_array)
+                        temp = []
+                        counter = 0    
+                        for sensitivity in np.nditer(MP_array,order='C'):
+                            k = tuple_list[counter][0]
+                            l= tuple_list[counter][1]
+                            counter +=1
+                               #need to add reduced p and t, and check these units were using to map
+                                
+                            #these might not work
+                            
+                            t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                            
+                            if target_press[i] ==0:
+                                target_press_new = 1e-9
+                            else:
+                                target_press_new=target_press[i]
+                            p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                            #these might nowt work 
+                            single_alpha_map = t_alpha*p_alpha*sensitivity
+                            temp.append(single_alpha_map)
+                        temp =sum(temp)
+                        #should there be an = temp here 
+                        #nested_reaction_list[master_equation_reaction_list.index(reaction)][j]=temp
+                        nested_reaction_list[master_equation_reaction_list.index(reaction)][j]=temp
+
+                    temp2  = nested_reaction_list
+                    flat_list = [item for sublist in temp2 for item in sublist]
+                    #print(flat_list)
+                    MP_stack.append(nested_reaction_list)
+                    flat_list = np.array(flat_list)
+                    flat_list = flat_list.reshape((1,flat_list.shape[0])) 
+                    target_values_to_stack.append(flat_list)
+                
+                else:
+                    #this will need to get fixed if we want to handle all reactions as chevy
+                    A_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
     
+                    N_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
+                    Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
+                        #decide if this mapping is correct             
+                    A_temp[0,reactions_in_cti_file.index(reaction)] = 1
+                    N_temp [0,reactions_in_cti_file.index(reaction)] = np.log(target_temp[i])
+                    Ea_temp[0,reactions_in_cti_file.index(reaction)] = (-1/target_temp[i])
+                    
+                    As.append(A_temp)
+                    Ns.append(N_temp)
+                    Eas.append(Ea_temp)
+                    A_temp = A_temp.reshape((1,A_temp.shape[1]))
+                    N_temp = N_temp.reshape((1,N_temp.shape[1]))
+                    Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+                    target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp)))
+                    
+                    
+               # might need to edit this to pass in s? and  
+            S_matrix = S_matrix
+            shape_s = S_matrix.shape
+            S_target_values = []
+            for i,row in enumerate(target_values_to_stack):
+                if target_reactions[i] in master_equation_reaction_list:
+                    zero_to_append_infront = np.zeros((1,((number_of_reactions_in_cti-len(master_equation_reaction_list))*3)))
+                    
+                    zero_to_append_behind = np.zeros((1, shape_s[1] - ((number_of_reactions_in_cti-len(master_equation_reaction_list))*3) - np.shape(row)[1] ))                
+                    temp_array = np.hstack((zero_to_append_infront,row,zero_to_append_behind))
+                    S_target_values.append(temp_array)
+                else:
+                    zero_to_append_behind = np.zeros((1,shape_s[1]-np.shape(row)[1]))
+                    temp_array = np.hstack((row,zero_to_append_behind))
+                    S_target_values.append(temp_array)
+
+
+            S_target_values = np.vstack((S_target_values))
+            return S_target_values        
+
     
     def appending_target_values(self,target_values_for_z,
-                                target_values_for_y,
-                                target_values_for_s,
-                                sigma_target_values):
-        z_matrix = np.vstack((self.z_matrix ,target_values_for_z))
-        Y_matrix = np.vstack((self.Y_matrix,target_values_for_y))
+                                target_values_for_Y,
+                                target_values_for_S,
+                                sigma_target_values,
+                                S_matrix,
+                                Y_matrix,
+                                z_matrix,
+                                sigma):
+                                
+        z_matrix = np.vstack((z_matrix ,target_values_for_z))
+        Y_matrix = np.vstack((Y_matrix,target_values_for_Y))
         
-        S_matrix = np.vstack((self.S_matrix,target_values_for_s))
-        sigma = np.vstack((self.sigma,sigma_target_values))
+        S_matrix = np.vstack((S_matrix,target_values_for_S))
+        sigma = np.vstack((sigma,sigma_target_values))
         
         self.S_matrix = S_matrix
         self.Y_matrix = Y_matrix
@@ -1317,20 +1366,14 @@ class Adding_Target_Values(meq.Master_Equation):
         return S_matrix,Y_matrix,z_matrix,sigma
     
 
-        
+    
+
+    
 
         
-        
-        
-        
-                
-        
-            
 
-            
-                
-                
-            
+
+    
                 
                 
        

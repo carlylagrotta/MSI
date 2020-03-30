@@ -120,7 +120,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
             
         
         return
-    
+    #change this to just running a simulation 
     def running_shock_tube_simulations(self,loop_counter=0):
         optimization_instance = opt.Optimization_Utility()
         if loop_counter == 0:
@@ -293,7 +293,8 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
             self.posterior_diag_df = posterior_diag_df
             self.sorted_posterior_diag = sorted_posterior_diag
             self.covariance_posterior_df = covariance_posterior_df
-            self.posterior_over_prior = pd.concat([self.prior_diag_df, self.posterior_diag_df], axis=1, join_axes=[self.prior_diag_df.index])
+            #self.posterior_over_prior = pd.concat([self.prior_diag_df, self.posterior_diag_df], axis=1, join_axes=[self.prior_diag_df.index])
+            self.posterior_over_prior = pd.concat([self.prior_diag_df, self.posterior_diag_df], axis=1, join='outer')
             self.posterior_over_prior['posterior/prior'] = (self.posterior_diag_df['value'] / self.prior_diag_df['value'])
             self.posterior_over_prior = self.posterior_over_prior.sort_values(by=['posterior/prior'])
             self.posterior_sigmas_df = posterior_sigmas_df
@@ -451,7 +452,6 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
         if loop_counter == 0:
             original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
             self.original_experimental_conditions_local = original_experimental_conditions_local
-            #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
         
         
         self.running_shock_tube_simulations(loop_counter=loop_counter)
@@ -460,6 +460,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
             self.master_equation_s_matrix_building(loop_counter=loop_counter)
             #need to add functionality to update with the surgate model or drop out of loop
         self.building_matrices(loop_counter=loop_counter)
+        
         if bool(self.k_target_values_csv):
             self.adding_k_target_values(loop_counter=loop_counter)
             

@@ -47,6 +47,7 @@ class Optimization_Utility(object):
             exp_dict['pressure']           = interpolated_tp_sens[1]
             exp_dict['species']            = interpolated_species_sens
             
+        exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
         exp_dict['observables']        = simulation.observables
         exp_dict['concentration_observables'] = simulation.concentrationObservables
         exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
@@ -214,6 +215,7 @@ class Optimization_Utility(object):
         shock_tube.species_adjustment(dk)
         int_tp_psen_against_experimental = shock_tube.interpolate_experimental([shock_tube.interpolate_physical_sensitivities(index=1),
                                                                                  shock_tube.interpolate_physical_sensitivities(index=2)])
+
         
         int_spec_psen_against_experimental = shock_tube.interpolate_experimental(pre_interpolated=shock_tube.interpolate_species_sensitivities())
         
