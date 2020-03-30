@@ -336,12 +336,12 @@ class Parser(object):
                 new_file_name = file_name_list[yaml_file][0]
     
             if experiment_dict_list[0]['simulation'].physicalSens ==1 :
-                if self.original_experimental_conditions[yaml_file]['simulationType']=='shock tube':
+                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperature']
-                elif self.original_experimental_conditions[yaml_file]['simulationType']=='JSR' or self.original_experimental_conditions[yaml_file]['simulationType']=='jsr': 
-                    temps = self.original_experimental_conditions[yaml_file]['temperatures']
+                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
+                    temp = self.original_experimental_conditions[yaml_file]['temperatures']
                 press = self.original_experimental_conditions[yaml_file]['pressure']
-                mole_fractions = self.original_experimental_conditions[yaml_file]['MoleFractions']
+                #mole_fractions = self.original_experimental_conditions[yaml_file]['MoleFractions']
                 conditions = self.original_experimental_conditions[yaml_file]['conditions']
                 
                 print('__________________________________________________________________________')
@@ -354,11 +354,10 @@ class Parser(object):
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
                     updatedTemp = round(updatedTemp,9)
-                elif re.match('[Jj][Ss][Rr]',self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Jj][Ss][Rr]',self.original_experimental_conditions[yaml_file]['simulationType']):
-                    X_temperatures=reorder_temps_from_dict(physical_observables_updates_list[yaml_file],self.original_experimental_conditions['temperatures'],yaml_file)
-                    updatedTemps=np.exp(X_temperatures)*temps
-                    for index in range(len(updatedTemps)):
-                        updatedTemps[index]=round(updatedTemps[index],9)
+                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
+                    updatedTemp=[]
+                    for i,T in enumerate(temp):
+                        updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))
                         
                 updatedPress = np.exp(physical_observables_updates_list[yaml_file]['P_experiment_'+str(yaml_file)]) * press
                 updatedPress = round(updatedPress,9)
@@ -390,8 +389,10 @@ class Parser(object):
                     config2 = yaml.safe_load(f)
                 
                 config2['common-properties']['pressure']['value']=float(updatedPress)
-                config2['common-properties']['temperature']['value']=float(updatedTemp)
-                    
+                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
+                    config2['common-properties']['temperature']['value']=float(updatedTemp)
+                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):    
+                    config2['common-properties']['temperature']['value-list']=updatedTemp
                 for i,moleFraction in enumerate(updated_mole_fraction_list):
                     config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)
                     

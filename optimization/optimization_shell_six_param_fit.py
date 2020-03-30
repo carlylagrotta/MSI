@@ -2,21 +2,22 @@
 import sys
 sys.path.append('.') #get rid of this at some point with central test script or when package is built
 
-import MSI.simulations.instruments.shock_tube as st
-import MSI.cti_core.cti_processor as pr
-import MSI.optimization.matrix_loader as ml
-import MSI.optimization.opt_runner as opt
-import MSI.simulations.absorbance.curve_superimpose as csp
-import MSI.simulations.yaml_parser as yp
-import MSI.master_equation.master_equation_six_parameter_fit as mespf
-import MSI.cti_core.cti_combine as ctic
+import MSI_2.simulations.instruments.shock_tube as st
+import MSI_2.cti_core.cti_processor as pr
+import MSI_2.optimization.matrix_loader as ml
+import MSI_2.optimization.opt_runner as opt
+import MSI_2.simulations.absorbance.curve_superimpose as csp
+import MSI_2.simulations.yaml_parser as yp
+import MSI_2.master_equation.master_equation_six_parameter_fit as mespf
+import MSI_2.cti_core.cti_combine as ctic
 import copy
 import cantera as ct
 import numpy as np
 import pandas as pd 
+import os
 
 
-class MSI_shocktube_optimization_six_parameter_fit(object):
+class MSI_optimization_six_parameter_fit(object):
         
     def __init__(self, cti_file:str,perturbment:int,
                  kineticSens:int,physicalSens:int,
@@ -67,7 +68,10 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
         for i, file_set in enumerate(self.yaml_file_list):
             temp = []
             for j,file in enumerate(self.yaml_file_list[i]):
-                temp.append(self.data_directory+'/'+file)
+                ##############################################################################################
+                #Fix for OS compatibility later
+                ##############################################################################################
+                temp.append(os.path.join(self.data_directory,file))
             temp = tuple(temp)
             yaml_file_list_with_working_directory.append(temp)
         self.yaml_file_list_with_working_directory = yaml_file_list_with_working_directory
@@ -77,14 +81,14 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
     # run the cti writer to establish processor and make cti file 
     def establish_processor(self,loop_counter=0):
         if loop_counter==0 and self.master_equation_flag==False:
-            new_file,original_rxn_eqs,master_rxn_eqs =ctic.cti_write2(original_cti=self.data_directory +'/'+ self.cti_file_name,
+            new_file,original_rxn_eqs,master_rxn_eqs =ctic.cti_write2(original_cti=os.path.join(self.data_directory,self.cti_file_name),
                                                                       working_directory=self.data_directory,
                                                                       file_name= self.cti_file_name.replace('.cti','')+'_updated')
             self.new_cti_file = new_file
              
         if loop_counter==0 and self.master_equation_flag==True:
-            new_file,original_rxn_eqs,master_rxn_eqs =ctic.cti_write2(original_cti=self.data_directory +'/'+ self.cti_file_name,
-                                                                      master_rxns = self.data_directory+'/'+self.master_reaction_equation_cti_name,
+            new_file,original_rxn_eqs,master_rxn_eqs =ctic.cti_write2(original_cti=os.path.join(self.data_directory,self.cti_file_name),
+                                                                      master_rxns = os.path.join(self.data_directory,self.master_reaction_equation_cti_name),
                                                                       master_index = self.master_index,
                                                                       working_directory=self.data_directory,
                                                                       file_name= self.cti_file_name.replace('.cti','')+'_updated')
@@ -219,16 +223,16 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
     def adding_k_target_values(self,loop_counter=0):
         
         ### add dataframe  start hete  
-        k_target_values_for_z,sigma_target_values,z_data_frame = self.master_equation_six_param_fit_instance.target_values_for_Z_six_paramter_fit(self.data_directory+'/'+ self.k_target_values_csv,
+        k_target_values_for_z,sigma_target_values,z_data_frame = self.master_equation_six_param_fit_instance.target_values_for_Z_six_paramter_fit(os.path.join(self.data_directory,self.k_target_values_csv),
                                                                                                                             self.z_data_frame)
         if loop_counter == 0:
-            k_target_values_for_Y,Y_data_frame = self.master_equation_six_param_fit_instance.target_values_Y_six_parameter_fit(self.data_directory+'/'+ self.k_target_values_csv,
+            k_target_values_for_Y,Y_data_frame = self.master_equation_six_param_fit_instance.target_values_Y_six_parameter_fit(os.path.join(self.data_directory,self.k_target_values_csv),
                                                                                                                 self.experiment_dictonaries,
                                                                                                                 self.Y_data_frame,
                                                                                                                 master_equation_reaction_list=self.master_equation_reactions,
                                                                                                                 updated_six_paramter_fits_dict=self.six_paramter_fit_nominal_parameters_dict)
         else:
-            k_target_values_for_Y,Y_data_frame = self.master_equation_six_param_fit_instance.target_values_Y_six_parameter_fit(self.data_directory+'/'+ self.k_target_values_csv,
+            k_target_values_for_Y,Y_data_frame = self.master_equation_six_param_fit_instance.target_values_Y_six_parameter_fit(os.path.join(self.data_directory,self.k_target_values_csv),
                                                                                                                 self.experiment_dictonaries,
                                                                                                                 self.Y_data_frame,
                                                                                                                 master_equation_reaction_list=self.master_equation_reactions,
@@ -237,7 +241,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
 
         
         
-        k_target_values_for_S = self.master_equation_six_param_fit_instance.target_values_for_S_six_parameter_fit(self.data_directory+'/'+ self.k_target_values_csv,
+        k_target_values_for_S = self.master_equation_six_param_fit_instance.target_values_for_S_six_parameter_fit(os.path.join(self.data_directory, self.k_target_values_csv),
                                                                                                                   self.experiment_dictonaries,
                                                                                                                   self.S_matrix,
                                                                                                                   master_equation_reaction_list=self.master_equation_reactions,
@@ -422,8 +426,8 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
         # is this how this function works 
         if self.master_equation_flag == True:
             new_file,original_rxn_eqs,master_rxn_eqs =ctic.cti_write2(x = self.deltaXAsNsEas,
-                                                                      original_cti=self.data_directory +'/'+ self.cti_file_name,
-                                                                      master_rxns = self.data_directory+'/'+self.master_reaction_equation_cti_name,
+                                                                      original_cti=os.path.join(self.data_directory,self.cti_file_name),
+                                                                      master_rxns = os.path.join(self.data_directory,self.master_reaction_equation_cti_name),
                                                                       master_index = self.master_index,
                                                                       MP = self.master_equation_surrogate_model_update_dictonary,
                                                                       working_directory=self.data_directory,
@@ -431,7 +435,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
             
         if self.master_equation_flag == False:
             new_file,original_rxn_eqs,master_rxn_eqs =ctic.cti_write2(x = self.deltaXAsNsEas,
-                                                                      original_cti=self.data_directory +'/'+ self.cti_file_name,
+                                                                      original_cti=os.path.join(self.data_directory,self.cti_file_name),
                                                                       MP = self.master_equation_surrogate_model_update_dictonary,
                                                                       working_directory=self.data_directory,
                                                                       file_name= self.cti_file_name.replace('.cti','')+'_updated')
@@ -473,7 +477,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
 
         
         
-    def multiple_shock_tube_runs(self,loops):
+    def multiple_simulation_runs(self,loops):
         delta_X_list = []
         for loop in range(loops):            
             self.one_run_optimization(loop_counter=loop)

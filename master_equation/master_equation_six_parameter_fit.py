@@ -356,11 +356,10 @@ class Master_Equation_Six_Parameter_Fit(object):
                 k = gas.forward_rate_constants[reaction_number_in_cti]
                 #check units on original stuff
                 k=k*1000
-                #what units were these givin in?
-                #print(i,':',k,'   ',target_k[i])
-                # might need to multiply this  by 1000
-            
-                #check and make sure we are subtracting in the correct order 
+                
+                
+
+                    
             difference = np.log(target_k[i]) - np.log(k) 
             
 

@@ -2,14 +2,14 @@
 import sys
 sys.path.append('.') #get rid of this at some point with central test script or when package is built
 
-import MSI.simulations.instruments.shock_tube as st
-import MSI.cti_core.cti_processor as pr
-import MSI.optimization.matrix_loader as ml
-import MSI.optimization.opt_runner as opt
-import MSI.simulations.absorbance.curve_superimpose as csp
-import MSI.simulations.yaml_parser as yp
-import MSI.master_equation.master_equation_six_parameter_fit as mespf
-import MSI.cti_core.cti_combine as ctic
+import MSI_2.simulations.instruments.shock_tube as st
+import MSI_2.cti_core.cti_processor as pr
+import MSI_2.optimization.matrix_loader as ml
+import MSI_2.optimization.opt_runner as opt
+import MSI_2.simulations.absorbance.curve_superimpose as csp
+import MSI_2.simulations.yaml_parser as yp
+import MSI_2.master_equation.master_equation_six_parameter_fit as mespf
+import MSI_2.cti_core.cti_combine as ctic
 import copy
 import cantera as ct
 import numpy as np
@@ -35,7 +35,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
         copy.deepcopy(self.cti_file_name)
         self.perturbment = perturbment
         self.kineticSens = kineticSens
-        self.physicalSens = physicalSens
+        self.physicalSens = physicalSens 
         self.data_directory = data_directory
         self.yaml_file_list = yaml_file_list
         self.yaml_file_list_with_working_directory = None

@@ -1,8 +1,9 @@
-import sys
-sys.path.append('.') #get rid of this at some point with central test script or when package is built
+import sys, os
+sys.path.append('../../') #get rid of this at some point with central test script or when package is built
+os.chdir('../../')
 
-import MSI.simulations.instruments.jsr_steadystate as jsr
-import MSI.cti_core.cti_processor as pr
+import MSI2.simulations.instruments.jsr_steadystate as jsr
+import MSI2.cti_core.cti_processor as pr
 import cantera as ct
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,13 +17,13 @@ import pandas as pd
 #outfile='C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\N2O_AR\\glar_comp_lam_2027.csv'
 
 #outfile2='C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\N2O_AR\\glar_comp_lam_2027_ksens.csv'
-test_p=pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke Group\\Codes\\Mechanisms\\BattinLeClerk2011_Butane\\chem.cti')
-jsr1 = jsr.JSR_multiTemp_steadystate(volume=8.2e-5,pressure=1.0,
-                         temperatures=np.arange(800,1255,25),
+test_p=pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke Group\\Codes\\Mechanisms\\Lamoreaux\\lam_3p5_1050.cti')
+jsr1 = jsr.JSR_multiTemp_steadystate(volume=8.2e-5,pressure=1.02069,
+                         temperatures=np.arange(900,1100,25),
                          observables=['OH','O2'],
-                         kineticSens=1,
+                         kineticSens=0,
 						 physicalSens=0,
-                         conditions={'CH4':0.063,'He':0.874,'O2':0.063},
+                         conditions={'N2O':0.045,'Ar':0.955},
                          thermalBoundary='Adiabatic',
                          mechanicalBoundary='constant pressure',
                          processor=test_p,
@@ -61,7 +62,7 @@ methane_profile=[]
 #with open(data,'w') as f:
 #	f.writelines(temp)
 import pandas as pd
-
+solution.to_csv('C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\ESSCI_2020_N2O\\lam_results_3p5_1050.csv')
 #m=pd.read_csv(data,delimiter=',')
 #measT=m['T']
 
@@ -69,7 +70,7 @@ import pandas as pd
 
 #m2=pd.read_csv(data)
 #species_to_plot=['o2','co','co2','c2h4','c2h6']
-species_to_plot=['N2O','N2','H2']
+species_to_plot=['N2O','N2','NO']
 #solution.to_csv(outfile,index=False)
 #ksens_data.to_csv(outfile2,index=False)
 axis_font = {'fontname':'Arial', 'size':'14'}

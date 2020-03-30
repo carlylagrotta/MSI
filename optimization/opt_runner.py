@@ -1,11 +1,11 @@
-import MSI.simulations as sim
+import MSI_2.simulations as sim
 import re
-import MSI.cti_core.cti_processor as pr
-import MSI.optimization.matrix_loader as ml
-import MSI.simulations.absorbance.curve_superimpose as csp
-import MSI.simulations.yaml_parser as yp
-import MSI.simulations.instruments.shock_tube as st
-import MSI.simulations.instruments.jsr_steadystate as jsr
+import MSI_2.cti_core.cti_processor as pr
+import MSI_2.optimization.matrix_loader as ml
+import MSI_2.simulations.absorbance.curve_superimpose as csp
+import MSI_2.simulations.yaml_parser as yp
+import MSI_2.simulations.instruments.shock_tube as st
+import MSI_2.simulations.instruments.jsr_steadystate as jsr
 
 
 #acts as front end to the rest of the system
@@ -55,12 +55,18 @@ class Optimization_Utility(object):
         #needs to be in the order of mole fraction csv files + concentration csv files 
         exp_dict['experimental_data']  = experimental_data
         # start here 
-        exp_dict['uncertainty']        = self.build_uncertainty_shock_tube_dict(exp_dict['simulation'].fullParsedYamlFile)
+        if re.match('[Ss]hock [Tt]ube',yaml_dict['simulationType']):
+            exp_dict['uncertainty']        = self.build_uncertainty_shock_tube_dict(exp_dict['simulation'].fullParsedYamlFile)
+            exp_dict['simulation_type'] = yaml_dict['simulationType']
+
         #decide how we want to build uncertainty dict and if we want to pass in the parsed yaml file?
         
-        if yaml_dict['simulation_type']=='JSR':
+        if re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']):
+            
             exp_dict['volume']=yaml_dict['volume']
             exp_dict['residence_time']=yaml_dict['residence_time']
+            exp_dict['uncertainty']=self.build_uncertainty_jsr_dict(exp_dict['simulation'].fullParsedYamlFile)
+            exp_dict['simulation_type'] = yaml_dict['simulationType']
         if len(interpolated_absorbance) != 0:
             exp_dict['absorbance_model_data'] = interpolated_absorbance[0]
             exp_dict['absorbance_ksens']   = interpolated_absorbance[1]
@@ -78,7 +84,18 @@ class Optimization_Utility(object):
     def load_exp_from_file(self,yaml_exp_file_list = []):
         for file in yaml_exp_file_list:
             continue
-        
+    def build_uncertainty_jsr_dict(self,experiment_dictionary:dict={}):
+        uncertainty_dict={}
+        #Don't worry about absorbance for now
+        uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['tempRelativeUncertainty']
+        uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
+        uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['speciesUncertaintys'],
+                        'species':experiment_dictionary['speciesNames']}
+        uncertainty_dict['mole_fraction_relative_uncertainty'] = experiment_dictionary['moleFractionRelativeUncertainty']
+        uncertainty_dict['mole_fraction_absolute_uncertainty'] = experiment_dictionary['moleFractionAbsoluteUncertainty'] 
+        return uncertainty_dict
+    
+    
     def build_uncertainty_shock_tube_dict(self,experiment_dictonarie:dict={}):
         uncertainty_dict = {}
         #need to make an exception to this if there is no absortpion in dict
@@ -126,22 +143,31 @@ class Optimization_Utility(object):
                     processor=processor,
                     save_physSensHistories=1,
                     save_timeHistories=1,
-                    residence_time=experiment_dictionary['residence_time'])
+                    residence_time=experiment_dictionary['residence_time'],
+                    moleFractionObservables = experiment_dictionary['moleFractionObservables'],
+                    fullParsedYamlFile = experiment_dictionary)
         
-        jet_stirred_reactor.run()
-        jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)
-        jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)
-        jet_stirred_reactor.species_adjustment(dk)
-        print(jet_stirred_reactor.physicalSens)
+        soln,ksen=jet_stirred_reactor.run()
+        int_ksens_exp_mapped= jet_stirred_reactor.map_and_interp_ksens()
+        tsoln=jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)
+        psoln=jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)
+        ssoln=jet_stirred_reactor.species_adjustment(dk)
+        tsen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],tsoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
+        psen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],psoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
+        ssens=[]
+        for i in range(len(ssoln)):            
+            ssens.append(jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],ssoln[i][jet_stirred_reactor.observables],jet_stirred_reactor.observables))
+        #print(ssens)
+        #print(jet_stirred_reactor.physicalSens)
         csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] if x is not None]
-        print(csv_paths)
+        #print(csv_paths)
         exp_data = jet_stirred_reactor.importExperimentalData(csv_paths)
         
         experiment = self.build_single_exp_dict(exp_number,
                                            jet_stirred_reactor,
                                            int_ksens_exp_mapped,
-                                           int_tp_psen_against_experimental,
-                                           int_spec_psen_against_experimental,
+                                           [tsen,psen],
+                                           ssens,
                                            experimental_data = exp_data,
                                            yaml_dict=experiment_dictionary)
         return experiment

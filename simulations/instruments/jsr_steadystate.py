@@ -417,6 +417,7 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         #print(np.shape(ksens))
         if self.timeHistories != None:
             self.timeHistories.append(solution)
+        self.kineticSensitivities=ksens
         return (solution,ksens)
         
         
@@ -447,7 +448,7 @@ class JSR_multiTemp_steadystate(sim.Simulation):
             self.pressure=self.pressure+pres_del*self.pressure
             xj=self.conditions[spec_pair[0]]
             delxj=spec_pair[1]*self.conditions[spec_pair[0]]
-            print(xj,delxj)
+            #print(xj,delxj)
             self.conditions[spec_pair[0]]=np.divide(np.multiply(xj+delxj,1-xj),1-xj-delxj)
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                   self.pressure+self.pressure*pres_del,
@@ -483,10 +484,10 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         '''
         # gets the mole fraction and the species which are going to be 
         #perturbed in order to run a sensitivity calculation 
-        data = ''
+        data = []
         for x in self.conditions.keys():
             if x not in inert_species:
-                data =  self.sensitivity_adjustment(spec_pair=(x,spec_del))
+                data.append(self.sensitivity_adjustment(spec_pair=(x,spec_del)))
 
         return data
     
@@ -508,14 +509,38 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         for i in range(0,A.shape[2]):
             sheetA = A[:,:,i] #sheet for specific observable
             for x,column in enumerate(sheetA.T):
-                N[:,x,i]= np.multiply(column,np.log(self.timeHistories[0]['temperature'])) if temp_history is None else np.multiply(column,np.log(time_history['temperature']))
+                N[:,x,i]= np.multiply(column,np.log(self.timeHistories[0]['temperature'])) if temp_history is None else np.multiply(column,np.log(temp_history['temperature']))
                 #not sure if this mapping is correct, check with burke and also update absorption mapping
                 #to_mult_ea = np.divide(-1,np.multiply(1/ct.gas_constant,self.timeHistories[0]['temperature'])) if time_history is None else np.divide(-1,np.multiply(ct.gas_constant,time_history['temperature']))
-                to_mult_ea = np.divide(-1,np.multiply(1,self.timeHistories[0]['temperature'])) if temp_history is None else np.divide(-1,np.multiply(1,time_history['temperature']))
+                to_mult_ea = np.divide(-1,np.multiply(1,self.timeHistories[0]['temperature'])) if temp_history is None else np.divide(-1,np.multiply(1,temp_history['temperature']))
                 Ea[:,x,i]= np.multiply(column,to_mult_ea)
-                
-        return {'A':self.interpolate_experimental_kinetic(A),
-                'N':self.interpolate_experimental_kinetic(N),
-                'Ea':self.interpolate_experimental_kinetic(Ea)}
+        #print(np.shape(A))
+        tempA=[]
+        tempn=[]
+        tempEa=[]
+        for i in range(0,A.shape[2]):
+            tempA.append(A[:,:,i])
+            tempn.append(N[:,:,i])
+            tempEa.append(Ea[:,:,i])
+        A=tempA
+        N=tempn
+        Ea=tempEa
+        return {'A':A,
+                'N':N,
+                'Ea':Ea}
+    def sensitivityCalculation(self,originalValues,newValues,thingToFindSensitivtyOf,dk=.01):
+        if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
+            
+            #newValues.columns = thingToFindSensitivtyOf
+            
+            newValues = newValues.applymap(np.log)
+            originalValues = originalValues.applymap(np.log)
+            #tab
+            
+            sensitivity = (newValues.subtract(originalValues)/dk)
+            return sensitivity
+        else:
+            print("Error: wrong datatype, both must be pandas data frames")
+            return -1
         
         
