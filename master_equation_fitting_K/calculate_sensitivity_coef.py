@@ -91,6 +91,7 @@ def perturb_parameter_find_new_alphas(dk,
                                       T_max,
                                       number_coefficients):
     change_alpha_over_change_parameter = {}
+    change_alpha_over_change_parameter_by_reaction = {}
     original_dictonary = copy.deepcopy(dictonary)
     for parameter in dictonary[reaction].keys():
        dictonary[reaction][parameter] = 1.01*dictonary[reaction][parameter]
@@ -120,9 +121,9 @@ def perturb_parameter_find_new_alphas(dk,
            sensitivity_coef = np.true_divide(change_in_coefficients,change_in_parameter)
     
        change_alpha_over_change_parameter[parameter] = sensitivity_coef
+       change_alpha_over_change_parameter_by_reaction[reaction] = change_alpha_over_change_parameter
 
-     
-    return change_alpha_over_change_parameter
+    return change_alpha_over_change_parameter_by_reaction
 
 
 def multiply_by_six_parameter_fit_coeff(T_min,
@@ -131,23 +132,32 @@ def multiply_by_six_parameter_fit_coeff(T_min,
                                         dk,
                                         number_coefficients,
                                         dictonary,
-                                        six_parameter_fit_sensitivity_dict,
-                                        change_alpha_over_change_parameter):
+                                        six_parameter_fit_sensitivity_dict):
     
     mapped_sensitivity_dict = {}
-    change_alpha_over_change_parameter = perturb_parameter_find_new_alphas(dk,    
+    change_alpha_over_change_parameter_by_reaction = perturb_parameter_find_new_alphas(dk,    
                                                                            reaction,
                                                                            dictonary,
                                                                            T_min,
                                                                            T_max,
                                                                            number_coefficients)
     
-    print(six_parameter_fit_sensitivity_dict)
-    for parameter in six_parameter_fit_sensitivity_dict[reaction].keys():
-        for molecular_parameter in six_parameter_fit_sensitivity_dict[parameter]:
-            print(molecular_parameter)
-        #for i,alpha in change_alpha_over_change_parameter[parameter]:
+    for i in range(number_coefficients):
+        alpha_key = 'alpha_'+str(i)
+        alpha_list = []
+        temp_dict = {}
+        for parameter in six_parameter_fit_sensitivity_dict[reaction].keys():
+            parameter_key = parameter
+            paramter_list = []
+            for k, molecular_parameter in enumerate(six_parameter_fit_sensitivity_dict[reaction][parameter]): 
+                change_alpha_over_change_molecular_parameter = molecular_parameter * change_alpha_over_change_parameter_by_reaction[reaction][parameter][i]
+                print('alpha',i,parameter,'    ','molecular parameter:',k)
+                paramter_list.append(change_alpha_over_change_molecular_parameter)
+            temp_dict[parameter]=paramter_list
+            mapped_sensitivity_dict[alpha_key] = temp_dict
     
+    return mapped_sensitivity_dict
+
     
     
     
