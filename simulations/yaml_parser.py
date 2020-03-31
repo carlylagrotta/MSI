@@ -220,7 +220,8 @@ class Parser(object):
                    'simulationType':  simulation_type,
                    'parameterOnes':parameter_ones,
                    'parameterTwos':parameter_twos,
-                   'functionalForm':functional_form
+                   'functionalForm':functional_form,
+                   'simulationType':  simulation_type
                    }
             
     def load_yaml_list(self, yaml_list:list = []):
@@ -240,8 +241,11 @@ class Parser(object):
         counter=0
         for tup in list_of_yaml_objects:
             
-            simtype=self.get_sim_type(tup[0])
-            if simtype=='shock tube' or simtype=='Shock Tube' or simtype=='Shock tube':
+            simtype=str(self.get_sim_type(tup[0]))
+           # print(simtype)
+            #simtype = 'shock tube'
+            #if simtype=='shock tube' or simtype=='Shock Tube' or simtype=='Shock tube':
+            if re.match('[Ss]hock [Tt]ube',simtype):
                 if len(tup)>1:
                     experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
@@ -249,7 +253,7 @@ class Parser(object):
                 else:
                     
                     experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0]))
-            if simtype=='jsr' or simtype=='JSR':
+            elif simtype=='jsr' or simtype=='JSR':
                 if len(tup)>1:
                     experiment_dictonaries.append(self.parse_jsr_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
