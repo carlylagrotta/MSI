@@ -37,7 +37,6 @@ class Simulation(object):
         Set solution object for a simulation
         '''
         #set the temperature, pressure and species mole fractions for the simulation
-        #print(conditions_perturb)
         if temperature== -1:
             temperature = self.temperature
         if pressure == -1:
@@ -46,19 +45,17 @@ class Simulation(object):
             new_conditions = self.conditions
         else:
             #make copy of the original mole fractions so they can be changed 
-            #for sensitivity analysis but the original ones are saved
-            print('hello')
+            #for sensitivity analysis but the original ones are saved 
             conditions_copy = copy.deepcopy(self.conditions)
             for x in conditions_perturb.keys():
                 if x != '':
                     
                     #print(conditions_perturb[x],'these are the perturbed conditions')
                     #conditions_copy[x] = ((conditions_copy[x]+conditions_perturb[x])*(1-conditions_copy[x]))/((1-conditions_copy[x])-(conditions_copy[x]+conditions_perturb[x]))
-                    print(conditions_copy[x],conditions_perturb[x])
+                    
                     conditions_copy[x] = ((conditions_copy[x]+conditions_perturb[x])*(1-conditions_copy[x]))/(1 - (conditions_copy[x]+conditions_perturb[x]))
             new_conditions = conditions_copy
-            #print(new_conditions,'these are the new conditions')
-        print('testing'+str(new_conditions))
+        
         self.processor.solution.TPX=temperature,pressure*self.pasc_to_atm, new_conditions
         #print(self.processor.solution.TPX)
         

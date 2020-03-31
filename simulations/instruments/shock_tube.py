@@ -315,9 +315,12 @@ class shockTube(sim.Simulation):
             sheet = array[:,:,i]
             exp_interp_array.append([])
             for time_history in sheet.T:
-                new_history = np.interp(frame.ix[:,0],
-                                       self.timeHistories[0]['time'],
-                                       time_history)
+                # new_history = np.interp(frame.ix[:,0],
+                #                        self.timeHistories[0]['time'],
+                #                        time_history)
+                new_history = np.interp(frame.iloc[:,0],
+                             self.timeHistories[0]['time'],
+                             time_history)
                 new_history = new_history.reshape((new_history.shape[0],
                                                   1))
                 exp_interp_array[-1].append(new_history)
@@ -338,6 +341,7 @@ class shockTube(sim.Simulation):
                 #to_mult_ea = np.divide(-1,np.multiply(1/ct.gas_constant,self.timeHistories[0]['temperature'])) if time_history is None else np.divide(-1,np.multiply(ct.gas_constant,time_history['temperature']))
                 to_mult_ea = np.divide(-1,np.multiply(1,self.timeHistories[0]['temperature'])) if time_history is None else np.divide(-1,np.multiply(1,time_history['temperature']))
                 Ea[:,x,i]= np.multiply(column,to_mult_ea)
+                
                 
         return {'A':self.interpolate_experimental_kinetic(A),
                 'N':self.interpolate_experimental_kinetic(N),
@@ -399,7 +403,7 @@ class shockTube(sim.Simulation):
                 
             for x in int_exp:
                 x.columns = mole_fraction_and_concentration_observables
-                
+            
             return int_exp[0]
                     
                     
@@ -413,9 +417,14 @@ class shockTube(sim.Simulation):
                     if i>len(self.observables):
                         break
                     #change these bboth to use observable 
-                    interpolated_column= np.interp(frame.ix[:,0],
+                    # interpolated_column= np.interp(frame.ix[:,0],
+                    #                                self.timeHistories[0]['time'],
+                    #                                time_history.ix[:,i])
+                    
+                    interpolated_column= np.interp(frame.iloc[:,0],
                                                    self.timeHistories[0]['time'],
-                                                   time_history.ix[:,i])
+                                                   time_history.iloc[:,i])
+
                     
 
                     interpolated_column= np.reshape(interpolated_column,
@@ -445,7 +454,8 @@ class shockTube(sim.Simulation):
         #interpolating time histories to original time history 
         if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
             tempDfForInterpolation = newValues[thingBeingInterpolated]
-            tempListForInterpolation = [tempDfForInterpolation.ix[:,x].values for x in range(tempDfForInterpolation.shape[1])]
+            #tempListForInterpolation = [tempDfForInterpolation.ix[:,x].values for x in range(tempDfForInterpolation.shape[1])]
+            tempListForInterpolation = [tempDfForInterpolation.iloc[:,x].values for x in range(tempDfForInterpolation.shape[1])]
             interpolatedData = [np.interp(originalValues['time'].values,newValues['time'].values,tempListForInterpolation[x]) for x in range(len(tempListForInterpolation))]
             interpolatedData = [pd.DataFrame(interpolatedData[x]) for x in range(len(interpolatedData))]
             interpolatedData = pd.concat(interpolatedData, axis=1,ignore_index=True)

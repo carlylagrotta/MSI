@@ -21,23 +21,23 @@ import MSI.utilities.post_processor as post_processor
 files_to_include = [['Hong_0.yaml'],
                     ['Hong_2.yaml'],
                     ['Hong_3.yaml'],
+                    ['Hong_4.yaml','Hong_4_abs.yaml'],
                     ['Hong_1.yaml'],
                     ['Troe_4.yaml','Troe_4_abs.yaml'],
                     ['Troe_5.yaml','Troe_5_abs.yaml'],
                     ['Troe_6.yaml','Troe_6_abs.yaml'],
                     ['Troe_7.yaml','Troe_7_abs.yaml'],
-                    ['Troe_8.yaml','Troe_8_abs.yaml'],
-                    ['Hong_4.yaml','Hong_4_abs.yaml'],
-                    ['Hong_5.yaml','Hong_5_abs.yaml'],
-                    ['Hong_6_high_temp_large_uncertainty.yaml', 'Hong_6_high_temp_abs.yaml']] 
-                                                      
+                    ['Troe_8.yaml','Troe_8_abs.yaml'],            
+                    ['Hong_5.yaml','Hong_5_abs.yaml']]
 
 
-
-
-                                                      
-numer_of_iterations = 15
+#files_to_include = [['Hong_0.yaml']]
+numer_of_iterations = 10
 cti_file = 'FFCM1_custom.cti'
+#cti_file = 'FFCM1_custom_1_collider.cti'
+
+
+
 working_directory = 'MSI/data/test_data'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty.csv'
 master_reaction_equation_cti_name = 'master_reactions_FFCM1.cti'
@@ -56,11 +56,19 @@ master_equation_reactions = ['H2O2 + OH <=> H2O + HO2',
 master_index = [2,3,4,5,6,7]
 
 master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df.csv')
+#master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df_rebuttle_uncertainty.csv')
+
 #this could be 'On'
 
 rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting.csv'
 rate_constant_target_value_data = 'FFCM1_target_reactions_1.csv'
 rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data.csv'
+
+
+#
+#rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting.csv'
+#rate_constant_target_value_data = 'FFCM1_target_reactions_1_no_weights_for_test.csv'
+#rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data.csv'
 
 #start here 
 
@@ -160,7 +168,8 @@ exp_dict_list_original = MSI_st_instance_one.experiment_dictonaries
 original_covariance = MSI_st_instance_one.covarience
 X_one_itteration = MSI_st_instance_one.X
 MSI_st_instance_one.deltaXAsNsEas
-
+Ydf_original = MSI_st_instance_one.Y_data_frame
+Zdf_original = MSI_st_instance_one.z_data_frame
 
 
 
@@ -241,7 +250,7 @@ csv_file_sigma = ''
 plotting_instance = plotter.Plotting(S_matrix,
                                      s_matrix,
                                      Y_matrix,
-                                     Y_matrix,
+                                     y,
                                      z_matrix,
                                      X,
                                      sigma,
@@ -268,12 +277,8 @@ diag = plotting_instance.getting_matrix_diag(covarience)
 
 #plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
 
-#
-#
-#plotting_instance.plotting_rate_constants(optimized_cti_file=MSI_st_instance_two.new_cti_file,
-#                                original_cti_file=original_cti_file,
-#                                initial_temperature=250,
-#                                final_temperature=2500)
+
+
                                 
 
 
@@ -289,6 +294,29 @@ plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MS
                                 six_parameter_fit_dict_nominal = six_parameter_fit_nominal_parameters_dict,
                                 six_parameter_fit_sensitivity_dict =six_parameter_fit_sensitivities )
 
+
+
+
+plotting_instance.plotting_physical_model_parameter_distributions(MSI_st_instance_two.posterior_diag_df['parameter'].tolist(),
+                                                                  MSI_st_instance_two,
+                                                                  MSI_st_instance_two.X,
+                                                                  MSI_st_instance_two.original_experimental_conditions_local)
+
+RSS_list = plotting_instance.residual_sum_of_squares()
+SYY_list = plotting_instance.sum_of_squares_of_Y()
+R_squared = plotting_instance.calculating_R_squared(RSS_list,SYY_list)
+
+
+overall_list_unweighted_uncertainty,overall_list_maximum_deviation,overall_list_weighted_uncertainty,overall_percent_difference = plotting_instance.weighted_sum_of_squares()
+SYY_list_weighted = plotting_instance.weighted_sum_of_squares_of_Y()
+R_squared_weighted = plotting_instance.calculating_R_squared(overall_list_weighted_uncertainty,SYY_list_weighted)
+
+plotting_instance.plotting_individual_histograms()
+plotting_instance.plotting_normal_distributions(MSI_st_instance_two.posterior_diag_df['parameter'].tolist()[889:],
+                                                optimized_cti_file=MSI_st_instance_two.new_cti_file,
+                                                pdf_distribution_file='',
+                                                shock_tube_instance=MSI_st_instance_two)
+
 #plotting_instance.plotting_X_itterations(list_of_X_values_to_plot = [0,1,2,3,4,5,50],list_of_X_array=X_list,number_of_iterations=numer_of_iterations)
 post_processor_instance = post_processor.post_processing(optimized_cti_file = MSI_st_instance_two.new_cti_file,
                                                     original_cti_file = original_cti_file,
@@ -299,6 +327,9 @@ post_processor_instance = post_processor.post_processing(optimized_cti_file = MS
                                                     exp_dict_list_optimized = exp_dict_list_optimized,
                                                     exp_dict_list_original = exp_dict_list_original,
                                                     parsed_yaml_list = parsed_yaml_list)
+
+
+
 
 kinetic_paramters_dict = post_processor_instance.create_active_kinetic_paramter_dictonary()
 physical_params_dict = post_processor_instance.create_active_physical_paramter_dictonary()

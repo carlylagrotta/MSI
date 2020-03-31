@@ -49,15 +49,16 @@ class Optimization_Utility(object):
             exp_dict['pressure']           = interpolated_tp_sens[1]
             exp_dict['species']            = interpolated_species_sens
             
+        exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
         exp_dict['observables']        = simulation.observables
         exp_dict['concentration_observables'] = simulation.concentrationObservables
         exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
         #needs to be in the order of mole fraction csv files + concentration csv files 
         exp_dict['experimental_data']  = experimental_data
         # start here 
-        if re.match('[Ss]hock [Tt]ube',yaml_dict['simulationType']):
+        if re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['simulationType']):
             exp_dict['uncertainty']        = self.build_uncertainty_shock_tube_dict(exp_dict['simulation'].fullParsedYamlFile)
-            exp_dict['simulation_type'] = yaml_dict['simulationType']
+            exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
 
         #decide how we want to build uncertainty dict and if we want to pass in the parsed yaml file?
         
@@ -223,7 +224,8 @@ class Optimization_Utility(object):
                                            int_ksens_exp_mapped,
                                            int_tp_psen_against_experimental,
                                            int_spec_psen_against_experimental,
-                                           experimental_data = exp_data)
+                                           experimental_data = exp_data,
+                                           yaml_dict=experiment_dictonary)
         
         #write test case and check if we can get as far as just returnign the experiment
         return experiment
@@ -282,6 +284,7 @@ class Optimization_Utility(object):
         shock_tube.species_adjustment(dk)
         int_tp_psen_against_experimental = shock_tube.interpolate_experimental([shock_tube.interpolate_physical_sensitivities(index=1),
                                                                                  shock_tube.interpolate_physical_sensitivities(index=2)])
+
         
         int_spec_psen_against_experimental = shock_tube.interpolate_experimental(pre_interpolated=shock_tube.interpolate_species_sensitivities())
         
@@ -317,7 +320,8 @@ class Optimization_Utility(object):
                                       experimental_data = exp_data,
                                       absorbance_experimental_data = loaded_experimental_data_absorbance,
                                       time_history_interpolated_against_absorbance_experiment = time_history_interp_against_experiment_dict,
-                                      absorbance_calculated_from_model = abs_data[0])
+                                      absorbance_calculated_from_model = abs_data[0],
+                                      yaml_dict=experiment_dictonary)
         
         return experiment
     
@@ -399,7 +403,8 @@ class Optimization_Utility(object):
                                       interpolated_absorbance=interp_abs_exp,
                                       absorbance_experimental_data = loaded_experimental_data_absorbance,
                                       time_history_interpolated_against_absorbance_experiment = time_history_interp_against_experiment_dict,
-                                      absorbance_calculated_from_model = abs_data[0] )
+                                      absorbance_calculated_from_model = abs_data[0],
+                                      yaml_dict=experiment_dictonary)
         
         return experiment    
     

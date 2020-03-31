@@ -92,34 +92,37 @@ class OptMatrix(object):
         #tab, start working here tomorrow with how we want to read in csv file     
         for i,exp_dic in enumerate(exp_dict_list):
             counter = 0
-            for j,observable in enumerate((exp_dic['mole_fraction_observables']+
-                                           exp_dic['concentration_observables'])):
+
+            for j,observable in enumerate(exp_dic['mole_fraction_observables']+
+                                           exp_dic['concentration_observables']):
+
                 if observable == None:
                     pass
-                elif observable in exp_dic['mole_fraction_observables']:
-                    ## add ppm statment here ? check if it exists? and add concentration statment below just for parcing 
-                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['mole_fraction_relative_uncertainty'][counter],
-                        exp_dic['uncertainty']['mole_fraction_absolute_uncertainty'][counter],
-                        exp_dic['experimental_data'][counter][observable].values,exp_dic['experimental_data'][counter])
-                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
-                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
-                elif observable in exp_dic['concentration_observables'] and '_ppm' in exp_dic['experimental_data'][counter].columns[1]:
-                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
-                         exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
-                         exp_dic['experimental_data'][counter][observable+'_ppm'].values,exp_dic['experimental_data'][counter])
-                   
-                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0], 1))
-                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
-                elif observable in exp_dic['concentration_observables'] and '_mol/cm^3' in exp_dic['experimental_data'][counter].columns[1]:
-                     total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
-                         exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
-                         exp_dic['experimental_data'][counter][observable+'_mol/cm^3'].values,exp_dic['experimental_data'][counter])
-                   
-                     total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
-                     un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))               
+                else:
+                    if observable in exp_dic['mole_fraction_observables']:
+                        ## add ppm statment here ? check if it exists? and add concentration statment below just for parcing 
+                        total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['mole_fraction_relative_uncertainty'][counter],
+                            exp_dic['uncertainty']['mole_fraction_absolute_uncertainty'][counter],
+                            exp_dic['experimental_data'][counter][observable].values,exp_dic['experimental_data'][counter])
+                        total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
+                        un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
+                    elif observable in exp_dic['concentration_observables'] and '_ppm' in exp_dic['experimental_data'][counter].columns[1]:
+                        total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
+                             exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
+                             exp_dic['experimental_data'][counter][observable+'_ppm'].values,exp_dic['experimental_data'][counter])
+                       
+                        total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0], 1))
+                        un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
+                    elif observable in exp_dic['concentration_observables'] and '_mol/cm^3' in exp_dic['experimental_data'][counter].columns[1]:
+                         total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
+                             exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
+                             exp_dic['experimental_data'][counter][observable+'_mol/cm^3'].values,exp_dic['experimental_data'][counter])
+                       
+                         total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
+                         un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))               
 
-                else: 
-                    raise Exception('We Do Not Have This Unit Installed, Please Use Mole Fraction, ppm, or mol/cm^3!')               
+                    else: 
+                        raise Exception('We Do Not Have This Unit Installed, Please Use Mole Fraction, ppm, or mol/cm^3!')               
 
                     
                     
@@ -127,11 +130,11 @@ class OptMatrix(object):
                     
                     
                     
-                Z.append(total_uncertainty)
-                sigma.append(un_weighted_uncertainty)
-                tempList = [observable+'_'+'experiment'+str(i)]*np.shape(total_uncertainty)[0]
-                Z_data_Frame.extend(tempList)
-                counter+=1
+                    Z.append(total_uncertainty)
+                    sigma.append(un_weighted_uncertainty)
+                    tempList = [observable+'_'+'experiment'+str(i)]*np.shape(total_uncertainty)[0]
+                    Z_data_Frame.extend(tempList)
+                    counter+=1
             if 'absorbance_observables' in list(exp_dic.keys()):
                 wavelengths = parsed_yaml_file_list[i]['absorbanceCsvWavelengths']
                     
@@ -610,7 +613,6 @@ class OptMatrix(object):
                master_equation_uncertainty_df = None,
                master_equation_flag = False):
         
-        
 
         
         #preprocessing for padding
@@ -755,9 +757,7 @@ class OptMatrix(object):
                                     array = array.reshape((array.shape[0],1))
                                     perturbed_coefficeints.append(array)
 
-                                
-                    
-                    
+        
                     missing_sigmas = []  
                     for indp_sigma in range(len(list_to_keep_order_of_coef)):
                         if indp_sigma not in index_list:
@@ -933,7 +933,34 @@ class OptMatrix(object):
         
             
         else:
-            X_new = X      
+            X_new = X
+        ##################################################################
+        #print('USING BURKE X VALUES')
+        #X = pd.read_csv('MSI/data/test_data/burke_X_values.csv')
+        #X= X['Burke_Value'].values
+        #X = X.reshape(X.shape[0],1)
+        
+        ################################################################
+
+        ##################################################################
+#        print('RUNNING TEST')
+#        X_new[846] = -0.28572334167542013
+#        X_new[847] = -0.007258986471821074
+#        X_new[848] = -0.07160891432785314
+#        X_new[849] = -0.038747789992729584
+#        X_new[850] = -0.09184808671928052
+#        X_new[851] = -0.13343314153597205
+#        X_new[852] = 0.0046931837946472
+#        X_new[853] = -0.007191276020250346
+
+        #X= X['Burke_Value'].values
+        #X = X.reshape(X.shape[0],1)
+        #zeros = np.zeros((X_new.shape))
+        #X_new = zeros
+       # X_new[873,0] = .01
+       # print("X_NEW")
+        
+        ################################################################        
         
         X_new = list(X_new.flatten())            
         if exp_dict_list[0]['simulation'].kineticSens ==1:
@@ -1234,7 +1261,236 @@ class OptMatrix(object):
             return X,c,s_matrix,y_matrix,delta_X,z_matrix,X_data_frame,prior_diag,prior_diag_df,sorted_prior_diag,covariance_prior_df,prior_sigmas_df
         else:
             return X,c,s_matrix,y_matrix,delta_X,z_matrix,X_data_frame,posterior_diag,posterior_diag_df,sorted_posterior_diag,covariance_posterior_df,posterior_sigmas_df
-                           
+
+class Adding_Target_Values(meq.Master_Equation):
+    def __init__(self,S_matrix,Y_matrix,z_matrix,sigma,Y_data_Frame,z_data_Frame):
+        self.S_matrix = S_matrix
+        self.Y_matrix = Y_matrix
+        self.z_matrix = z_matrix
+        self.sigma = sigma
+        self.Y_data_Frame = Y_data_Frame
+        self.z_data_Frame = z_data_Frame
+        meq.Master_Equation.__init__(self)
+        
+         
+        
+    def target_values_Y(self,target_value_csv,exp_dict_list:list,Y_data_Frame):
+        import cantera as ct
+        Y_df_list = []
+        Y_values = []
+        
+        #make sure we put the reactions into the file in the units cantera uses
+        target_value_csv = pd.read_csv(target_value_csv)
+        target_reactions = target_value_csv['Reaction']
+        target_temp = target_value_csv['temperature']
+        target_press = target_value_csv['pressure']
+        target_k = target_value_csv['k']
+        bath_gas = target_value_csv['M']
+        reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
+        gas = ct.Solution(exp_dict_list[0]['simulation'].processor.cti_path)
+        #print(gas.rea)
+        diff_in_ks_for_Y = []
+        for i,reaction in enumerate(target_reactions): 
+                #ask about the mixture composition
+            if target_press[i] == 0:
+                pressure = 1e-9
+            else:
+                pressure = target_press[i]
+            if bath_gas[i] !=0:
+                gas.TPX = target_temp[i],pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}
+
+            else:
+                gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
+            reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+            k = gas.forward_rate_constants[reaction_number_in_cti]
+            k = k*1000
+            
+                #check and make sure we are subtracting in the correct order 
+
+            difference = np.log(target_k[i]) - np.log(k) 
+
+            diff_in_ks_for_Y.append(difference)
+            Y_df_list.append(reaction)
+            Y_values.append(difference)
+            
+        k_targets_for_y = np.array(diff_in_ks_for_Y)
+        k_targets_for_y = k_targets_for_y.reshape((k_targets_for_y.shape[0],1))
+        Y_values = np.array(Y_values)
+        
+        Y_df_temp = pd.DataFrame({'value': Y_df_list,'ln_difference': Y_values.reshape((Y_values.shape[0],))}) 
+        Y_data_Frame = Y_data_Frame.append(Y_df_temp, ignore_index=True)
+        
+
+        
+        return k_targets_for_y,Y_data_Frame
+    
+    def target_values_for_Z(self,target_value_csv,z_data_Frame):
+        z_over_w = []
+        sigma = []
+        target_value_csv = pd.read_csv(target_value_csv)
+        target_ln_uncertainty = target_value_csv['ln_unc_k']
+        target_W = target_value_csv['W']
+        target_reactions = target_value_csv['Reaction']
+        z_df_list=[]
+        z_values = []
+        for i,value in enumerate(target_ln_uncertainty):
+            temp = np.divide(value,target_W[i])
+            sigma.append(value)
+            z_over_w.append(temp)
+            z_values.append(temp)
+            z_df_list.append(target_reactions[i])
+            
+        k_targets_for_z = np.array(z_over_w)
+        sigma = np.array(sigma)
+        sigma = sigma.reshape((sigma.shape[0],1))
+        z_values = np.array(z_values)
+        k_targets_for_z = k_targets_for_z.reshape((k_targets_for_z.shape[0],1))
+        Z_data_Frame_temp = pd.DataFrame({'value': z_df_list,'Uncertainty': z_values.reshape((z_values.shape[0],))})
+        z_data_Frame = z_data_Frame.append(Z_data_Frame_temp, ignore_index=True)    
+        return k_targets_for_z,sigma,z_data_Frame
+    
+
+    def target_values_for_S(self,target_value_csv,
+                            exp_dict_list,
+                            S_matrix,
+                            master_equation_reaction_list = [],
+                            master_equation_sensitivites = {}):
+                
+                
+                
+            target_value_csv = pd.read_csv(target_value_csv)
+            target_reactions = target_value_csv['Reaction']
+            target_temp = target_value_csv['temperature']
+            target_press = target_value_csv['pressure']
+            target_k = target_value_csv['k']
+            reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
+            number_of_reactions_in_cti = len(reactions_in_cti_file)
+            As = []
+            Ns =  []
+            Eas = []
+                
+
+            
+            def create_empty_nested_reaction_list():
+                
+                
+                nested_reaction_list = [[] for x in range(len(master_equation_reaction_list))]
+                for reaction in master_equation_reaction_list:
+                    for i,MP in enumerate(master_equation_sensitivites[reaction]):
+                        nested_reaction_list[master_equation_reaction_list.index(reaction)].append(0)
+                return nested_reaction_list      
+            
+            
+            def create_tuple_list(array_of_sensitivities):
+                tuple_list = []
+                for ix,iy in np.ndindex(array_of_sensitivities.shape):
+                    tuple_list.append((ix,iy))
+                return tuple_list
+                
+            MP_stack = []
+            target_values_to_stack =  []
+            for i,reaction in enumerate(target_reactions):
+                if reaction in master_equation_reaction_list:
+                    nested_reaction_list = create_empty_nested_reaction_list()
+                    for j, MP_array in enumerate(master_equation_sensitivites[reaction]):
+                        tuple_list = create_tuple_list(MP_array)
+                        temp = []
+                        counter = 0    
+                        for sensitivity in np.nditer(MP_array,order='C'):
+                            k = tuple_list[counter][0]
+                            l= tuple_list[counter][1]
+                            counter +=1
+                               #need to add reduced p and t, and check these units were using to map
+                                
+                            #these might not work
+                            
+                            t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                            
+                            if target_press[i] ==0:
+                                target_press_new = 1e-9
+                            else:
+                                target_press_new=target_press[i]
+                            p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                            #these might nowt work 
+                            single_alpha_map = t_alpha*p_alpha*sensitivity
+                            temp.append(single_alpha_map)
+                        temp =sum(temp)
+                        #should there be an = temp here 
+                        #nested_reaction_list[master_equation_reaction_list.index(reaction)][j]=temp
+                        nested_reaction_list[master_equation_reaction_list.index(reaction)][j]=temp
+
+                    temp2  = nested_reaction_list
+                    flat_list = [item for sublist in temp2 for item in sublist]
+                    #print(flat_list)
+                    MP_stack.append(nested_reaction_list)
+                    flat_list = np.array(flat_list)
+                    flat_list = flat_list.reshape((1,flat_list.shape[0])) 
+                    target_values_to_stack.append(flat_list)
+                
+                else:
+                    #this will need to get fixed if we want to handle all reactions as chevy
+                    A_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
+    
+                    N_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
+                    Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
+                        #decide if this mapping is correct             
+                    A_temp[0,reactions_in_cti_file.index(reaction)] = 1
+                    N_temp [0,reactions_in_cti_file.index(reaction)] = np.log(target_temp[i])
+                    Ea_temp[0,reactions_in_cti_file.index(reaction)] = (-1/target_temp[i])
+                    
+                    As.append(A_temp)
+                    Ns.append(N_temp)
+                    Eas.append(Ea_temp)
+                    A_temp = A_temp.reshape((1,A_temp.shape[1]))
+                    N_temp = N_temp.reshape((1,N_temp.shape[1]))
+                    Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+                    target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp)))
+                    
+                    
+               # might need to edit this to pass in s? and  
+            S_matrix = S_matrix
+            shape_s = S_matrix.shape
+            S_target_values = []
+            for i,row in enumerate(target_values_to_stack):
+                if target_reactions[i] in master_equation_reaction_list:
+                    zero_to_append_infront = np.zeros((1,((number_of_reactions_in_cti-len(master_equation_reaction_list))*3)))
+                    
+                    zero_to_append_behind = np.zeros((1, shape_s[1] - ((number_of_reactions_in_cti-len(master_equation_reaction_list))*3) - np.shape(row)[1] ))                
+                    temp_array = np.hstack((zero_to_append_infront,row,zero_to_append_behind))
+                    S_target_values.append(temp_array)
+                else:
+                    zero_to_append_behind = np.zeros((1,shape_s[1]-np.shape(row)[1]))
+                    temp_array = np.hstack((row,zero_to_append_behind))
+                    S_target_values.append(temp_array)
+
+
+            S_target_values = np.vstack((S_target_values))
+            return S_target_values        
+
+    
+    def appending_target_values(self,target_values_for_z,
+                                target_values_for_Y,
+                                target_values_for_S,
+                                sigma_target_values,
+                                S_matrix,
+                                Y_matrix,
+                                z_matrix,
+                                sigma):
+                                
+        z_matrix = np.vstack((z_matrix ,target_values_for_z))
+        Y_matrix = np.vstack((Y_matrix,target_values_for_Y))
+        
+        S_matrix = np.vstack((S_matrix,target_values_for_S))
+        sigma = np.vstack((sigma,sigma_target_values))
+        
+        self.S_matrix = S_matrix
+        self.Y_matrix = Y_matrix
+        self.z_matrix = z_matrix
+        self.sigma = sigma
+        
+        return S_matrix,Y_matrix,z_matrix,sigma
+    
+
                 
        
             

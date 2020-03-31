@@ -8,6 +8,7 @@ import MSI.optimization.opt_runner as opt
 import MSI.simulations.absorbance.curve_superimpose as csp
 import MSI.simulations.yaml_parser as yp
 import MSI.master_equation.master_equation_six_parameter_fit as mespf
+import MSI.master_equation.master_equation as mecheb
 import MSI.cti_core.cti_combine as ctic
 import copy
 import cantera as ct
@@ -92,6 +93,7 @@ class MSI_shocktube_optimization_chebyshev(object):
                                                                       file_name= self.cti_file_name.replace('.cti','')+'_updated')
             self.new_cti_file = new_file
             
+        
         processor = pr.Processor(self.new_cti_file)
         #processor = pr.Processor(self.data_directory +'/'+ self.cti_file_name)
         self.processor = processor
@@ -152,18 +154,29 @@ class MSI_shocktube_optimization_chebyshev(object):
         
            
         self.experiment_dictonaries = experiment_dictonaries
+       
+
         #maybe save this and just pass it in 
         return
     def master_equation_s_matrix_building(self,loop_counter=0):
-        master_equation_six_param_fit_instance = mespf.Master_Equation_Six_Parameter_Fit()
-        self.master_equation_six_param_fit_instance = master_equation_six_param_fit_instance
+        master_equation_cheby_instance = mecheb.Master_Equation()
+        self.master_equation_cheby_instance = master_equation_cheby_instance
         
-        MP_for_S_matrix = master_equation_six_param_fit_instance.master_equation_handling(self.experiment_dictonaries,
-                                                                                          self.list_of_parsed_yamls,
-                                                                                          self.molecular_parameter_sensitivities,
-                                                                                          self.master_equation_reactions)
+        
+        mapped_to_alpha_full_simulation,nested_list = master_equation_cheby_instance.map_to_alpha(self.chebyshev_sensitivities,
+                                                                                                  self.experiment_dictonaries,
+                                                                                                  self.list_of_parsed_yamls,
+                                                                                                  self.master_equation_reactions)   
+        self.mapped_to_alpha_full_simulation = mapped_to_alpha_full_simulation
+        MP_for_S_matrix,new_sens_dict,broken_up_by_reaction,tottal_dict,tester = master_equation_cheby_instance.map_parameters_to_s_matrix(self.mapped_to_alpha_full_simulation,
+                                                                                    self.chebyshev_sensitivities,
+                                                                                    self.master_equation_reactions)
 
         self.MP_for_S_matrix = MP_for_S_matrix
+        self.new_sens_dict = new_sens_dict
+        self.broken_up_by_reaction = broken_up_by_reaction
+        self.tottal_dict = tottal_dict
+        self.tester=tester
         return
         
     def building_matrices(self,loop_counter=0):
@@ -212,48 +225,51 @@ class MSI_shocktube_optimization_chebyshev(object):
         return
     
     
-    #test up to here first 
-    
-    def defining_six_parameter_fit_dictonary(self):
-        
-        
-        return 
+
     def adding_k_target_values(self,loop_counter=0):
         
-        ### add dataframe  start hete  
-        k_target_values_for_z,sigma_target_values,z_data_frame = self.master_equation_six_param_fit_instance.target_values_for_Z_six_paramter_fit(self.data_directory+'/'+ self.k_target_values_csv,
+        ### This needs to be editied to accomidate chebychev 
+
+        adding_target_values_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,self.Y_data_frame,self.z_data_frame)
+        
+        self.adding_target_values_instance = adding_target_values_instance
+        
+        k_target_values_for_z,sigma_target_values,z_data_frame = self.adding_target_values_instance.target_values_for_Z(self.data_directory+'/'+ self.k_target_values_csv,
                                                                                                                             self.z_data_frame)
+        
+        
         if loop_counter == 0:
-            k_target_values_for_Y,Y_data_frame = self.master_equation_six_param_fit_instance.target_values_Y_six_parameter_fit(self.data_directory+'/'+ self.k_target_values_csv,
-                                                                                                                self.experiment_dictonaries,
-                                                                                                                self.Y_data_frame,
-                                                                                                                master_equation_reaction_list=self.master_equation_reactions,
-                                                                                                                updated_six_paramter_fits_dict=self.six_paramter_fit_nominal_parameters_dict)
+    
+            
+            k_target_values_for_Y,Y_data_frame = self.adding_target_values_instance.target_values_Y(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                              self.experiment_dictonaries,self.Y_data_frame)
         else:
-            k_target_values_for_Y,Y_data_frame = self.master_equation_six_param_fit_instance.target_values_Y_six_parameter_fit(self.data_directory+'/'+ self.k_target_values_csv,
-                                                                                                                self.experiment_dictonaries,
-                                                                                                                self.Y_data_frame,
-                                                                                                                master_equation_reaction_list=self.master_equation_reactions,
-                                                                                                                updated_six_paramter_fits_dict=self.updated_six_parameter_fits_dict)        
+            k_target_values_for_Y,Y_data_frame = self.adding_target_values_instance.target_values_Y(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                              self.experiment_dictonaries,self.Y_data_frame)       
         
 
         
         
-        k_target_values_for_S = self.master_equation_six_param_fit_instance.target_values_for_S_six_parameter_fit(self.data_directory+'/'+ self.k_target_values_csv,
-                                                                                                                  self.experiment_dictonaries,
-                                                                                                                  self.S_matrix,
-                                                                                                                  master_equation_reaction_list=self.master_equation_reactions,
-                                                                                                                  six_parameter_fit_sensitivity_dict=self.six_parameter_fit_sensitivities)
+       
+
+        k_target_values_for_S = self.adding_target_values_instance.target_values_for_S(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                 self.experiment_dictonaries,
+                                                                                 self.S_matrix,
+                                                                                 master_equation_reaction_list = self.master_equation_reactions,
+                                                                                 master_equation_sensitivites = self.chebyshev_sensitivities)    
+
         
 
-        S_matrix,Y_matrix,z_matrix,sigma = self.master_equation_six_param_fit_instance.appending_target_values(k_target_values_for_z,
+                                
+        S_matrix,Y_matrix,z_matrix,sigma = self.adding_target_values_instance.appending_target_values(k_target_values_for_z,
                                                                                                                k_target_values_for_Y,
                                                                                                                k_target_values_for_S,
                                                                                                                sigma_target_values,
                                                                                                                self.S_matrix,
                                                                                                                self.Y_matrix,
                                                                                                                self.z_matrix,
-                                                                                                               self.sigma)
+                                                                                                               self.sigma)                        
+
         
         
         
@@ -263,7 +279,7 @@ class MSI_shocktube_optimization_chebyshev(object):
         self.sigma = sigma
         self.Y_data_frame = Y_data_frame
         self.z_data_frame = z_data_frame
-        self.k_target_values_for_s = k_target_values_for_S
+        self.k_target_values_for_S = k_target_values_for_S
         return
     
     def matrix_math(self,loop_counter = 0):
@@ -341,9 +357,7 @@ class MSI_shocktube_optimization_chebyshev(object):
             
             original_covarience = copy.deepcopy(self.covarience)
             self.original_covarience = original_covarience
-            
-            six_paramter_fit_nominal_parameters_dict = copy.deepcopy(self.six_paramter_fit_nominal_parameters_dict)
-            self.six_paramter_fit_nominal_parameters_dict = six_paramter_fit_nominal_parameters_dict
+
             
             #original_experiment_dictonaries  = copy.deepcopy(self.experiment_dictonaries[0]['ksens'])
 
@@ -392,27 +406,23 @@ class MSI_shocktube_optimization_chebyshev(object):
        
         
         if self.master_equation_flag == True:
-            updated_six_parameter_fits_dict = self.master_equation_six_param_fit_instance.update_six_paramter_fits_dict(self.six_parameter_fit_sensitivities,
-                                                                                      self.delta_x_molecular_params_by_reaction_dict, 
-                                                                                      self.master_equation_reactions,
-                                                                                      self.six_paramter_fit_nominal_parameters_dict)
-        
-            self.updated_six_parameter_fits_dict = updated_six_parameter_fits_dict
-            
-            
-        if self.master_equation_flag == True:
-            master_equation_surrogate_model_update_dictonary = self.master_equation_six_param_fit_instance.surrogate_model_molecular_parameters(self.molecular_parameter_sensitivities,
-                                                                                                                                                self.master_equation_reactions,
-                                                                                                                                                self.delta_x_molecular_params_by_reaction_dict,
-                                                                                                                                                self.experiment_dictonaries)
+
+                                                   
+            master_equation_surrogate_model_update_dictonary = self.master_equation_cheby_instance.surrogate_model_molecular_parameters_chevy(self.chebyshev_sensitivities,
+                                                                                                                                              self.new_sens_dict,
+                                                                                                                                              self.master_equation_reactions,
+                                                                                                                                              self.delta_x_molecular_params_by_reaction_dict,
+                                                                                                                                              self.experiment_dictonaries)     
                                                                                                                                                 
-            
-            
 
         #this may not be the best way to do this 
 
             
             self.master_equation_surrogate_model_update_dictonary = master_equation_surrogate_model_update_dictonary
+            
+        lei=False
+        if lei==True:
+            print('This is where lei would run his stuff')
             
         if self.master_equation_flag == False:
             self.master_equation_surrogate_model_update_dictonary = {}
@@ -453,7 +463,6 @@ class MSI_shocktube_optimization_chebyshev(object):
         if loop_counter == 0:
             original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
             self.original_experimental_conditions_local = original_experimental_conditions_local
-            #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
         
         
         self.running_shock_tube_simulations(loop_counter=loop_counter)

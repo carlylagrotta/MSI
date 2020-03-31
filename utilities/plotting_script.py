@@ -1334,6 +1334,7 @@ class Plotting(object):
                 plt.title(reaction_list_from_mechanism[reaction])
                 plt.tick_params(axis ='both', direction ='in') 
                 plt.tick_params(axis ='both', direction ='in',which='minor') 
+
                 #plt.savefig(os.path.join(self.working_directory,reaction_list_from_mechanism[reaction]+'.pdf'), bbox_inches='tight')
                 #plt.savefig(os.path.join(self.working_directory,reaction_list_from_mechanism[reaction]+'.svg'), bbox_inches='tight')
 
@@ -1713,72 +1714,6 @@ class Plotting(object):
                 plt.scatter(df2[couple[0]], df2[couple[1]])
                 
                 plt.savefig(self.working_directory+'/'+couple[0]+'_'+couple[1]+'_distribution'+'_.pdf',bbox_inches='tight')
-
-    def difference_plotter(self,
-                           paramter_list,
-                           optimized_cti_file='',
-                           pdf_distribution_file=''):
-                        
-            
-        all_parameters = self.shock_tube_instance.posterior_diag_df['parameter'].tolist()
-        df = self.shock_tube_instance.posterior_diag_df
-        gas_optimized = ct.Solution(optimized_cti_file)
-        
-        for parameter in paramter_list:
-            indx = all_parameters.index(parameter)
-            variance = df['value'][indx]
-            letter,number = parameter.split('_')
-            number = int(number)
-            A=gas_optimized.reaction(number).rate.pre_exponential_factor
-            n=gas_optimized.reaction(number).rate.temperature_exponent
-            Ea=gas_optimized.reaction(number).rate.activation_energy
-            
-            if letter =='A':
-                mu = np.log(A*1000)
-                sigma = math.sqrt(variance)
-                sigma = sigma
-                
-            if letter == 'n':
-                mu = n
-                sigma = math.sqrt(variance)
-                #sigma = sigma/2
-            if letter == 'Ea':
-                mu=Ea/1000/4.184            
-                sigma = math.sqrt(variance)
-                sigma = sigma*ct.gas_constant/(1000*4.184)
-                #sigma = sigma/2
-
-            
-            
-            x = np.linspace(mu - 6*sigma, mu + 6*sigma, 100)
-            #plt.figure()
-            #plt.plot(x, stats.norm.pdf(x, mu, sigma))
-           # plt.xlabel(parameter)
-           # plt.ylabel('pdf')
-           # plt.savefig(self.working_directory+'/'+parameter+'_distribution'+'_.pdf',bbox_inches='tight')
-
-            if bool(pdf_distribution_file):
-                df2 = pd.read_csv(pdf_distribution_file)
-                #temp = np.log(np.exp(df2[parameter].values)/9.33e13)
-                #plt.plot(temp,df2['pdf_'+parameter])
-                interp_y = np.interp(df2[parameter],x,stats.norm.pdf(x, mu, sigma))
-                plt.figure()
-                plt.plot(df2[parameter],interp_y)
-                plt.plot(df2[parameter],df2['pdf_'+parameter])
-                interp_x = np.interp(df2['pdf_'+parameter],stats.norm.pdf(x,mu,sigma),x)
-                y_shift = np.divide((df2['pdf_'+parameter] - interp_y),df2['pdf_'+parameter])
-                x_shift = np.divide((df2[parameter] - interp_x),df2[parameter])
-                plt.figure()
-                plt.title('Percent Difference In Y')
-                plt.plot(y_shift)
-                plt.xlabel(parameter)
-                plt.figure()
-                plt.plot(x_shift)
-                plt.title('Percent Difference In X')
-                plt.xlabel(parameter)
-        
-                    
-                    
     def plotting_physical_model_parameter_distributions(self,
                            paramter_list,
                            shock_tube_instance,
@@ -1900,11 +1835,70 @@ class Plotting(object):
             plt.grid(True)
             plt.savefig(directory_to_save_images+'/'+'Including Experiments_'+ str(experiments_want_to_plot_data_from)+parameter+'_.pdf',dpi=1000,bbox_inches='tight')
 
-            
-                
-            
 
-        return
+    def difference_plotter(self,
+                           paramter_list,
+                           optimized_cti_file='',
+                           pdf_distribution_file=''):
+                        
+            
+        all_parameters = self.shock_tube_instance.posterior_diag_df['parameter'].tolist()
+        df = self.shock_tube_instance.posterior_diag_df
+        gas_optimized = ct.Solution(optimized_cti_file)
+        
+        for parameter in paramter_list:
+            indx = all_parameters.index(parameter)
+            variance = df['value'][indx]
+            letter,number = parameter.split('_')
+            number = int(number)
+            A=gas_optimized.reaction(number).rate.pre_exponential_factor
+            n=gas_optimized.reaction(number).rate.temperature_exponent
+            Ea=gas_optimized.reaction(number).rate.activation_energy
+            
+            if letter =='A':
+                mu = np.log(A*1000)
+                sigma = math.sqrt(variance)
+                sigma = sigma
+                
+            if letter == 'n':
+                mu = n
+                sigma = math.sqrt(variance)
+                #sigma = sigma/2
+            if letter == 'Ea':
+                mu=Ea/1000/4.184            
+                sigma = math.sqrt(variance)
+                sigma = sigma*ct.gas_constant/(1000*4.184)
+                #sigma = sigma/2
+
+            
+            
+            x = np.linspace(mu - 6*sigma, mu + 6*sigma, 100)
+            #plt.figure()
+            #plt.plot(x, stats.norm.pdf(x, mu, sigma))
+           # plt.xlabel(parameter)
+           # plt.ylabel('pdf')
+           # plt.savefig(self.working_directory+'/'+parameter+'_distribution'+'_.pdf',bbox_inches='tight')
+
+            if bool(pdf_distribution_file):
+                df2 = pd.read_csv(pdf_distribution_file)
+                #temp = np.log(np.exp(df2[parameter].values)/9.33e13)
+                #plt.plot(temp,df2['pdf_'+parameter])
+                interp_y = np.interp(df2[parameter],x,stats.norm.pdf(x, mu, sigma))
+                plt.figure()
+                plt.plot(df2[parameter],interp_y)
+                plt.plot(df2[parameter],df2['pdf_'+parameter])
+                interp_x = np.interp(df2['pdf_'+parameter],stats.norm.pdf(x,mu,sigma),x)
+                y_shift = np.divide((df2['pdf_'+parameter] - interp_y),df2['pdf_'+parameter])
+                x_shift = np.divide((df2[parameter] - interp_x),df2[parameter])
+                plt.figure()
+                plt.title('Percent Difference In Y')
+                plt.plot(y_shift)
+                plt.xlabel(parameter)
+                plt.figure()
+                plt.plot(x_shift)
+                plt.title('Percent Difference In X')
+                plt.xlabel(parameter)
+              
     def plotting_histograms_of_MSI_simulations(self,experiments_want_to_plot_data_from=[],bins='auto',directory_to_save_images=''):
         s_shape = self.S_matrix.shape[1]
         if self.k_target_value_S_matrix.any():
@@ -2336,6 +2330,36 @@ class Plotting(object):
                     
                     
                     
+                    #plotting two fold plots 
+                    plt.figure()            
+                    plt.subplot(2,1,1)
+                    plt.title(str(observables_unique[i])+'_Including Experiments_'+ str(experiments_want_to_plot_data_from))
+        
+                    n, bins2, patches = plt.hist(Y_values,bins=bins ,align='mid')
+                    plt.xlabel('Y')
+                    #plt.xlim([-1,1])
+        
+                    plt.subplot(2,1,2)
+                    plt.hist(y_values,bins=bins,align='mid')
+                    plt.xlabel('y')
+                    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=.5, hspace=.5)
+                    #plt.savefig(directory_to_save_images+'/'+str(observables_unique[i])+'_Including Experiments_'+ str(experiments_want_to_plot_data_from)+'_Yy_hist_2.pdf',dpi=1000,bbox_inches='tight')
+        
+        #plotting normalized values
+                    plt.figure()            
+                    plt.subplot(2,1,1)
+                    n, bins2, patches = plt.hist(Y_values,bins=bins ,align='mid',density=True)
+                    plt.xlabel('Y')
+                    plt.title(str(observables_unique[i])+'_Including Experiments_'+ str(experiments_want_to_plot_data_from))
+                    plt.ylabel('normalized')
+        
+                    plt.subplot(2,1,2)
+                    plt.hist(y_values,bins=bins,align='mid',density=True)
+                    plt.xlabel('y')
+                    plt.ylabel('normalized')
+                    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=.5, hspace=.5)
+                    
+
                     #plotting two fold plots 
                     plt.figure()            
                     plt.subplot(2,1,1)
