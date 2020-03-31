@@ -1,4 +1,4 @@
-import MSI_2.simulations as sim
+import MSI.simulations as sim
 import numpy as np
 import pandas as pd
 import cantera as ct

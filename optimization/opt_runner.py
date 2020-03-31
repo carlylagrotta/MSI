@@ -1,11 +1,11 @@
-import MSI_2.simulations as sim
+import MSI.simulations as sim
 import re
-import MSI_2.cti_core.cti_processor as pr
-import MSI_2.optimization.matrix_loader as ml
-import MSI_2.simulations.absorbance.curve_superimpose as csp
-import MSI_2.simulations.yaml_parser as yp
-import MSI_2.simulations.instruments.shock_tube as st
-import MSI_2.simulations.instruments.jsr_steadystate as jsr
+import MSI.cti_core.cti_processor as pr
+import MSI.optimization.matrix_loader as ml
+import MSI.simulations.absorbance.curve_superimpose as csp
+import MSI.simulations.yaml_parser as yp
+import MSI.simulations.instruments.shock_tube as st
+import MSI.simulations.instruments.jsr_steadystate as jsr
 
 
 #acts as front end to the rest of the system
