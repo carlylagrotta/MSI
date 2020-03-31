@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import time
 import copy
+import re
 
 class JSR_steadystate(sim.Simulation):
     
@@ -423,7 +424,8 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         
     def sensitivity_adjustment(self,temp_del:float=0.0,
                                pres_del:float=0.0,
-                               spec_pair:(str,float)=('',0.0)):
+                               spec_pair:(str,float)=('',0.0),
+                               res_del:float=0.0):
         
         #this is where we would make the dk fix
         if temp_del != 0.0:
@@ -458,6 +460,7 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         else:
            self.temperatures=np.array(self.temperatures)+temp_del*np.array(self.temperatures)
            self.pressure=self.pressure+pres_del*self.pressure
+           self.residence_time=self.residence_time+res_del*self.residence_time
            
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                       self.pressure+self.pressure*pres_del)

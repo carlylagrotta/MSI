@@ -45,6 +45,7 @@ class Parser(object):
         volume=loaded_exp['apparatus']['reactor-volume']['value']
         mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
         residence_time=loaded_exp['apparatus']['residence-time']['value']
+        restime_relative_uncertainty=loaded_exp['apparatus']['residence-time']['relative-uncertainty']
         if loaded_absorption == {}:
             return{
                'pressure':pressure,
@@ -65,7 +66,8 @@ class Parser(object):
                'csvFiles': csv_files,
                'simulationType':  simulation_type,
                'volume': volume,
-               'residence_time': residence_time
+               'residence_time': residence_time,
+               'residenceTimeRelativeUncertainty':restime_relative_uncertainty
            }
         else:
             print('Placeholder: no JSR absorption')
@@ -340,6 +342,7 @@ class Parser(object):
                     temp = self.original_experimental_conditions[yaml_file]['temperature']
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperatures']
+                    res = self.original_experimental_conditions[yaml_file]['residence_time']
                 press = self.original_experimental_conditions[yaml_file]['pressure']
                 #mole_fractions = self.original_experimental_conditions[yaml_file]['MoleFractions']
                 conditions = self.original_experimental_conditions[yaml_file]['conditions']
@@ -349,6 +352,8 @@ class Parser(object):
                 print(temp)
                 print(press)
                 print(conditions)
+                if re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
+                    print(res)
                 print('__________________________________________________________________________')
                 
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
@@ -358,7 +363,8 @@ class Parser(object):
                     updatedTemp=[]
                     for i,T in enumerate(temp):
                         updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))
-                        
+                    updatedResTime=np.exp(physical_observables_updates_list[yaml_file]['R_experiment_'+str(yaml_file)])*res
+                    updatedResTime=round(updatedResTime,9)
                 updatedPress = np.exp(physical_observables_updates_list[yaml_file]['P_experiment_'+str(yaml_file)]) * press
                 updatedPress = round(updatedPress,9)
                 
@@ -393,6 +399,7 @@ class Parser(object):
                     config2['common-properties']['temperature']['value']=float(updatedTemp)
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):    
                     config2['common-properties']['temperature']['value-list']=updatedTemp
+                    config2['apparatus']['residence-time']['value']=float(updatedResTime)
                 for i,moleFraction in enumerate(updated_mole_fraction_list):
                     config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)
                     
