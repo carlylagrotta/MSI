@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import MSI_2.master_equation.master_equation as meq 
+import MSI.master_equation.master_equation as meq 
 import copy
 import re
 import cantera as ct
@@ -92,34 +92,37 @@ class OptMatrix(object):
         #tab, start working here tomorrow with how we want to read in csv file     
         for i,exp_dic in enumerate(exp_dict_list):
             counter = 0
-            for j,observable in enumerate((exp_dic['mole_fraction_observables']+
-                                           exp_dic['concentration_observables'])):
+
+            for j,observable in enumerate(exp_dic['mole_fraction_observables']+
+                                           exp_dic['concentration_observables']):
+
                 if observable == None:
                     pass
-                elif observable in exp_dic['mole_fraction_observables']:
-                    ## add ppm statment here ? check if it exists? and add concentration statment below just for parcing 
-                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['mole_fraction_relative_uncertainty'][counter],
-                        exp_dic['uncertainty']['mole_fraction_absolute_uncertainty'][counter],
-                        exp_dic['experimental_data'][counter][observable].values,exp_dic['experimental_data'][counter])
-                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
-                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
-                elif observable in exp_dic['concentration_observables'] and '_ppm' in exp_dic['experimental_data'][counter].columns[1]:
-                    total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
-                         exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
-                         exp_dic['experimental_data'][counter][observable+'_ppm'].values,exp_dic['experimental_data'][counter])
-                   
-                    total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0], 1))
-                    un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
-                elif observable in exp_dic['concentration_observables'] and '_mol/cm^3' in exp_dic['experimental_data'][counter].columns[1]:
-                     total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
-                         exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
-                         exp_dic['experimental_data'][counter][observable+'_mol/cm^3'].values,exp_dic['experimental_data'][counter])
-                   
-                     total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
-                     un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))               
+                else:
+                    if observable in exp_dic['mole_fraction_observables']:
+                        ## add ppm statment here ? check if it exists? and add concentration statment below just for parcing 
+                        total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['mole_fraction_relative_uncertainty'][counter],
+                            exp_dic['uncertainty']['mole_fraction_absolute_uncertainty'][counter],
+                            exp_dic['experimental_data'][counter][observable].values,exp_dic['experimental_data'][counter])
+                        total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
+                        un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
+                    elif observable in exp_dic['concentration_observables'] and '_ppm' in exp_dic['experimental_data'][counter].columns[1]:
+                        total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
+                             exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
+                             exp_dic['experimental_data'][counter][observable+'_ppm'].values,exp_dic['experimental_data'][counter])
+                       
+                        total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0], 1))
+                        un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))
+                    elif observable in exp_dic['concentration_observables'] and '_mol/cm^3' in exp_dic['experimental_data'][counter].columns[1]:
+                         total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['concentration_relative_uncertainty'][counter],
+                             exp_dic['uncertainty']['concentration_absolute_uncertainty'][counter],
+                             exp_dic['experimental_data'][counter][observable+'_mol/cm^3'].values,exp_dic['experimental_data'][counter])
+                       
+                         total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
+                         un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))               
 
-                else: 
-                    raise Exception('We Do Not Have This Unit Installed, Please Use Mole Fraction, ppm, or mol/cm^3!')               
+                    else: 
+                        raise Exception('We Do Not Have This Unit Installed, Please Use Mole Fraction, ppm, or mol/cm^3!')               
 
                     
                     
@@ -127,11 +130,11 @@ class OptMatrix(object):
                     
                     
                     
-                Z.append(total_uncertainty)
-                sigma.append(un_weighted_uncertainty)
-                tempList = [observable+'_'+'experiment'+str(i)]*np.shape(total_uncertainty)[0]
-                Z_data_Frame.extend(tempList)
-                counter+=1
+                    Z.append(total_uncertainty)
+                    sigma.append(un_weighted_uncertainty)
+                    tempList = [observable+'_'+'experiment'+str(i)]*np.shape(total_uncertainty)[0]
+                    Z_data_Frame.extend(tempList)
+                    counter+=1
             if 'absorbance_observables' in list(exp_dic.keys()):
                 wavelengths = parsed_yaml_file_list[i]['absorbanceCsvWavelengths']
                     
