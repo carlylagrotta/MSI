@@ -442,7 +442,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
         
         return
      
-    def one_run_optimization(self,loop_counter=0):
+    def one_run_shock_tube_optimization(self,loop_counter=0):
         self.append_working_directory()
         #every loop run this, probably not?
         self.establish_processor(loop_counter=loop_counter)
@@ -454,7 +454,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
             self.original_experimental_conditions_local = original_experimental_conditions_local
         
         
-        self.running_simulations(loop_counter=loop_counter)
+        self.running_shock_tube_simulations(loop_counter=loop_counter)
         
         if self.master_equation_flag == True:
             self.master_equation_s_matrix_building(loop_counter=loop_counter)
@@ -476,7 +476,7 @@ class MSI_shocktube_optimization_six_parameter_fit(object):
     def multiple_shock_tube_runs(self,loops):
         delta_X_list = []
         for loop in range(loops):            
-            self.one_run_optimization(loop_counter=loop)
+            self.one_run_shock_tube_optimization(loop_counter=loop)
             delta_x_df = pd.DataFrame(self.delta_X)
             delta_x_df = pd.concat([self.X_data_frame,delta_x_df],axis=1)
             delta_x_df.columns = ['parameter', 'X_values','delta_X_values']
