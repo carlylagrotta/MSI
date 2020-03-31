@@ -510,3 +510,37 @@ class shockTube(sim.Simulation):
             self.pressureAndTemperatureToExperiment = list_of_df
             
         return list_of_df
+    
+    def calculate_time_shift_sensitivitie(self,simulation,experimental_data):
+        original_time = simulation.timeHistories[0]['time']
+        last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
+        one_percent_of_last_timestep = last_timestep_in_simulation*.01        
+        new_time = original_time['time']+one_percent_of_last_timestep
+        
+        observables_interpolate_against_original_time = []
+        observables_interpolated_against_new_time = []
+        lst_obs = simulation.moleFractionObservables + simulation.concentrationobservables
+        lst_obs = [i for i in lst_obs if i] 
+
+        for i,df in enumerate(experimental_data):
+            interpolated_original_observable = np.interp(df['Time'],simulation.timeHistories[0]['time'],simulation.timeHistories[0][lst_obs[i]])
+            interpolated_original_observable = interpolated_original_observable.reshape((interpolated_original_observable.shape[0],1))
+            observables_interpolate_against_original_time.append(pd.DataFrame(interpolated_original_observable,columns=lst_obs[i]))
+            
+            
+            interpolated_shited_observable = np.interp(df['Time'],new_time,simulation.timeHistories[0][lst_obs[i]])
+            interpolated_shited_observable = interpolated_shited_observable.reshape((interpolated_shited_observable.shape[0],1))
+            observables_interpolated_against_new_time.append(pd.DataFrame(interpolated_shited_observable,columns=lst_obs[i]))
+        
+        
+        observables_against_original_time_df = pd.concat(observables_interpolate_against_original_time,axis=1,ignore_index=True)                                                     
+        observables_against_new_time_df = pd.concat(observables_interpolated_against_new_time,axis=1,ignore_index=True)
+        
+        temp_lst=[]
+        for j,observable in enumerate(lst_obs):
+            temp_lst.append(self.sensitivityCalculation(observables_against_original_time_df,observables_against_new_time_df,observable,dk=one_percent_of_last_timestep)
+        temp_df = pd.concat(temp_lst,axis=1,ignore_index=True)
+        
+        time_shift_sensitivity = temp_df
+        self.time_shift_sensitivity = time_shift_sensitivity
+        return time_shift_sensitivity
