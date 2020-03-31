@@ -211,6 +211,7 @@ class Optimization_Utility(object):
         ############################################### check to make sure these aren't effected 
         int_tp_psen_against_experimental = shock_tube.interpolate_experimental([shock_tube.interpolate_physical_sensitivities(index=1),
                                                                            shock_tube.interpolate_physical_sensitivities(index=2)])
+        
     
         int_spec_psen_against_experimental = shock_tube.interpolate_experimental(pre_interpolated=shock_tube.interpolate_species_sensitivities())
     ###############saving the shock tube experimental interpolated time history     
@@ -218,6 +219,8 @@ class Optimization_Utility(object):
         shock_tube.savingInterpTimeHistoryAgainstExp(single_data)
         #tab starting here tomorrow
         shock_tube.interpolatePressureandTempToExperiment(shock_tube,exp_data)
+        time_shift_sensitivity = shock_tube.calculate_time_shift_sensitivitie(shock_tube,exp_data)
+        
     ###############  ###############  
         experiment = self.build_single_exp_dict(exp_number,
                                            shock_tube,
@@ -287,7 +290,7 @@ class Optimization_Utility(object):
 
         
         int_spec_psen_against_experimental = shock_tube.interpolate_experimental(pre_interpolated=shock_tube.interpolate_species_sensitivities())
-        
+        time_shift_sensitivity = shock_tube.calculate_time_shift_sensitivitie(shock_tube,exp_data)
         abs_phys_sens = abs_instance.absorb_phys_sensitivities(shock_tube,abs_data[0],abs_loaded,
                                                                experiment_dictonary['pathLength'],
                                                                dk = dk)
@@ -309,6 +312,7 @@ class Optimization_Utility(object):
         single_data = shock_tube.interpolate_experimental(single=shock_tube.timeHistories[0])
         shock_tube.savingInterpTimeHistoryAgainstExp(single_data)
         shock_tube.interpolatePressureandTempToExperiment(shock_tube,exp_data)
+        time_shift_sensitivity = shock_tube.calculate_time_shift_sensitivitie(shock_tube,exp_data)
     ####################################################################################    
         
         experiment = self.build_single_exp_dict(exp_number,
