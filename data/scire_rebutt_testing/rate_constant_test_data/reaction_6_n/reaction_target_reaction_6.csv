@@ -1,0 +1,2 @@
+Reaction,temperature,pressure,M,k,ln_unc_k,W
+H + HO2 <=> 2 OH,1500,101325,0,7.00E+10,1.00E-06,1

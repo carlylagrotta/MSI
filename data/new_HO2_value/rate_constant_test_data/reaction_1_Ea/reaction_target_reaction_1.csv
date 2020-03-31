@@ -1,0 +1,2 @@
+Reaction,temperature,pressure,M,k,ln_unc_k,W
+H2O2 + OH <=> H2O + HO2,1500,101325,0,1.20E+11,1.00E-06,1

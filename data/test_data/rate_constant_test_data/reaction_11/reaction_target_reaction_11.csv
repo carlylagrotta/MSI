@@ -1,0 +1,2 @@
+Reaction,temperature,pressure,M,k,ln_unc_k,W
+H2 + M <=> 2 H + M,1500,1,1,1.38E-10,1.00E-06,1
