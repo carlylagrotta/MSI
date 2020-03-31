@@ -1714,6 +1714,126 @@ class Plotting(object):
                 plt.scatter(df2[couple[0]], df2[couple[1]])
                 
                 plt.savefig(self.working_directory+'/'+couple[0]+'_'+couple[1]+'_distribution'+'_.pdf',bbox_inches='tight')
+    def plotting_physical_model_parameter_distributions(self,
+                           paramter_list,
+                           shock_tube_instance,
+                           optimized_X,
+                           original_experimental_conditions,
+                           T_uncertainty=.005,
+                           P_uncertainty=.01,
+                           X_uncertainty=.025,
+                           directory_to_save_images='',
+                           experiments_want_to_plot_data_from=[]):
+        
+        if bool(experiments_want_to_plot_data_from)==False:
+            experiments_want_to_plot_data_from = np.arange(0,len(self.exp_dict_list_optimized))
+        try:
+            all_parameters = shock_tube_instance.posterior_diag_df['parameter'].tolist()
+        except:
+            all_parameters = shock_tube_instance.prior_diag_df['parameter'].tolist()
+
+        parameter_groups = ['T','P']
+
+        list_of_species = []
+        for parameter in all_parameters:
+            if parameter[0] == 'X':
+                list_of_species.append(parameter.split('_')[1])
+        
+        output = []
+        for x in list_of_species:
+            if x not in output:
+                output.append(x)
+        parameter_groups = parameter_groups + output
+        
+        for parameter in parameter_groups:
+            temp_list = []
+            parameter_counter = 0
+            for i,p in enumerate(all_parameters):
+                if parameter == 'T':
+                    if p[0] == 'T':
+                        yaml_file = int(p.split('_')[2])
+                        if parameter_counter in experiments_want_to_plot_data_from: 
+                            temp_list.append(optimized_X[i][0])
+                            prior_sigma=T_uncertainty
+                        parameter_counter+=1
+                        
+                elif parameter == 'P':        
+                    if p[0] == 'P':
+                        yaml_file = int(p.split('_')[2])
+                        pressure_original = original_experimental_conditions[yaml_file]['pressure']
+                        #temp_list.append(temp_original*np.exp(optimized_X[i]) - temp_original) 
+                        if parameter_counter in experiments_want_to_plot_data_from: 
+                            temp_list.append(optimized_X[i][0])  
+                            prior_sigma = P_uncertainty
+                        parameter_counter+=1
+
+                elif parameter =='H2O':
+                    if p[0] == 'X' and p[2:5] == 'H2O' and p[5]== '_':
+                        yaml_file = int(p.split('_')[3])
+                        specie_original = original_experimental_conditions[yaml_file]['conditions']['H2O'] 
+                        if parameter_counter in experiments_want_to_plot_data_from:                            
+                            temp_list.append(optimized_X[i][0])     
+                            prior_sigma=X_uncertainty
+                        parameter_counter+=1
+   
+                elif parameter =='H2O2':
+                    if p[0] == 'X' and p[2:6] == 'H2O2' and p[6]== '_':
+                        yaml_file = int(p.split('_')[3])
+                        specie_original = original_experimental_conditions[yaml_file]['conditions']['H2O2']                            
+                        if parameter_counter in experiments_want_to_plot_data_from:                            
+                            temp_list.append(optimized_X[i][0])     
+                            prior_sigma=X_uncertainty
+                        parameter_counter+=1
+
+                elif parameter =='O2':
+                    if p[0] == 'X' and p[2:4] == 'O2' and p[4]== '_':
+                        yaml_file = int(p.split('_')[3])
+                        specie_original = original_experimental_conditions[yaml_file]['conditions']['O2']                            
+                        if parameter_counter in experiments_want_to_plot_data_from:                            
+                            temp_list.append(optimized_X[i][0])     
+                            prior_sigma=X_uncertainty
+                        parameter_counter+=1
+                            
+                elif parameter =='H':
+                    if p[0] == 'X' and p[2:3] == 'H' and p[3]== '_':
+                        yaml_file = int(p.split('_')[3])
+                        specie_original = original_experimental_conditions[yaml_file]['conditions']['H']                            
+                        if parameter_counter in experiments_want_to_plot_data_from:                            
+                            temp_list.append(optimized_X[i][0])     
+                            prior_sigma=X_uncertainty
+                        parameter_counter+=1
+                        
+                elif parameter =='CH4':
+                    if p[0] == 'X' and p[2:5] == 'CH4' and p[5]== '_':
+                        yaml_file = int(p.split('_')[3])
+                        specie_original = original_experimental_conditions[yaml_file]['conditions']['CH4']                            
+                        if parameter_counter in experiments_want_to_plot_data_from:                            
+                            temp_list.append(optimized_X[i][0])     
+                            prior_sigma=X_uncertainty                         
+                        parameter_counter+=1
+                else:
+                    parameter_counter+=1
+                
+
+            plt.figure()
+            mu2=0 
+            sigma2=prior_sigma
+            n, bins, patches=plt.hist(temp_list,bins='auto',density=True,color='g') 
+            (mu, sigma) = norm.fit(temp_list)
+            #y = mlab.normpdf( bins, mu, sigma)
+            y = norm.pdf(bins,mu,sigma)
+            x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+            l = plt.plot(bins, y, 'b--', linewidth=2)
+            plt.plot(x, stats.norm.pdf(x, mu, sigma),'b')
+            x2 = np.linspace(mu2 - 3*sigma2, mu2 + 3*sigma2, 100)
+            plt.plot(x2, stats.norm.pdf(x2, mu2, sigma2),'r')
+
+    #plot
+            plt.xlabel(parameter)
+            #plt.ylabel('Probability')
+            plt.title(r'$\mathrm{Histogram\ of\ physical\ model\ parameter:}\ \mu=%.3f,\ \sigma=%.3f$' %(mu, sigma))
+            plt.grid(True)
+            plt.savefig(directory_to_save_images+'/'+'Including Experiments_'+ str(experiments_want_to_plot_data_from)+parameter+'_.pdf',dpi=1000,bbox_inches='tight')
 
 
     def difference_plotter(self,
@@ -1779,7 +1899,7 @@ class Plotting(object):
                 plt.title('Percent Difference In X')
                 plt.xlabel(parameter)
               
-     def plotting_histograms_of_MSI_simulations(self,experiments_want_to_plot_data_from=[],bins='auto',directory_to_save_images=''):
+    def plotting_histograms_of_MSI_simulations(self,experiments_want_to_plot_data_from=[],bins='auto',directory_to_save_images=''):
         s_shape = self.S_matrix.shape[1]
         if self.k_target_value_S_matrix.any():
             target_values_for_s = self.k_target_value_S_matrix
