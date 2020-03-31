@@ -106,6 +106,7 @@ class Parser(object):
         temp_relative_uncertainty = float(temp_relative_uncertainty)
         pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
         pressure_relative_uncertainty = float(pressure_relative_uncertainty)
+        time_shift = loaded_exp['common-properties']['time-shift']['value']
         time_shift_uncertainty = loaded_exp['common-properties']['time-shift']['absolute-uncertainty']['value']
         concentration_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
         concentration_relative_uncertainity = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
@@ -140,7 +141,8 @@ class Parser(object):
                'moleFractionAbsoluteUncertainty':mole_fraction_absolute_uncertainty,
                'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
                'csvFiles': csv_files,
-               'simulationType':  simulation_type
+               'simulationType':  simulation_type,
+               'timeShift':time_shift
            }
         
         else: #absorbtion file given
@@ -221,7 +223,8 @@ class Parser(object):
                    'parameterOnes':parameter_ones,
                    'parameterTwos':parameter_twos,
                    'functionalForm':functional_form,
-                   'simulationType':  simulation_type
+                   'simulationType':  simulation_type,
+                   'timeShift':time_shift
                    }
             
     def load_yaml_list(self, yaml_list:list = []):
