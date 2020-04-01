@@ -470,6 +470,7 @@ class shockTube(sim.Simulation):
         if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
             newValues.columns = thingToFindSensitivtyOf
             newValues = newValues.applymap(np.log)
+            originalValues.columns = thingToFindSensitivtyOf
             originalValues = originalValues.applymap(np.log)
             #tab
             
@@ -515,32 +516,30 @@ class shockTube(sim.Simulation):
         original_time = simulation.timeHistories[0]['time']
         last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
         one_percent_of_last_timestep = last_timestep_in_simulation*.01        
-        new_time = original_time['time']+one_percent_of_last_timestep
+        new_time = original_time + one_percent_of_last_timestep
         
         observables_interpolate_against_original_time = []
         observables_interpolated_against_new_time = []
-        lst_obs = simulation.moleFractionObservables + simulation.concentrationobservables
+        lst_obs = simulation.moleFractionObservables + simulation.concentrationObservables
         lst_obs = [i for i in lst_obs if i] 
 
         for i,df in enumerate(experimental_data):
             interpolated_original_observable = np.interp(df['Time'],simulation.timeHistories[0]['time'],simulation.timeHistories[0][lst_obs[i]])
             interpolated_original_observable = interpolated_original_observable.reshape((interpolated_original_observable.shape[0],1))
-            observables_interpolate_against_original_time.append(pd.DataFrame(interpolated_original_observable,columns=lst_obs[i]))
+            temp_data_frame = pd.DataFrame(interpolated_original_observable,columns=[lst_obs[i]])
+            observables_interpolate_against_original_time.append(temp_data_frame)
             
             
             interpolated_shited_observable = np.interp(df['Time'],new_time,simulation.timeHistories[0][lst_obs[i]])
             interpolated_shited_observable = interpolated_shited_observable.reshape((interpolated_shited_observable.shape[0],1))
-            observables_interpolated_against_new_time.append(pd.DataFrame(interpolated_shited_observable,columns=lst_obs[i]))
+            temp_data_frame_2 = pd.DataFrame(interpolated_shited_observable,columns=[lst_obs[i]])
+            observables_interpolated_against_new_time.append(temp_data_frame_2)
         
         
         observables_against_original_time_df = pd.concat(observables_interpolate_against_original_time,axis=1,ignore_index=True)                                                     
         observables_against_new_time_df = pd.concat(observables_interpolated_against_new_time,axis=1,ignore_index=True)
         
-        temp_lst=[]
-        for j,observable in enumerate(lst_obs):
-            temp_lst.append(self.sensitivityCalculation(observables_against_original_time_df,observables_against_new_time_df,observable,dk=one_percent_of_last_timestep)
-        temp_df = pd.concat(temp_lst,axis=1,ignore_index=True)
-        
-        time_shift_sensitivity = temp_df
+
+        time_shift_sensitivity = self.sensitivityCalculation(observables_against_original_time_df,observables_against_new_time_df,[lst_obs],dk=one_percent_of_last_timestep)
         self.time_shift_sensitivity = time_shift_sensitivity
         return time_shift_sensitivity
