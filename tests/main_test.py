@@ -2,18 +2,18 @@ import sys, os
 sys.path.append('../../') #get rid of this at some point with central test script or when package is built
 os.chdir('../../')
 
-import MSI_2.simulations.instruments.shock_tube as st
-import MSI_2.cti_core.cti_processor as pr
-import MSI_2.optimization.matrix_loader as ml
-import MSI_2.optimization.opt_runner as opt
-import MSI_2.simulations.absorbance.curve_superimpose as csp
-import MSI_2.simulations.yaml_parser as yp
-import MSI_2.optimization.optimization_shell_six_param_fit as MSIspf
+import MSI.simulations.instruments.shock_tube as st
+import MSI.cti_core.cti_processor as pr
+import MSI.optimization.matrix_loader as ml
+import MSI.optimization.opt_runner as opt
+import MSI.simulations.absorbance.curve_superimpose as csp
+import MSI.simulations.yaml_parser as yp
+import MSI.optimization.optimization_shell_six_param_fit as MSIspf
 import cantera as ct
 import pandas as pd
 import numpy as np
-import MSI_2.utilities.plotting_script as plotter
-import MSI_2.utilities.post_processor as post_processor
+import MSI.utilities.plotting_script as plotter
+import MSI.utilities.post_processor as post_processor
 
 
 
@@ -22,7 +22,7 @@ files_to_include = [['JSR_template_new.yaml']]
 
 
 #files_to_include = [['Hong_0.yaml']]
-numer_of_iterations = 2
+numer_of_iterations = 10
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
