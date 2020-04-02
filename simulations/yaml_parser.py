@@ -106,7 +106,7 @@ class Parser(object):
         temp_relative_uncertainty = float(temp_relative_uncertainty)
         pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
         pressure_relative_uncertainty = float(pressure_relative_uncertainty)
-        time_shift = loaded_exp['common-properties']['time-shift']['value']
+        time_shift = float(loaded_exp['common-properties']['time-shift']['value'])
         time_shift_uncertainty = loaded_exp['common-properties']['time-shift']['absolute-uncertainty']['value']
         concentration_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
         concentration_relative_uncertainity = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
@@ -345,6 +345,7 @@ class Parser(object):
             if experiment_dict_list[0]['simulation'].physicalSens ==1 :
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperature']
+                    time_shift = self.original_experimental_conditions[yaml_file]['timeShift']
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperatures']
                 press = self.original_experimental_conditions[yaml_file]['pressure']
@@ -357,10 +358,13 @@ class Parser(object):
                 print(press)
                 print(conditions)
                 print('__________________________________________________________________________')
-                
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
                     updatedTemp = round(updatedTemp,9)
+                    
+                    updatedTimeShift =  np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * time_shift
+                    updatedTimeShift = round(updatedTimeShift,9)
+                    
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
                     updatedTemp=[]
                     for i,T in enumerate(temp):
@@ -398,6 +402,7 @@ class Parser(object):
                 config2['common-properties']['pressure']['value']=float(updatedPress)
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     config2['common-properties']['temperature']['value']=float(updatedTemp)
+                    config2['common-properties']['time-shift']['value']=float(updatedTimeShift)
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):    
                     config2['common-properties']['temperature']['value-list']=updatedTemp
                 for i,moleFraction in enumerate(updated_mole_fraction_list):

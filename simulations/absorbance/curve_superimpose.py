@@ -449,7 +449,7 @@ class Absorb:
         for sp in range(len(absorb['Absorption-coefficients'])):
             temp = [wl['value'] for wl in absorb['Absorption-coefficients'][sp]['wave-lengths']]
             wavelengths.append(temp)
-
+        self.wavelengths = wavelengths
         return wavelengths
 
     def couple_parameters(self,absorb:dict()):
@@ -479,4 +479,25 @@ class Absorb:
             temp = [wl['functional-form'] for wl in absorb['Absorption-coefficients'][form]['wave-lengths']]
             functional_form.append(temp)
         return functional_form
+    
+    def calculate_time_shift_sensitivity_abs(self,absorabnce_from_model,absorbance_experimental_data,simulation,dk):
+        flat_list = [item for sublist in self.wavelengths for item in sublist]
+        flat_list = list(set(flat_list))
+        wavelengths = flat_list
 
+        
+        original_time = simulation.timeHistories[0]['time']
+        last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
+        one_percent_of_last_timestep = last_timestep_in_simulation*dk        
+        new_time = original_time + one_percent_of_last_timestep
+        time_shift_sensitivity_dict = {}
+        for i,wl in enumerate(wavelengths):
+            original_absorabnce_interpolated = np.interp(absorbance_experimental_data[i]['time'],simulation.timeHistories[0]['time'],absorabnce_from_model[wl])
+            original_absorabnce_interpolated = original_absorabnce_interpolated.reshape((original_absorabnce_interpolated.shape[0],1))
+            time_shifted_absorabnce_interpolated = np.interp(absorbance_experimental_data[i]['time'],new_time,absorabnce_from_model[wl])
+            time_shifted_absorabnce_interpolated = time_shifted_absorabnce_interpolated.reshape((time_shifted_absorabnce_interpolated.shape[0],1))
+            
+            sensitivity = (np.log(time_shifted_absorabnce_interpolated) - np.log(original_absorabnce_interpolated))/dk
+            time_shift_sensitivity_dict[wl] = sensitivity
+        self.time_shift_sensitivity_dict = time_shift_sensitivity_dict
+        return time_shift_sensitivity_dict
