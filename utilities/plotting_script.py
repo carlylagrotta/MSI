@@ -1732,8 +1732,8 @@ class Plotting(object):
         except:
             all_parameters = shock_tube_instance.prior_diag_df['parameter'].tolist()
 
-        parameter_groups = ['T','P']
-
+        parameter_groups = ['T','P','Time']
+        #print(all_parameters)
         list_of_species = []
         for parameter in all_parameters:
             if parameter[0] == 'X':
@@ -1750,12 +1750,20 @@ class Plotting(object):
             parameter_counter = 0
             for i,p in enumerate(all_parameters):
                 if parameter == 'T':
-                    if p[0] == 'T':
+                    if p[0] == 'T' and p[1] != 'i':
                         yaml_file = int(p.split('_')[2])
                         if parameter_counter in experiments_want_to_plot_data_from: 
                             temp_list.append(optimized_X[i][0])
                             prior_sigma=T_uncertainty
                         parameter_counter+=1
+            
+                elif parameter == 'Time':
+                    if p[0] == 'T' and p[1] == 'i':
+                        yaml_file = int(p.split('_')[3])
+                        if parameter_counter in experiments_want_to_plot_data_from: 
+                            temp_list.append(optimized_X[i][0])
+                            prior_sigma=T_uncertainty
+                        parameter_counter+=1                
                         
                 elif parameter == 'P':        
                     if p[0] == 'P':
@@ -1833,7 +1841,7 @@ class Plotting(object):
             #plt.ylabel('Probability')
             plt.title(r'$\mathrm{Histogram\ of\ physical\ model\ parameter:}\ \mu=%.3f,\ \sigma=%.3f$' %(mu, sigma))
             plt.grid(True)
-            plt.savefig(directory_to_save_images+'/'+'Including Experiments_'+ str(experiments_want_to_plot_data_from)+parameter+'_.pdf',dpi=1000,bbox_inches='tight')
+            #plt.savefig(directory_to_save_images+'/'+'Including Experiments_'+ str(experiments_want_to_plot_data_from)+parameter+'_.pdf',dpi=1000,bbox_inches='tight')
 
 
     def difference_plotter(self,
