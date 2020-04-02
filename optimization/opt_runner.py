@@ -33,7 +33,9 @@ class Optimization_Utility(object):
                               absorbance_experimental_data:list=[],
                               time_history_interpolated_against_absorbance_experiment:dict={},
                               absorbance_calculated_from_model=None,
-                              yaml_dict:dict={}):
+                              yaml_dict:dict={},
+                              interpolated_time_shift_sens=None,
+                              interpolated_abs_time_shift = None):
         exp_dict = {}
         exp_dict['index']              = exp_index
         exp_dict['simulation']         = simulation
@@ -58,6 +60,7 @@ class Optimization_Utility(object):
         exp_dict['experimental_data']  = experimental_data
         # start here 
         if re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['simulationType']):
+            exp_dict['time_shift'] = interpolated_time_shift_sens
             exp_dict['uncertainty']        = self.build_uncertainty_shock_tube_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
 
@@ -73,11 +76,13 @@ class Optimization_Utility(object):
             exp_dict['absorbance_model_data'] = interpolated_absorbance[0]
             exp_dict['absorbance_ksens']   = interpolated_absorbance[1]
             exp_dict['absorbance_psens']   = interpolated_absorbance[2]
+            exp_dict['absorbance_time_shift'] = interpolated_abs_time_shift
             exp_dict['perturbed_coef']     = interpolated_absorbance[3]
             exp_dict['absorbance_observables'] = simulation.absorbanceObservables
             exp_dict['absorbance_experimental_data'] = absorbance_experimental_data
             exp_dict['absorbance_calculated_from_model'] = absorbance_calculated_from_model
             exp_dict['time_history_interpolated_against_abs'] = time_history_interpolated_against_absorbance_experiment
+
             
             
         return exp_dict
@@ -119,6 +124,7 @@ class Optimization_Utility(object):
         uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictonarie['pressureRelativeUncertainty']
         uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictonarie['speciesUncertaintys'],
                         'species':experiment_dictonarie['speciesNames']}
+        uncertainty_dict['time_shift_absolute_uncertainty'] = experiment_dictonarie['timeShiftUncertainty']
         uncertainty_dict['mole_fraction_relative_uncertainty'] = experiment_dictonarie['moleFractionRelativeUncertainty']
         uncertainty_dict['mole_fraction_absolute_uncertainty'] = experiment_dictonarie['moleFractionAbsoluteUncertainty'] 
         uncertainty_dict['concentration_relative_uncertainty'] = experiment_dictonarie['concentrationRelativeUncertainity']
@@ -198,7 +204,8 @@ class Optimization_Utility(object):
                      save_physSensHistories = 1,
                      moleFractionObservables = experiment_dictonary['moleFractionObservables'],
                      concentrationObservables = experiment_dictonary['concentrationObservables'],
-                     fullParsedYamlFile = experiment_dictonary)
+                     fullParsedYamlFile = experiment_dictonary,
+                     time_shift_value = experiment_dictonary['timeShift'])
         
         csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
         exp_data = shock_tube.importExperimentalData(csv_paths)
@@ -215,6 +222,7 @@ class Optimization_Utility(object):
         ############################################### check to make sure these aren't effected 
         int_tp_psen_against_experimental = shock_tube.interpolate_experimental([shock_tube.interpolate_physical_sensitivities(index=1),
                                                                            shock_tube.interpolate_physical_sensitivities(index=2)])
+        
     
         int_spec_psen_against_experimental = shock_tube.interpolate_experimental(pre_interpolated=shock_tube.interpolate_species_sensitivities())
     ###############saving the shock tube experimental interpolated time history     
@@ -222,6 +230,8 @@ class Optimization_Utility(object):
         shock_tube.savingInterpTimeHistoryAgainstExp(single_data)
         #tab starting here tomorrow
         shock_tube.interpolatePressureandTempToExperiment(shock_tube,exp_data)
+        time_shift_sensitivity = shock_tube.calculate_time_shift_sensitivity(shock_tube,exp_data,dk)
+        
     ###############  ###############  
         experiment = self.build_single_exp_dict(exp_number,
                                            shock_tube,
@@ -229,7 +239,8 @@ class Optimization_Utility(object):
                                            int_tp_psen_against_experimental,
                                            int_spec_psen_against_experimental,
                                            experimental_data = exp_data,
-                                           yaml_dict=experiment_dictonary)
+                                           yaml_dict=experiment_dictonary,
+                                           interpolated_time_shift_sens = time_shift_sensitivity)
         
         #write test case and check if we can get as far as just returnign the experiment
         return experiment
@@ -257,7 +268,8 @@ class Optimization_Utility(object):
                      moleFractionObservables = experiment_dictonary['moleFractionObservables'],
                      absorbanceObservables = experiment_dictonary['absorbanceObservables'],
                      concentrationObservables = experiment_dictonary['concentrationObservables'],
-                     fullParsedYamlFile = experiment_dictonary)
+                     fullParsedYamlFile = experiment_dictonary,
+                     time_shift_value = experiment_dictonary['timeShift'])
     
         
         csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
@@ -291,7 +303,6 @@ class Optimization_Utility(object):
 
         
         int_spec_psen_against_experimental = shock_tube.interpolate_experimental(pre_interpolated=shock_tube.interpolate_species_sensitivities())
-        
         abs_phys_sens = abs_instance.absorb_phys_sensitivities(shock_tube,abs_data[0],abs_loaded,
                                                                experiment_dictonary['pathLength'],
                                                                dk = dk)
@@ -313,8 +324,11 @@ class Optimization_Utility(object):
         single_data = shock_tube.interpolate_experimental(single=shock_tube.timeHistories[0])
         shock_tube.savingInterpTimeHistoryAgainstExp(single_data)
         shock_tube.interpolatePressureandTempToExperiment(shock_tube,exp_data)
+        time_shift_sensitivity = shock_tube.calculate_time_shift_sensitivity(shock_tube,exp_data,dk)
     ####################################################################################    
-        
+        time_shift_abs_senstivity = abs_instance.calculate_time_shift_sensitivity_abs(abs_data[0],
+                                                                                       loaded_experimental_data_absorbance,
+                                                                                       shock_tube,dk)
         experiment = self.build_single_exp_dict(exp_number,
                                                 shock_tube,
                                       int_ksens_exp_mapped,
@@ -325,7 +339,9 @@ class Optimization_Utility(object):
                                       absorbance_experimental_data = loaded_experimental_data_absorbance,
                                       time_history_interpolated_against_absorbance_experiment = time_history_interp_against_experiment_dict,
                                       absorbance_calculated_from_model = abs_data[0],
-                                      yaml_dict=experiment_dictonary)
+                                      yaml_dict=experiment_dictonary,
+                                      interpolated_time_shift_sens = time_shift_sensitivity,
+                                      interpolated_abs_time_shift = time_shift_abs_senstivity)
         
         return experiment
     
@@ -354,7 +370,8 @@ class Optimization_Utility(object):
                      moleFractionObservables = experiment_dictonary['moleFractionObservables'],
                      absorbanceObservables = experiment_dictonary['absorbanceObservables'],
                      concentrationObservables = experiment_dictonary['concentrationObservables'],
-                     fullParsedYamlFile = experiment_dictonary)
+                     fullParsedYamlFile = experiment_dictonary,
+                     time_shift_value = experiment_dictonary['timeShift'])
 
     
         shock_tube.run()
@@ -399,6 +416,9 @@ class Optimization_Utility(object):
         time_history_interp_against_experiment_dict = abs_instance.interpolate_experimental(shock_tube,
                                                                                             loaded_experimental_data_absorbance,
                                                                                             time_history = shock_tube.timeHistories[0])
+        time_shift_abs_senstivity = abs_instance.calculate_time_shift_sensitivity_abs(abs_data[0],
+                                                                                       loaded_experimental_data_absorbance,
+                                                                                       shock_tube,dk)
         experiment = self.build_single_exp_dict(exp_number,
                                                 shock_tube,
                                       None,
@@ -408,7 +428,8 @@ class Optimization_Utility(object):
                                       absorbance_experimental_data = loaded_experimental_data_absorbance,
                                       time_history_interpolated_against_absorbance_experiment = time_history_interp_against_experiment_dict,
                                       absorbance_calculated_from_model = abs_data[0],
-                                      yaml_dict=experiment_dictonary)
+                                      yaml_dict=experiment_dictonary,
+                                      interpolated_abs_time_shift = time_shift_abs_senstivity)
         
         return experiment    
     

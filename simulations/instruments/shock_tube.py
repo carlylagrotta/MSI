@@ -15,7 +15,8 @@ class shockTube(sim.Simulation):
                  processor:ctp.Processor=None,cti_path="",save_timeHistories:int=0, 
                  save_physSensHistories=0,moleFractionObservables:list=[],
                  absorbanceObservables:list=[],concentrationObservables:list=[],
-                 fullParsedYamlFile:dict={}):
+                 fullParsedYamlFile:dict={},
+                 time_shift_value = 0):
 
         '''
         Child class of shock Tubes. Inherits all attributes and
@@ -44,6 +45,7 @@ class shockTube(sim.Simulation):
         self.moleFractionObservables = moleFractionObservables
         self.absorbanceObservables = absorbanceObservables
         self.fullParsedYamlFile =  fullParsedYamlFile
+        self.time_shift_value = time_shift_value
 
         if save_timeHistories == 1:
             self.timeHistories=[]
@@ -204,7 +206,14 @@ class shockTube(sim.Simulation):
                             ignore_index=True)
             counter+=1
         if self.timeHistories != None:
+            ############################################################
+
+            #This maybe where I add in the time shift for each array
+            #STUB
+            ############################################################
+            self.timeHistory.time = self.timeHistory.time + self.time_shift_value
             self.timeHistories.append(self.timeHistory)
+            ############################################################
 
         if self.kineticSens == 1:
             numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
@@ -510,3 +519,39 @@ class shockTube(sim.Simulation):
             self.pressureAndTemperatureToExperiment = list_of_df
             
         return list_of_df
+    
+    def calculate_time_shift_sensitivity(self,simulation,experimental_data,dk):
+        original_time = simulation.timeHistories[0]['time']
+        last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
+        one_percent_of_last_timestep = last_timestep_in_simulation*dk      
+        new_time = original_time + one_percent_of_last_timestep
+        
+        observables_interpolate_against_original_time = []
+        observables_interpolated_against_new_time = []
+        lst_obs = simulation.moleFractionObservables + simulation.concentrationObservables
+        lst_obs = [i for i in lst_obs if i] 
+
+        for i,df in enumerate(experimental_data):
+            interpolated_original_observable = np.interp(df['Time'],simulation.timeHistories[0]['time'],simulation.timeHistories[0][lst_obs[i]])
+            s1 = pd.Series(interpolated_original_observable,name=lst_obs[i])
+            observables_interpolate_against_original_time.append(s1)
+
+            
+            interpolated_shited_observable = np.interp(df['Time'],new_time,simulation.timeHistories[0][lst_obs[i]])
+            s2 = pd.Series(interpolated_shited_observable,name=lst_obs[i])
+            observables_interpolated_against_new_time.append(s2)
+
+        observables_against_new_time_df = pd.concat(observables_interpolated_against_new_time,axis=1)
+        observables_against_original_time_df = pd.concat(observables_interpolate_against_original_time,axis=1)
+        self.original_time = observables_against_original_time_df
+        self.new_time = observables_against_new_time_df
+        
+       
+        observables_against_new_time_df = observables_against_new_time_df.applymap(np.log)
+        observables_against_original_time_df = observables_against_original_time_df.applymap(np.log)
+        sensitivity = (observables_against_new_time_df.subtract(observables_against_original_time_df)/dk)
+        
+        time_shift_sensitivity = sensitivity
+        #time_shift_sensitivity = self.sensitivityCalculation(observables_against_original_time_df,observables_against_new_time_df,[lst_obs],dk=one_percent_of_last_timestep)
+        self.time_shift_sensitivity = time_shift_sensitivity
+        return time_shift_sensitivity

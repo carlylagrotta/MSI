@@ -7,7 +7,7 @@ class testing_code(object):
                  shape_of_X_counter=None,value=.01,
                  Y_matrix = None,experimental_dict_list=None,
                  S_matrix_original=None,Y_matrix_original=None,
-                 number_of_reactions_in_cti_file = 25,macroscopic_test_data_directory = None):
+                 number_of_reactions_in_cti_file = 288,macroscopic_test_data_directory = None):
         self.S_matrix = S_matrix_original
         self.s_matrix = None
         self.Y_matrix = Y_matrix
@@ -49,6 +49,7 @@ class testing_code(object):
         S_percent_difference = np.zeros(np.shape(self.S_matrix))
         S_residuals = np.zeros((np.shape(self.S_matrix)))
         S_new = np.zeros((np.shape(self.S_matrix)))
+        
         for x in range(len(self.simulation_lengths_of_experimental_data)):
             for y in range(len(self.simulation_lengths_of_experimental_data[x])):
                 stop = self.simulation_lengths_of_experimental_data[x][y] + start
@@ -56,7 +57,8 @@ class testing_code(object):
                 original = original.reshape(original.shape[0],1)
                 numerator =  self.Y_matrix_original[start:stop,:] -self.Y_matrix[start:stop,:]
                 denominator = self.value_to_perturb_by
-                if self.shape_of_X_counter > self.number_of_reactions_in_cti_file*2 and self.shape_of_X_counter < self.number_of_reactions_in_cti_file*3:
+
+                if (self.shape_of_X_counter > self.number_of_reactions_in_cti_file*2)-6 and self.shape_of_X_counter < (self.number_of_reactions_in_cti_file*3)-6:
                     denominator = self.value_to_perturb_by * ct.gas_constant
                 Sij = np.divide(numerator,denominator)
                 S_temp = Sij
@@ -73,7 +75,7 @@ class testing_code(object):
                 S_percent_difference[start:stop,self.shape_of_X_counter] = percent_difference
                 start = start + self.simulation_lengths_of_experimental_data[x][y]
         
-        return S_residuals, numerator,S_new,S_percent_difference
+        return Sij, numerator,S_new,S_percent_difference
                 
     def lengths_of_experimental_data(self):
         simulation_lengths_of_experimental_data = []

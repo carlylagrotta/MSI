@@ -108,6 +108,7 @@ class Parser(object):
         temp_relative_uncertainty = float(temp_relative_uncertainty)
         pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
         pressure_relative_uncertainty = float(pressure_relative_uncertainty)
+        time_shift = float(loaded_exp['common-properties']['time-shift']['value'])
         time_shift_uncertainty = loaded_exp['common-properties']['time-shift']['absolute-uncertainty']['value']
         concentration_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
         concentration_relative_uncertainity = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
@@ -142,7 +143,8 @@ class Parser(object):
                'moleFractionAbsoluteUncertainty':mole_fraction_absolute_uncertainty,
                'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
                'csvFiles': csv_files,
-               'simulationType':  simulation_type
+               'simulationType':  simulation_type,
+               'timeShift':time_shift
            }
         
         else: #absorbtion file given
@@ -223,7 +225,8 @@ class Parser(object):
                    'parameterOnes':parameter_ones,
                    'parameterTwos':parameter_twos,
                    'functionalForm':functional_form,
-                   'simulationType':  simulation_type
+                   'simulationType':  simulation_type,
+                   'timeShift':time_shift
                    }
             
     def load_yaml_list(self, yaml_list:list = []):
@@ -344,6 +347,7 @@ class Parser(object):
             if experiment_dict_list[0]['simulation'].physicalSens ==1 :
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperature']
+                    time_shift = self.original_experimental_conditions[yaml_file]['timeShift']
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperatures']
                     res = self.original_experimental_conditions[yaml_file]['residence_time']
@@ -359,10 +363,13 @@ class Parser(object):
                 if re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
                     print(res)
                 print('__________________________________________________________________________')
-                
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
                     updatedTemp = round(updatedTemp,9)
+                    
+                    updatedTimeShift =  np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * time_shift
+                    updatedTimeShift = round(updatedTimeShift,9)
+                    
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
                     updatedTemp=[]
                     for i,T in enumerate(temp):
@@ -401,6 +408,7 @@ class Parser(object):
                 config2['common-properties']['pressure']['value']=float(updatedPress)
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     config2['common-properties']['temperature']['value']=float(updatedTemp)
+                    config2['common-properties']['time-shift']['value']=float(updatedTimeShift)
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):    
                     config2['common-properties']['temperature']['value-list']=updatedTemp
                     config2['apparatus']['residence-time']['value']=float(updatedResTime)

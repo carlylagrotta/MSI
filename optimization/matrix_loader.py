@@ -254,13 +254,20 @@ class OptMatrix(object):
                     species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
                     species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
                     dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
+                    
+
                     for specie in species_to_loop:
                         if specie in dilluant:
                             continue
                         experiment_physical_uncertainty.append(species_uncertainties[specie])
                         Z_data_Frame.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
                         active_parameters.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
-
+                    
+                    
+                    experiment_physical_uncertainty.append(exp_dic['uncertainty']['time_shift_absolute_uncertainty'])
+                    Z_data_Frame.append('Time_shift'+'_'+'experiment'+'_'+str(i))
+                    active_parameters.append('Time_shift'+'_'+'experiment'+'_'+str(i))
+                    
                     experiment_physical_uncertainty = np.array(experiment_physical_uncertainty)
                     experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],
                                                       1))
@@ -514,14 +521,16 @@ class OptMatrix(object):
                         species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
                         
                         #add two for Temperature and Pressure
-                        len_of_phsycial_observables_in_simulation = species_in_simulation + 2 
+                        len_of_phsycial_observables_in_simulation = species_in_simulation + 2 + 1
                         temp_zeros = np.zeros((len_of_phsycial_observables_in_simulation,1))
                         #stacking the zeros onto the Y array 
                         Y = np.vstack((Y,temp_zeros))
                         Y_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
-                        Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
+                        Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))                        
                         for variable in range(species_in_simulation):
                             Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                        Y_data_Frame.append('Time_shift'+'_'+'experiment'+'_'+str(i)) 
+                        
                     if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
                         dict_of_conditions = exp_dic['simulation'].conditions
                         species_in_simulation = len(set(dict_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
@@ -548,6 +557,8 @@ class OptMatrix(object):
                         Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
                         for variable in range(species_in_simulation):
                             Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                        Y_data_Frame.append('Time_shift'+'_'+'experiment'+'_'+str(i))
+                        
 
                     if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
                         dict_of_conditions = exp_dic['simulation'].conditions
@@ -693,6 +704,11 @@ class OptMatrix(object):
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
                         temperature_sensitivity = exp['temperature'][observable].dropna().values
                         temperature_sensitivity = temperature_sensitivity.reshape((temperature_sensitivity.shape[0], 1))
+                        
+                        time_shift_sensitivity = exp['time_shift'][observable].dropna().values
+                        time_shift_sensitivity = time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))
+                        
+
                     elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
                         temperature_sensitivity=np.array(exp['temperature'][observable])*np.identity(len(exp['simulation'].temperatures))
                         restime_sensitivity=exp['restime_sens'][observable].dropna().values
@@ -707,11 +723,15 @@ class OptMatrix(object):
                         species_sensitivty.append(single_species_sensitivty)
                         
                     species_sensitivty = np.hstack((species_sensitivty))
-                        
+                                            
                     
-                    single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty))
                     if re.match('[Jj][Ss][Rr]',exp['simulation_type']):
                         single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty,restime_sensitivity))
+
+                       
+                    elif re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                        single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty,time_shift_sensitivity)) 
+
                     ttl_phsycal_obs_for_exp.append(single_obs_physical)
                     obs_counter +=1
                 if 'perturbed_coef' in exp.keys():
@@ -722,6 +742,11 @@ class OptMatrix(object):
                             array = p_sens[wl]
                             array = array.reshape((array.shape[0],1))
                             physical_sens.append(array)
+                        for time_sens in exp['absorbance_time_shift']:
+                            array2 = p_sens[wl]
+                            array2 = array2.reshape((array2.shape[0],1))
+                            physical_sens.append(array2)
+                            
                         physical_sens = np.hstack((physical_sens))
                         ttl_phsycal_obs_for_exp.append(physical_sens)
                     
@@ -1051,7 +1076,7 @@ class OptMatrix(object):
                         #subtract out the dilluant 
                     species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
                         #add two for Temperature and Pressure
-                    len_of_phsycial_observables_in_simulation = species_in_simulation + 2 
+                    len_of_phsycial_observables_in_simulation = species_in_simulation + 2 +1 
                     new_value = previous_value + len_of_phsycial_observables_in_simulation
                     single_experiment_physical_observables = X_new[(value1+value2+previous_value):(value1+value2+new_value)]
                     physical_observables_for_Y.append(single_experiment_physical_observables)
@@ -1061,6 +1086,9 @@ class OptMatrix(object):
                     temp_keys.append('P'+'_'+'experiment'+'_'+str(i))
                     for variable in range(species_in_simulation):
                         temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                    
+                    temp_keys.append('Time_shift'+'_'+'experiment'+'_'+str(i))
+                    
                     temp_dict = dict(zip(temp_keys,single_experiment_physical_observables))
                     physical_observables.append(temp_dict)
                     ##come back to this and do a test on paper
