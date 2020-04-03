@@ -522,10 +522,15 @@ class shockTube(sim.Simulation):
     
     def calculate_time_shift_sensitivity(self,simulation,experimental_data,dk):
         original_time = simulation.timeHistories[0]['time']
-        last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
-        one_percent_of_last_timestep = last_timestep_in_simulation*dk      
-        new_time = original_time + one_percent_of_last_timestep
+        #last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
+        first_timestep_in_simulation = simulation.timeHistories[0]['time'].loc[2]
         
+        #one_percent_of_last_timestep = last_timestep_in_simulation*dk      
+        one_percent_of_first_timestep = first_timestep_in_simulation*dk      
+
+        #new_time = original_time + one_percent_of_last_timestep
+        new_time = original_time + one_percent_of_first_timestep
+
         observables_interpolate_against_original_time = []
         observables_interpolated_against_new_time = []
         lst_obs = simulation.moleFractionObservables + simulation.concentrationObservables

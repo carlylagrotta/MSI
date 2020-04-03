@@ -487,9 +487,15 @@ class Absorb:
 
         
         original_time = simulation.timeHistories[0]['time']
-        last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
-        one_percent_of_last_timestep = last_timestep_in_simulation*dk        
-        new_time = original_time + one_percent_of_last_timestep
+        #last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
+        first_timestep_in_simulation = simulation.timeHistories[0]['time'].loc[2]
+
+        #one_percent_of_last_timestep = last_timestep_in_simulation*dk  
+        one_percent_of_first_timestep = first_timestep_in_simulation*dk      
+
+        #new_time = original_time + one_percent_of_last_timestep
+        new_time = original_time + one_percent_of_first_timestep
+        
         time_shift_sensitivity_dict = {}
         for i,wl in enumerate(wavelengths):
             original_absorabnce_interpolated = np.interp(absorbance_experimental_data[i]['time'],simulation.timeHistories[0]['time'],absorabnce_from_model[wl])
