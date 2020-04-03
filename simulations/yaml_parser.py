@@ -18,11 +18,59 @@ class Parser(object):
     
     def get_sim_type(self,loaded_exp:dict={}):
         simtype = loaded_exp['apparatus']['kind']
-        return simtype
+        experiment_type = loaded_exp['experiment-type']
+        return simtype,experiment_type
+    def parse_flame_speed_obj(self,loaded_exp:dict={},loaded_absorption={}):
+        simulation_type = loaded_exp['apparatus']['kind']
+        experiment_type = loaded_exp['experiment-type']
+        flame_width = loaded_exp['apparatus']['flame_width']['value']
+        flame_width_relative_uncertainty = loaded_exp['apparatus']['flame_width']['relative-uncertainty']
+        pressure = loaded_exp['common-properties']['pressure']['value']
+        inlet_temperature = loaded_exp['common-properties']['inlet-temperature']['value']
+        inlet_temperature_relative_uncertainty = loaded_exp['common-properties']['inlet-temperature']['relative-uncertainty']
+        species_names = [(species['species']) for species in loaded_exp['common-properties']['composition']]
+        mole_fractions = [((concentration['mole-fraction']['value-list'])) for concentration in loaded_exp['common-properties']['composition']]
+        mole_fractions = [[float(elm) for elm in specie] for specie in mole_fractions]
+        conditions = dict(zip(species_names,mole_fractions))
+        species_types = [(species['type']) for species in loaded_exp['common-properties']['composition']]
+        species_types_dict = dict(zip(species_names,species_types))
+        thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
+        mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
+        species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
+        species_uncertainties = [float(elm) for elm in species_uncertainties]
+        species_uncertainties = dict(zip(species_names,species_uncertainties))
+        flame_speed_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['flame-speed']]
+        flame_speed_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['flame-speed']]
+        flame_speed_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['flame-speed']]
+        pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
+        pressure_relative_uncertainty = float(pressure_relative_uncertainty)
+            
+        return{'simulationType': simulation_type,
+               'experiment_type':experiment_type,
+               'flameWidth':flame_width,
+               'flameWidthRelativeUncertainty':flame_width_relative_uncertainty,
+               'pressure':pressure,
+               'inletTemperature':inlet_temperature,
+               'inletTemperatureRelativeUncertainty':inlet_temperature_relative_uncertainty,
+               'speciesNames':species_names,
+               'moleFractions':mole_fractions,
+               'conditions':conditions,
+               'speciesTypesDict':species_types_dict,
+               'thermalBoundary':thermal_boundary,
+               'mechanicalBoundary':mechanical_boundary,
+               'speciesUncertainties':species_uncertainties,
+               'flameSpeedRelativeUncertainty':flame_speed_relative_uncertainty,
+               'flameSpeedAbsoluteUncertainty':flame_speed_absolute_uncertainty,
+               'flameSpeedObservables':flame_speed_observables,
+               'pressureRelativeUncertainty':pressure_relative_uncertainty
+               
+               
+              }
     
     def parse_jsr_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
+        experiment_type = loaded_exp['experiment-type']
         temperatures = loaded_exp['common-properties']['temperature']['value-list']
         mole_fractions = [((concentration['mole-fraction'])) for concentration in loaded_exp['common-properties']['composition']]
         mole_fractions = [float(elm) for elm in mole_fractions]
@@ -65,7 +113,8 @@ class Parser(object):
                'csvFiles': csv_files,
                'simulationType':  simulation_type,
                'volume': volume,
-               'residence_time': residence_time
+               'residence_time': residence_time,
+               'experimentType':experiment_type
            }
         else:
             print('Placeholder: no JSR absorption')
@@ -80,7 +129,7 @@ class Parser(object):
         conditions = dict(zip(species_names,mole_fractions))
         thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
         mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
-        
+        experiment_type = loaded_exp['experiment-type']
         mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
@@ -142,7 +191,8 @@ class Parser(object):
                'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
                'csvFiles': csv_files,
                'simulationType':  simulation_type,
-               'timeShift':time_shift
+               'timeShift':time_shift,
+               'experimentType':experiment_type
            }
         
         else: #absorbtion file given
@@ -224,7 +274,8 @@ class Parser(object):
                    'parameterTwos':parameter_twos,
                    'functionalForm':functional_form,
                    'simulationType':  simulation_type,
-                   'timeShift':time_shift
+                   'timeShift':time_shift,
+                   'experimentType':experiment_type
                    }
             
     def load_yaml_list(self, yaml_list:list = []):
@@ -244,7 +295,7 @@ class Parser(object):
         counter=0
         for tup in list_of_yaml_objects:
             
-            simtype=str(self.get_sim_type(tup[0]))
+            simtype,experiment_type=str(self.get_sim_type(tup[0]))
            # print(simtype)
             #simtype = 'shock tube'
             #if simtype=='shock tube' or simtype=='Shock Tube' or simtype=='Shock tube':
