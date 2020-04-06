@@ -24,12 +24,13 @@ class free_flame(sim.Simulation):
     
     
     def __init__(self,pressure:float,temperature:float,observables:list,
-                 kineticSens:int,physicalSens:int,conditions:dict,thermalBoundary,mechanicalBoundary,
+                 kineticSens:int,physicalSens:int,conditions:dict,thermalBoundary,
                  processor:ctp.Processor=None,cti_path="", 
                  save_physSensHistories=0,moleFractionObservables:list=[],
                  absorbanceObservables:list=[],concentrationObservables:list=[],
-                 fullParsedYamlFile:dict={},residence_time:float=1.0,pvalveCoefficient:float=0.01,
-                 maxpRise:float=0.001,save_timeHistories:int=0,rtol:float=1e-14,atol:float=1e-15):
+                 fullParsedYamlFile:dict={},flame_width:float=1.0,
+                 save_timeHistories:int=0,T_profile=pd.DataFrame(columns=['z','T']),soret=True,flamespeed_sens=0,
+                 tol_ss=[1.0e-5, 1.0e-13],tol_ts=[1.0e-4, 1.0e-10],loglevel):
         
         #sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
         #                        conditions,processor,cti_path)
@@ -51,19 +52,20 @@ class free_flame(sim.Simulation):
         self.conditions=conditions
         self.cti_path=cti_path
         self.thermalBoundary = thermalBoundary
-        self.mechanicalBoundary = mechanicalBoundary
         self.kineticSensitivities= None
         self.experimentalData = None
         self.concentrationObservables = concentrationObservables
         self.moleFractionObservables = moleFractionObservables
         self.absorbanceObservables = absorbanceObservables
         self.fullParsedYamlFile =  fullParsedYamlFile
-        self.pvalveCoefficient=pvalveCoefficient
-        self.maxPrise=maxpRise
         self.energycon='off'
-        self.residence_time=residence_time
+        self.flame_width=flame_width
         self.timeHistory = None
         self.experimentalData = None
+        self.flamespeed_sens=flamespeed_sens
+        self.tol_ss=tol_ss
+        self.tol_ts=tol_ts
+        self.soret=soret
         
         if save_timeHistories == 1:
             self.timeHistories=[]
@@ -75,19 +77,13 @@ class free_flame(sim.Simulation):
             self.physSensHistories = []
         self.setTPX()
         self.dk = 0.01
-        self.rtol=rtol
-        self.atol=atol
         self.solution=None
-        
-        
-    def set_geometry(self,volume=0.1):
-        self.reactor_volume=volume
         
         
     def printVars(self):
         print()
         
-    def settingJSRConditions(self):
+    def settingFlameConditions(self):
         '''
         Determine the mechanical and thermal boundary conditions for a 
         shock tube.
@@ -131,66 +127,30 @@ class free_flame(sim.Simulation):
     
     def run_single(self):
         
-        gas=self.processor.solution
-        reactorPressure=gas.P
-        self.reactorPressure=self.processor.solution.P
-        pressureValveCoefficient=self.pvalveCoefficient
-        maxPressureRiseAllowed=self.maxPrise
+        gas=self.processor.solution       
         
-        print(maxPressureRiseAllowed,self.reactorPressure,pressureValveCoefficient)
-        #Build the system components for JSR
-        pretic=time.time()
+        self.flame=ct.FreeFlame(gas,width=self.flame_width)
         
-        if bool(self.observables) and self.kineticSens==1:
-            ###################################################################
-            #Block to create temp reactor network to pre-solve JSR without kinetic sens
-            ct.suppress_thermo_warnings()
-            tempgas=ct.Solution(self.processor.cti_path)
-            tempgas.TPX=self.processor.solution.TPX
-            tempfuelAirMixtureTank=ct.Reservoir(tempgas)
-            tempexhaust=ct.Reservoir(tempgas)
-            tempstirredReactor=ct.IdealGasReactor(tempgas,energy=self.energycon,
-                                                  volume=self.reactor_volume)
-            tempmassFlowController=ct.MassFlowController(upstream=tempfuelAirMixtureTank,
-                                                         downstream=tempstirredReactor,
-                                                         mdot=tempstirredReactor.mass/self.residence_time)
-            tempPressureRegulator=ct.Valve(upstream=tempstirredReactor,downstream=tempexhaust,
-                                           K=pressureValveCoefficient)
-            
-            tempreactorNetwork=ct.ReactorNet([tempstirredReactor])
-            tempreactorNetwork.rtol = self.rtol
-            tempreactorNetwork.atol = self.atol
-            print(self.rtol,self.atol)
-            tempreactorNetwork.advance_to_steady_state()
-            ###################################################################
-            #reactorNetwork.advance_to_steady_state()
-            #reactorNetwork.reinitialize()
-        #print(tempgas.TPX)
-        elif self.kineticSens and bool(self.observables)==False:
-            #except:
-                print('Please supply a non-empty list of observables for sensitivity analysis or set kinetic_sens=0')        
-        pretoc=time.time()
+        self.flame.flame.set_steady_tolerances(default=self.tol_ss)   #Set steady state tolerances
+        self.flame.flame.set_transient_tolerances(default=self.tol_ts) #Set transient tolerances
         
-        print('Presolving Took {:3.2f}s to compute'.format(pretoc-pretic))        
-        fuelAirMixtureTank=ct.Reservoir(self.processor.solution)
-        exhaust=ct.Reservoir(self.processor.solution)
-        if bool(self.observables) and self.kineticSens==1:
-            stirredReactor=ct.IdealGasReactor(tempgas,energy=self.energycon,
-                                          volume=self.reactor_volume)
-        else:
-            stirredReactor=ct.IdealGasReactor(self.processor.solution,energy=self.energycon,
-                                          volume=self.reactor_volume)
-        #stirredReactor=ct.IdealGasReactor(self.processor.solution,energy=self.energycon,
-        #                                  volume=self.reactor_volume)    
-        massFlowController=ct.MassFlowController(upstream=fuelAirMixtureTank,
-                                                 downstream=stirredReactor,
-                                                 mdot=stirredReactor.mass/self.residence_time)
-        pressureRegulator=ct.Valve(upstream=stirredReactor,downstream=exhaust,K=pressureValveCoefficient)
-        reactorNetwork=ct.ReactorNet([stirredReactor])
-        if bool(self.observables) and self.kineticSens==1:
-            for i in range(gas.n_reactions):
-                stirredReactor.add_sensitivity_reaction(i)
-        # now compile a list of all variables for which we will store data
+        if re.match('[aA]diabatic',self.thermalBoundary):
+            energycon = True
+        self.flame.energy_enabled = energycon
+        
+        self.flame.transport_model = 'Multi'
+        self.flame.set_max_jac_age(10,10)
+        self.flame.solve(loglevel,)
+        #self.flame.soret_enabled = self.soret
+        
+        
+        
+        
+        self.flame.set_refine_criteria(ratio=2.0,slope=0.05,curve=0.1)
+        
+               
+        
+        
         columnNames = [stirredReactor.component_name(item) for item in range(stirredReactor.n_vars)]
         columnNames = ['pressure'] + columnNames
 
