@@ -30,7 +30,7 @@ class free_flame(sim.Simulation):
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={},flame_width:float=1.0,
                  save_timeHistories:int=0,T_profile=pd.DataFrame(columns=['z','T']),soret=True,flamespeed_sens=0,
-                 tol_ss=[1.0e-5, 1.0e-13],tol_ts=[1.0e-4, 1.0e-10],loglevel):
+                 tol_ss=[1.0e-5, 1.0e-13],tol_ts=[1.0e-4, 1.0e-10],loglevel=1):
         
         #sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
         #                        conditions,processor,cti_path)
@@ -66,6 +66,7 @@ class free_flame(sim.Simulation):
         self.tol_ss=tol_ss
         self.tol_ts=tol_ts
         self.soret=soret
+        self.loglevel=loglevel
         
         if save_timeHistories == 1:
             self.timeHistories=[]
@@ -140,54 +141,61 @@ class free_flame(sim.Simulation):
         
         self.flame.transport_model = 'Multi'
         self.flame.set_max_jac_age(10,10)
-        self.flame.solve(loglevel,)
-        #self.flame.soret_enabled = self.soret
+        self.flame.solve(self.loglevel,refine_grid=False)
+        self.flame.soret_enabled = self.soret
         
         
         
         
         self.flame.set_refine_criteria(ratio=2.0,slope=0.05,curve=0.1)
+        self.flame.transport_model = 'Multi'
+        self.flame.solve(self.loglevel,refine_grid=True)
+        self.forward_rates=self.flame.forward_rate_constants
+        self.net_rates=self.flame.net_rates_of_progress
+        self.reverse_rates=self.flame.reverse_rate_constants
+        
         
                
+        self.dk=0.01
+        self.solution=self.flame.X
+        
+        if self.kineticSens==1 and bool(self.observables):
+        
+            #Calculate kinetic sensitivities
+            sensIndex = [self.flame.grid.tolist(),gas.reaction_equations(),self.observables]
+            
+            S = np.zeros((len(self.flame.grid),gas.n_reactions,len(self.observables)))
+            #print(solution.X[solution.flame.component_index(observables[0])-4,len(f.grid)-1])
+            #a=solution.X[solution.flame.component_index(observables[0])-4,len(f.grid)-1]
+            for m in range(gas.n_reactions):
+                gas.set_multiplier(1.0)
+                gas.set_multiplier(1+self.dk,m)
+                self.flame.solve(loglevel=1,refine_grid=False)
+                for i in np.arange(len(self.observables)):
+                    for k in np.arange(len(self.flame.grid)):                    
+                        S[k,m,i]=np.log10(self.solution[self.flame.flame.component_index(self.observables[i])-4,k])-np.log10(self.flame.X[self.flame.flame.component_index(self.observables[i])-4,k])
+                        #print(solution.X[solution.flame.component_index(observables[i])-4,k])
+                        #print(f.X[f.flame.component_index(observables[i])-4,k])
+                        S[k,m,i]=np.divide(S[k,m,i],np.log10(self.dk))    
         
         
-        columnNames = [stirredReactor.component_name(item) for item in range(stirredReactor.n_vars)]
+        elif self.kineticSens==1 and bool(self.observables)==False:
+            raise Exception('Please supply a list of observables in order to run kinetic sensitivity analysis')
+        gas.set_multiplier(1.0)
+        if self.flamespeed_sens==1:    
+            self.fsens = self.flame.get_flame_speed_reaction_sensitivities()
+        columnNames = [self.stirredReactor.component_name(item) for item in range(self.stirredReactor.n_vars)]
         columnNames = ['pressure'] + columnNames
 
         # use the above list to create a DataFrame
         timeHistory = pd.DataFrame(columns=columnNames)
 
         # Start the stopwatch
-        tic = time.time()
-        reactorNetwork.rtol = self.rtol
-        reactorNetwork.atol = self.atol    
-        #reactorNetwork.max_err_test_fails= 10000
-        #print(reactorNetwork.max_err_test_fails)
-        if self.physicalSens==1 and bool(self.observables)==False:
-            #except:
-                print('Please supply a non-empty list of observables for sensitivity analysis or set physical_sens=0')
-        
-        #Establish a matrix to hold sensitivities for kinetic parameters, along with tolerances
-        if self.kineticSens==1 and bool(self.observables):
-            #senscolumnNames = ['Reaction']+observables     
-            senscolumnNames = self.observables
-            #sensArray = pd.DataFrame(columns=senscolumnNames)
-            #senstempArray = np.zeros((gas.n_reactions,len(observables)))
-            dfs = [pd.DataFrame() for x in range(len(self.observables))]
-            #tempArray = [np.zeros(self.processor.solution.n_reactions) for x in range(len(self.observables))]
-            #stirredReactor.thermo.X=tempstirredReactor.thermo.X
-                
-        
-        posttic=time.time()
-#        for steps in range(10):
-#            reactorNetwork.step()
-        reactorNetwork.advance_to_steady_state()
-        posttoc=time.time()
-        print('Main Solver Took {:3.2f}s to compute'.format(posttoc-posttic))
-        final_pressure=stirredReactor.thermo.P
-        sens=reactorNetwork.sensitivities()
+       
+       
         #print(sens)
         if self.kineticSens==1 and bool(self.observables):
+            dfs = [pd.DataFrame() for x in range(len(self.observables))]
             #print((pd.DataFrame(sens[0,:])).transpose())
             #test=pd.concat([pd.DataFrame(),pd.DataFrame(sens[0,:]).transpose()])
             #print(test)
@@ -196,32 +204,28 @@ class free_flame(sim.Simulation):
                 #dfs[k]=pd.concat([dfs[k],pd.DataFrame(sens[k,:]).transpose()])
                 #dfs[k]=pd.DataFrame(sens[k,:]).transpose()
             #print(dfs)  
-        toc = time.time()
-        print('Simulation Took {:3.2f}s to compute'.format(toc-tic)+' at T = '+str(stirredReactor.T))
-   
-        columnNames = []
-        #Store solution to a solution array
-        #for l in np.arange(stirredReactor.n_vars):
-            #columnNames.append(stirredReactor.component_name(l))
-        columnNames=[stirredReactor.component_name(item) for item in range(stirredReactor.n_vars)]
-        #state=stirredReactor.get_state()
-        state=np.hstack([stirredReactor.mass, 
-                   stirredReactor.volume, stirredReactor.T, stirredReactor.thermo.X])
-        data=pd.DataFrame(state).transpose()
-        data.columns=columnNames
-        pressureDifferential = timeHistory['pressure'].max()-timeHistory['pressure'].min()
-        if(abs(pressureDifferential/self.reactorPressure) > maxPressureRiseAllowed):
-            #except:
-                print("WARNING: Non-trivial pressure rise in the reactor. Adjust K value in valve")
         
-        if self.kineticSens==1:
+        
+        if self.kineticSens==1 and self.flamespeed_sens==0:
             numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
             self.kineticSensitivities = np.dstack(numpyMatrixsksens)
             #print(np.shape(self.kineticSensitivities))
-            self.solution=data
+            #self.solution=data
             return (self.solution,self.kineticSensitivities)
+        elif self.kineticSens==1 and self.flamespeed_sens==1:
+            numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
+            self.kineticSensitivities = np.dstack(numpyMatrixsksens)
+            #print(np.shape(self.kineticSensitivities))
+            #self.solution=data
+            return (self.solution,self.kineticSensitivities,self.fsens)
+        elif self.kineticSens==0 and self.flamespeed_sens==1:
+            numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
+            self.kineticSensitivities = np.dstack(numpyMatrixsksens)
+            #print(np.shape(self.kineticSensitivities))
+            #self.solution=data
+            return (self.solution,[],self.fsens)
         else:
-            self.solution=data
+            #self.solution=data
             return (self.solution,[])
         
         
