@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 import MSI.utilities.plotting_script as plotter
 import MSI.utilities.post_processor as post_processor
-
+import matplotlib.pyplot as plt
 
 
 
@@ -31,9 +31,9 @@ files_to_include = [['Hong_0.yaml'],
                     ['Hong_5.yaml','Hong_5_abs.yaml']]
 
 
-#files_to_include = [['Hong_4.yaml','Hong_4_abs.yaml'],
-                    #['Troe_4.yaml','Troe_4_abs.yaml']]
-numer_of_iterations = 10
+
+files_to_include = [['Hong_0_time_shift_test.yaml']]
+numer_of_iterations = 2
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
@@ -249,90 +249,90 @@ else:
 #csv_file_sigma =  MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_glarborg.csv'
 csv_file_sigma = ''
 plotting_instance = plotter.Plotting(S_matrix,
-                                     s_matrix,
-                                     Y_matrix,
-                                     y,
-                                     z_matrix,
-                                     X,
-                                     sigma,
-                                     covarience,
-                                     original_covariance,
-                                     S_matrix_original,
-                                     exp_dict_list_optimized,
-                                     exp_dict_list_original,
-                                     parsed_yaml_list,
-                                     Ydf,
-                                     target_value_rate_constant_csv= MSI_st_instance_two.data_directory +'/'+ rate_constant_target_value_data_for_plotting ,
-                                     target_value_rate_constant_csv_extra_values = MSI_st_instance_two.data_directory +'/'+rate_constant_target_value_data_extra,
-                                     k_target_value_S_matrix =k_target_value_S_matrix,
-                                     k_target_values=run_with_k_target_values,
-                                     working_directory = working_directory,
-                                     sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma)
+                                      s_matrix,
+                                      Y_matrix,
+                                      y,
+                                      z_matrix,
+                                      X,
+                                      sigma,
+                                      covarience,
+                                      original_covariance,
+                                      S_matrix_original,
+                                      exp_dict_list_optimized,
+                                      exp_dict_list_original,
+                                      parsed_yaml_list,
+                                      Ydf,
+                                      target_value_rate_constant_csv= MSI_st_instance_two.data_directory +'/'+ rate_constant_target_value_data_for_plotting ,
+                                      target_value_rate_constant_csv_extra_values = MSI_st_instance_two.data_directory +'/'+rate_constant_target_value_data_extra,
+                                      k_target_value_S_matrix =k_target_value_S_matrix,
+                                      k_target_values=run_with_k_target_values,
+                                      working_directory = working_directory,
+                                      sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma)
 #csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_updated.csv'
 observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
 sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
 sigmas_original,test2 = plotting_instance.calculating_sigmas(S_matrix_original,original_covariance)
 plotting_instance.plotting_observables(sigmas_original = sigmas_original,sigmas_optimized= sigmas_optimized)
-diag = plotting_instance.getting_matrix_diag(covarience)
+# diag = plotting_instance.getting_matrix_diag(covarience)
 
 
-#plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
+# #plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
 
 
 
                                 
 
 
-sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
-obs = plotting_instance.plotting_uncertainty_weighted_sens()
+# sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
+# obs = plotting_instance.plotting_uncertainty_weighted_sens()
 
-plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MSI_st_instance_two.new_cti_file,
-                                original_cti_file=original_cti_file,
-                               initial_temperature=250,
-                                final_temperature=2500,
-                                master_equation_reactions = master_equation_reactions,
-                                six_parameter_fit_dict_optimized = six_parameter_fit_dict_optimized,
-                                six_parameter_fit_dict_nominal = six_parameter_fit_nominal_parameters_dict,
-                                six_parameter_fit_sensitivity_dict =six_parameter_fit_sensitivities )
-
-
-
-
-plotting_instance.plotting_physical_model_parameter_distributions(MSI_st_instance_two.posterior_diag_df['parameter'].tolist(),
-                                                                  MSI_st_instance_two,
-                                                                  MSI_st_instance_two.X,
-                                                                  MSI_st_instance_two.original_experimental_conditions_local)
-
-RSS_list = plotting_instance.residual_sum_of_squares()
-SYY_list = plotting_instance.sum_of_squares_of_Y()
-R_squared = plotting_instance.calculating_R_squared(RSS_list,SYY_list)
-
-
-overall_list_unweighted_uncertainty,overall_list_maximum_deviation,overall_list_weighted_uncertainty,overall_percent_difference = plotting_instance.weighted_sum_of_squares()
-SYY_list_weighted = plotting_instance.weighted_sum_of_squares_of_Y()
-R_squared_weighted = plotting_instance.calculating_R_squared(overall_list_weighted_uncertainty,SYY_list_weighted)
-
-plotting_instance.plotting_individual_histograms()
-plotting_instance.plotting_normal_distributions(MSI_st_instance_two.posterior_diag_df['parameter'].tolist()[889:],
-                                                optimized_cti_file=MSI_st_instance_two.new_cti_file,
-                                                pdf_distribution_file='',
-                                                shock_tube_instance=MSI_st_instance_two)
-
-#plotting_instance.plotting_X_itterations(list_of_X_values_to_plot = [0,1,2,3,4,5,50],list_of_X_array=X_list,number_of_iterations=numer_of_iterations)
-post_processor_instance = post_processor.post_processing(optimized_cti_file = MSI_st_instance_two.new_cti_file,
-                                                    original_cti_file = original_cti_file,
-                                                    kinetic_paramter_dictonary = MSI_st_instance_two.kinetic_paramter_dict,
-                                                    master_equation_reactions=master_equation_reactions,
-                                                    six_parameter_fit_nominal_parameters_dict = six_parameter_fit_nominal_parameters_dict,
-                                                    six_parameter_fit_optimized_paramter_dict = six_parameter_fit_dict_optimized,
-                                                    exp_dict_list_optimized = exp_dict_list_optimized,
-                                                    exp_dict_list_original = exp_dict_list_original,
-                                                    parsed_yaml_list = parsed_yaml_list)
+# plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MSI_st_instance_two.new_cti_file,
+#                                 original_cti_file=original_cti_file,
+#                                initial_temperature=250,
+#                                 final_temperature=2500,
+#                                 master_equation_reactions = master_equation_reactions,
+#                                 six_parameter_fit_dict_optimized = six_parameter_fit_dict_optimized,
+#                                 six_parameter_fit_dict_nominal = six_parameter_fit_nominal_parameters_dict,
+#                                 six_parameter_fit_sensitivity_dict =six_parameter_fit_sensitivities )
 
 
 
 
-kinetic_paramters_dict = post_processor_instance.create_active_kinetic_paramter_dictonary()
-physical_params_dict = post_processor_instance.create_active_physical_paramter_dictonary()
+# plotting_instance.plotting_physical_model_parameter_distributions(MSI_st_instance_two.posterior_diag_df['parameter'].tolist(),
+#                                                                   MSI_st_instance_two,
+#                                                                   MSI_st_instance_two.X,
+#                                                                   MSI_st_instance_two.original_experimental_conditions_local)
+
+# RSS_list = plotting_instance.residual_sum_of_squares()
+# SYY_list = plotting_instance.sum_of_squares_of_Y()
+# R_squared = plotting_instance.calculating_R_squared(RSS_list,SYY_list)
+
+
+# overall_list_unweighted_uncertainty,overall_list_maximum_deviation,overall_list_weighted_uncertainty,overall_percent_difference = plotting_instance.weighted_sum_of_squares()
+# SYY_list_weighted = plotting_instance.weighted_sum_of_squares_of_Y()
+# R_squared_weighted = plotting_instance.calculating_R_squared(overall_list_weighted_uncertainty,SYY_list_weighted)
+
+# plotting_instance.plotting_individual_histograms()
+# plotting_instance.plotting_normal_distributions(MSI_st_instance_two.posterior_diag_df['parameter'].tolist()[889:],
+#                                                 optimized_cti_file=MSI_st_instance_two.new_cti_file,
+#                                                 pdf_distribution_file='',
+#                                                 shock_tube_instance=MSI_st_instance_two)
+
+# #plotting_instance.plotting_X_itterations(list_of_X_values_to_plot = [0,1,2,3,4,5,50],list_of_X_array=X_list,number_of_iterations=numer_of_iterations)
+# post_processor_instance = post_processor.post_processing(optimized_cti_file = MSI_st_instance_two.new_cti_file,
+#                                                     original_cti_file = original_cti_file,
+#                                                     kinetic_paramter_dictonary = MSI_st_instance_two.kinetic_paramter_dict,
+#                                                     master_equation_reactions=master_equation_reactions,
+#                                                     six_parameter_fit_nominal_parameters_dict = six_parameter_fit_nominal_parameters_dict,
+#                                                     six_parameter_fit_optimized_paramter_dict = six_parameter_fit_dict_optimized,
+#                                                     exp_dict_list_optimized = exp_dict_list_optimized,
+#                                                     exp_dict_list_original = exp_dict_list_original,
+#                                                     parsed_yaml_list = parsed_yaml_list)
+
+
+
+
+# kinetic_paramters_dict = post_processor_instance.create_active_kinetic_paramter_dictonary()
+# physical_params_dict = post_processor_instance.create_active_physical_paramter_dictonary()
 
 

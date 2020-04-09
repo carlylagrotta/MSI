@@ -185,7 +185,7 @@ class Absorb:
             return dic
                 
                 
-        if original_summed_absorption is None and abs_kinetic_sens is None and absorbance_phys_sens is None and abs_coef_sens is None:
+        if original_summed_absorption is None and abs_kinetic_sens is None and abs_phys_sens is None and abs_coef_sens is None:
             print("Error: must give something to interpolate")
             return -1
         #each absorbance already against the original time history
@@ -489,10 +489,12 @@ class Absorb:
         original_time = simulation.timeHistories[0]['time']
         #last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
         first_timestep_in_simulation = simulation.timeHistories[0]['time'].loc[2]
+        
 
         #one_percent_of_last_timestep = last_timestep_in_simulation*dk  
-        one_percent_of_first_timestep = first_timestep_in_simulation*dk      
-
+        #one_percent_of_first_timestep = first_timestep_in_simulation*dk  
+        one_percent_of_first_timestep = 1e-6*dk
+        #one_percent_of_first_timestep = 1e-12
         #new_time = original_time + one_percent_of_last_timestep
         new_time = original_time + one_percent_of_first_timestep
         
@@ -503,7 +505,9 @@ class Absorb:
             time_shifted_absorabnce_interpolated = np.interp(absorbance_experimental_data[i]['time'],new_time,absorabnce_from_model[wl])
             time_shifted_absorabnce_interpolated = time_shifted_absorabnce_interpolated.reshape((time_shifted_absorabnce_interpolated.shape[0],1))
             
-            sensitivity = (np.log(time_shifted_absorabnce_interpolated) - np.log(original_absorabnce_interpolated))/dk
+            #sensitivity = (np.log(time_shifted_absorabnce_interpolated) - np.log(original_absorabnce_interpolated))/dk
+            sensitivity = time_shifted_absorabnce_interpolated - original_absorabnce_interpolated/one_percent_of_first_timestep
+
             time_shift_sensitivity_dict[wl] = sensitivity
         self.time_shift_sensitivity_dict = time_shift_sensitivity_dict
         return time_shift_sensitivity_dict

@@ -20,53 +20,98 @@ class Parser(object):
         simtype = loaded_exp['apparatus']['kind']
         experiment_type = loaded_exp['experiment-type']
         return simtype,experiment_type
-    def parse_flame_speed_obj(self,loaded_exp:dict={},loaded_absorption={}):
+    
+    def parse_flame_speed_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         simulation_type = loaded_exp['apparatus']['kind']
         experiment_type = loaded_exp['experiment-type']
         flame_width = loaded_exp['apparatus']['flame_width']['value']
         flame_width_relative_uncertainty = loaded_exp['apparatus']['flame_width']['relative-uncertainty']
-        pressure = loaded_exp['common-properties']['pressure']['value']
-        inlet_temperature = loaded_exp['common-properties']['inlet-temperature']['value']
+        pressure = loaded_exp['common-properties']['pressure']['value-list']
+        inlet_temperature = loaded_exp['common-properties']['inlet-temperature']['value-list']
         inlet_temperature_relative_uncertainty = loaded_exp['common-properties']['inlet-temperature']['relative-uncertainty']
-        species_names = [(species['species']) for species in loaded_exp['common-properties']['composition']]
-        mole_fractions = [((concentration['mole-fraction']['value-list'])) for concentration in loaded_exp['common-properties']['composition']]
-        mole_fractions = [[float(elm) for elm in specie] for specie in mole_fractions]
-        conditions = dict(zip(species_names,mole_fractions))
-        species_types = [(species['type']) for species in loaded_exp['common-properties']['composition']]
-        species_types_dict = dict(zip(species_names,species_types))
-        thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
-        mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
-        species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
-        species_uncertainties = [float(elm) for elm in species_uncertainties]
-        species_uncertainties = dict(zip(species_names,species_uncertainties))
+        species_group_numbers = [(species['species-group']) for species in loaded_exp['common-properties']['composition']]
         flame_speed_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['flame-speed']]
-        flame_speed_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['flame-speed']]
+        flame_speed_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['flame-speed']]    
         flame_speed_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['flame-speed']]
         pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
         pressure_relative_uncertainty = float(pressure_relative_uncertainty)
-            
-        return{'simulationType': simulation_type,
-               'experiment_type':experiment_type,
-               'flameWidth':flame_width,
-               'flameWidthRelativeUncertainty':flame_width_relative_uncertainty,
-               'pressure':pressure,
-               'inletTemperature':inlet_temperature,
-               'inletTemperatureRelativeUncertainty':inlet_temperature_relative_uncertainty,
-               'speciesNames':species_names,
-               'moleFractions':mole_fractions,
-               'conditions':conditions,
-               'speciesTypesDict':species_types_dict,
-               'thermalBoundary':thermal_boundary,
-               'mechanicalBoundary':mechanical_boundary,
-               'speciesUncertainties':species_uncertainties,
-               'flameSpeedRelativeUncertainty':flame_speed_relative_uncertainty,
-               'flameSpeedAbsoluteUncertainty':flame_speed_absolute_uncertainty,
-               'flameSpeedObservables':flame_speed_observables,
-               'pressureRelativeUncertainty':pressure_relative_uncertainty
-               
-               
-              }
+        thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
+        mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
+        flame_speed_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['flame-speed']]
+
+        
+        species_groups = [(species['mixture']) for species in loaded_exp['common-properties']['composition']]
+        attribute_group = [(attribute['attributes']) for attribute in loaded_exp['common-properties']['composition']]
+        species_in_group_list = [[] for groups in species_groups]
+        type_in_group_list = [[] for groups in species_groups]
+        relative_uncertainty_in_group_list = [[] for groups in species_groups]
+        species = []
+        mole_fractions = []
     
+    
+        for i,group in enumerate(species_groups):
+            for j, dictonary in enumerate(group):
+                species_in_group_list[i].append(dictonary['name'])
+                species.append(dictonary['name'])
+                mole_fractions.append(dictonary['mole-fraction']['value-list'])
+        
+        
+        conditions = dict(zip(species,mole_fractions))
+        species_by_group = dict(zip(species_group_numbers,species_in_group_list))
+    
+        for i,group in enumerate(attribute_group):
+            type_in_group_list[i].append(group['type'])
+            relative_uncertainty_in_group_list[i].append(group['relative-uncertainty'])
+    
+            
+        flat_type_list  = [item for sublist in type_in_group_list for item in sublist]
+        type_dict = dict(zip(flat_type_list,species_in_group_list))
+        relative_uncertainty_by_species = {}
+        
+        for i, grp in enumerate(species_in_group_list):
+            for j,s in enumerate(grp):    
+                relative_uncertainty_by_species[s] = relative_uncertainty_in_group_list[i][0]
+        
+    
+        group_lst = []
+        for i in species_group_numbers:
+            group_lst.append('group_'+str(i))
+            
+        overall_dict = {}
+        
+        for i, group in enumerate(group_lst):
+            overall_dict[group]= {'species': species_in_group_list[i]}
+            overall_dict[group].update({'type': type_in_group_list[i][0]})
+            overall_dict[group].update({'relative_uncertainty':relative_uncertainty_in_group_list[i][0]})
+    
+        if loaded_absorption == {}:
+      
+            return {'simulationType':simulation_type,
+                    'experimentType':experiment_type,
+                    'flameWidth': flame_width,
+                    'flameWidthrelativeUncertainty':flame_width_relative_uncertainty,
+                    'pressureList':pressure,
+                    'pressureRelativeUncertainty':pressure_relative_uncertainty,
+                    'inletTemperatureList':inlet_temperature,
+                    'inletTemperatureRelativeUncertainty':inlet_temperature_relative_uncertainty,
+                    'speciesGroupNumbers':species_group_numbers,
+                    'speciesInGroupList':species_in_group_list,
+                    'conditions':conditions,
+                    'species':species,
+                    'relativeUncertaintyBySpecies':relative_uncertainty_by_species,
+                    'speciesByGroup':species_by_group,
+                    'overallDict': overall_dict,
+                    'flameSpeedRelativeUncertainty':flame_speed_relative_uncertainty,
+                    'flameSpeedAbsoluteUncertainty':flame_speed_absolute_uncertainty,
+                    'flameSpeedObservables':flame_speed_observables,
+                    'flameSpeedCsvFiles':flame_speed_csv_files,
+                    'thermalBoundary':thermal_boundary,
+                    'mechanicalBoundary':mechanical_boundary,
+                    'typeToSpeciesDict':type_dict
+                    }
+        else:
+            print('Placeholder: no Flame Speed absorption')
+        
     def parse_jsr_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
@@ -295,11 +340,13 @@ class Parser(object):
         counter=0
         for tup in list_of_yaml_objects:
             
-            simtype,experiment_type=str(self.get_sim_type(tup[0]))
+            simtype, experiment_type= self.get_sim_type(tup[0])
            # print(simtype)
+            simtype=str(simtype)
+            experiment_type=str(experiment_type)
             #simtype = 'shock tube'
             #if simtype=='shock tube' or simtype=='Shock Tube' or simtype=='Shock tube':
-            if re.match('[Ss]hock [Tt]ube',simtype):
+            if re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
                 if len(tup)>1:
                     experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
@@ -307,7 +354,7 @@ class Parser(object):
                 else:
                     
                     experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0]))
-            elif simtype=='jsr' or simtype=='JSR':
+            elif re.match('[Jj][Ss][Rr]',simtype) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
                 if len(tup)>1:
                     experiment_dictonaries.append(self.parse_jsr_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
@@ -315,6 +362,13 @@ class Parser(object):
                 else:
                     
                     experiment_dictonaries.append(self.parse_jsr_obj(loaded_exp = tup[0]))
+            elif re.match('[Ff]lame[- ][Ss]peed',simtype) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',experiment_type):
+                if len(tup)>1:
+                    experiment_dictonaries.append(self.parse_flame_speed_obj(loaded_exp = tup[0],
+                                                                            loaded_absorption = tup[1]))
+                else:
+                    experiment_dictonaries.append(self.parse_flame_speed_obj(loaded_exp = tup[0]))
+                
             else:
                 print('Failed to parse Yaml files- unrecognized simulation type for tuple index: '+str(counter))
             counter=counter+1
@@ -397,7 +451,7 @@ class Parser(object):
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperature']
                     time_shift = self.original_experimental_conditions[yaml_file]['timeShift']
-                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
+                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperatures']
                 press = self.original_experimental_conditions[yaml_file]['pressure']
                 #mole_fractions = self.original_experimental_conditions[yaml_file]['MoleFractions']
@@ -413,10 +467,14 @@ class Parser(object):
                     updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
                     updatedTemp = round(updatedTemp,9)
                     
-                    updatedTimeShift =  np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * time_shift
+                    #updatedTimeShift =  np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * time_shift 
+                    updatedTimeShift = physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)] + time_shift
+
+                    print('THIS IS UPDATED TIME SHIFT')
+                    print(updatedTimeShift)
                     updatedTimeShift = round(updatedTimeShift,9)
                     
-                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
+                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):
                     updatedTemp=[]
                     for i,T in enumerate(temp):
                         updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))
@@ -454,7 +512,7 @@ class Parser(object):
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     config2['common-properties']['temperature']['value']=float(updatedTemp)
                     config2['common-properties']['time-shift']['value']=float(updatedTimeShift)
-                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):    
+                elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):    
                     config2['common-properties']['temperature']['value-list']=updatedTemp
                 for i,moleFraction in enumerate(updated_mole_fraction_list):
                     config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)

@@ -52,25 +52,36 @@ class Optimization_Utility(object):
             exp_dict['species']            = interpolated_species_sens
             
         exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
+        exp_dict['experiment_type'] = simulation.fullParsedYamlFile['experimentType']
         exp_dict['observables']        = simulation.observables
-        exp_dict['concentration_observables'] = simulation.concentrationObservables
-        exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
+
         #needs to be in the order of mole fraction csv files + concentration csv files 
         exp_dict['experimental_data']  = experimental_data
         # start here 
         if re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['simulationType']):
+            exp_dict['concentration_observables'] = simulation.concentrationObservables
+            exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
             exp_dict['time_shift'] = interpolated_time_shift_sens
             exp_dict['uncertainty']        = self.build_uncertainty_shock_tube_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
-
+            exp_dict['flame_speed_observables']= None
         #decide how we want to build uncertainty dict and if we want to pass in the parsed yaml file?
         
-        if re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']):
-            
+        if re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',yaml_dict['simulationType']):
+            exp_dict['concentration_observables'] = simulation.concentrationObservables
+            exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
             exp_dict['volume']=yaml_dict['volume']
             exp_dict['residence_time']=yaml_dict['residence_time']
             exp_dict['uncertainty']=self.build_uncertainty_jsr_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['simulation_type'] = yaml_dict['simulationType']
+            exp_dict['flame_speed_observables']= None
+        if re.match('[Ff]lame[ -][Ss]peed',yaml_dict['simulationType'] and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',yaml_dict['experimentType'])):
+            
+            exp_dict['flame_speed_observables']= simulation.flameSpeedObservables
+            exp_dict['concentration_observables'] = None
+            exp_dict['mole_fraction_observables'] = None
+            exp_dict['uncertainty']=self.build_uncertainty_flame_speed_dict(exp_dict['simulation'].fullParsedYamlFile)
+
         if len(interpolated_absorbance) != 0:
             exp_dict['absorbance_model_data'] = interpolated_absorbance[0]
             exp_dict['absorbance_ksens']   = interpolated_absorbance[1]
@@ -90,6 +101,18 @@ class Optimization_Utility(object):
     def load_exp_from_file(self,yaml_exp_file_list = []):
         for file in yaml_exp_file_list:
             continue
+        
+    def build_uncertainty_flame_speed_dict(self,experiment_dictonary:dict={}):
+        uncertainty_dict={}
+        uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['inletTemperatureRelativeUncertainty']
+        uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
+        uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['relativeUncertaintyBySpecies'],
+                        'species':experiment_dictionary['species'], 'type_dict':experiment_dictonary['typeDict']}
+        uncertainty_dict['flame_speed_relative_uncertainty'] = experiment_dictonarie['flameSpeedRelativeUncertainity']
+        uncertainty_dict['flame_speed_absolute_uncertainty'] = experiment_dictonarie['flameSpeedAbsoluteUncertainty']        
+        
+        return uncertainty_dict
+    
     def build_uncertainty_jsr_dict(self,experiment_dictionary:dict={}):
         uncertainty_dict={}
         #Don't worry about absorbance for now
@@ -130,6 +153,14 @@ class Optimization_Utility(object):
         
         return uncertainty_dict
     
+    def running_full_flame_speed(self,processor=None,
+                                 experiment_dictionary:dict={},
+                                 kineticSens = 1,
+                                 physicalSens =1,
+                                 dk =0.01,
+                                 exp_number = 1):
+        experiment = 'not yet installed'
+        return experiment
     
     def running_full_jsr(self,processor=None,
                              experiment_dictionary:dict={},
@@ -438,8 +469,9 @@ class Optimization_Utility(object):
         for i,yamlDict in enumerate(list_of_parsed_yamls):
          
             simulation_type = yamlDict['simulationType']
+            experiment_type = yamlDict['experimentType']
             
-            if re.match('[Ss]hock [Tt]ube',simulation_type):
+            if re.match('[Ss]hock [Tt]ube',simulation_type) and re.match('[Ss]pecies[- ][Pp]rofile',experiment_type):
                 #simulation_type = 'shock tube'
 
                 if simulation_type == 'shock tube':
@@ -510,7 +542,8 @@ class Optimization_Utility(object):
 #                                           exp_number=i)
 #                        experiment_list.append(experiment)
                         print('Absorbance currently not enabled for jsr')
-                                       
+            elif re.match('[Ff]lame[ -][Ss]peed',yaml_dict['simulationType'] and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',yaml_dict['experimentType'])):
+                print("ADD FLAME SPEED DICT HERE")           
             else:
                 print('We do not have this simulation installed yet')
             
