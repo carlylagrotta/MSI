@@ -29,8 +29,8 @@ class free_flame(sim.Simulation):
                  save_physSensHistories=0,moleFractionObservables:list=[],
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={},flame_width:float=1.0,
-                 save_timeHistories:int=0,T_profile=pd.DataFrame(columns=['z','T']),soret=True,flamespeed_sens=0,
-                 tol_ss=[1.0e-5, 1.0e-13],tol_ts=[1.0e-4, 1.0e-10],loglevel=1):
+                 save_timeHistories:int=0,T_profile=pd.DataFrame(columns=['z','T']),soret=True,
+                 tol_ss=[1.0e-5, 1.0e-13],tol_ts=[1.0e-4, 1.0e-10],loglevel=1,flametype='Flame Speed'):
         
         #sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
         #                        conditions,processor,cti_path)
@@ -62,11 +62,11 @@ class free_flame(sim.Simulation):
         self.flame_width=flame_width
         self.timeHistory = None
         self.experimentalData = None
-        self.flamespeed_sens=flamespeed_sens
         self.tol_ss=tol_ss
         self.tol_ts=tol_ts
         self.soret=soret
         self.loglevel=loglevel
+        self.flametype=flametype
         
         if save_timeHistories == 1:
             self.timeHistories=[]
@@ -157,9 +157,26 @@ class free_flame(sim.Simulation):
         
                
         self.dk=0.01
-        self.solution=self.flame.X
         
-        if self.kineticSens==1 and bool(self.observables):
+        if re.match('[Ff]lame [Ss]peed',self.flametype):
+            columns=['T_in','P']+list(self.conditions.keys())+['u0']
+            self.solution=pd.DataFrame(columns=columns)
+            for i in range(len(columns)):
+                if i==0:
+                    self.solution['T_in']=[self.temperature]
+                elif i==1:
+                    self.solution['P']=[self.pressure]
+                elif i>1 and i<len(columns)-1:
+                    self.solution[columns[i]]=[self.conditions[columns[i]]]
+                elif i==len(columns)-1:
+                    self.solution['u0']=[self.flame.u[0]]
+                    
+        elif re.match('[Aa]diabatic [Ff]lame',self.flametype):
+            self.solution=self.flame.X
+            columnNames=gas.species_names
+            tempdata=pd.DataFrame(columns=columnNames,data=self.flame.X)
+            print(tempdata)
+        if re.match('[Aa]diabatic [Ff]lame',self.flametype) and self.kineticSens==1 and bool(self.observables):
         
             #Calculate kinetic sensitivities
             sensIndex = [self.flame.grid.tolist(),gas.reaction_equations(),self.observables]
@@ -179,51 +196,39 @@ class free_flame(sim.Simulation):
                         S[k,m,i]=np.divide(S[k,m,i],np.log10(self.dk))    
         
         
-        elif self.kineticSens==1 and bool(self.observables)==False:
+        elif self.kineticSens==1 and bool(self.observables)==False and not re.match('[Ff]lame [Ss]peed',self.flametype):
             raise Exception('Please supply a list of observables in order to run kinetic sensitivity analysis')
-        gas.set_multiplier(1.0)
-        if self.flamespeed_sens==1:    
+        #gas.set_multiplier(1.0)
+        elif self.kineticSens==1 and re.match('[Ff]lame [Ss]peed',self.flametype):    
             self.fsens = self.flame.get_flame_speed_reaction_sensitivities()
-        columnNames = [self.stirredReactor.component_name(item) for item in range(self.stirredReactor.n_vars)]
-        columnNames = ['pressure'] + columnNames
+        
 
-        # use the above list to create a DataFrame
-        timeHistory = pd.DataFrame(columns=columnNames)
-
-        # Start the stopwatch
-       
-       
-        #print(sens)
-        if self.kineticSens==1 and bool(self.observables):
+        
+        if self.kineticSens==1 and re.match('[Ff]lame [Ss]peed',self.flametype):
+            #numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
+            #self.kineticSensitivities = np.dstack(numpyMatrixsksens)
+            #print(np.shape(self.kineticSensitivities))
+            #self.solution=data
+            return (self.solution,self.fsens)
+        elif self.kineticSens==1 and re.match('[Aa]diabatic [Ff]lame',self.flametype):
             dfs = [pd.DataFrame() for x in range(len(self.observables))]
             #print((pd.DataFrame(sens[0,:])).transpose())
             #test=pd.concat([pd.DataFrame(),pd.DataFrame(sens[0,:]).transpose()])
             #print(test)
-            for k in range(len(self.observables)):
-                dfs[k] = dfs[k].append(((pd.DataFrame(sens[k,:])).transpose()),ignore_index=True)
+            #for k in range(len(self.observables)):
+                #dfs[k] = dfs[k].append(((pd.DataFrame(sens[k,:])).transpose()),ignore_index=True)
                 #dfs[k]=pd.concat([dfs[k],pd.DataFrame(sens[k,:]).transpose()])
                 #dfs[k]=pd.DataFrame(sens[k,:]).transpose()
             #print(dfs)  
-        
-        
-        if self.kineticSens==1 and self.flamespeed_sens==0:
             numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
             self.kineticSensitivities = np.dstack(numpyMatrixsksens)
             #print(np.shape(self.kineticSensitivities))
             #self.solution=data
             return (self.solution,self.kineticSensitivities)
-        elif self.kineticSens==1 and self.flamespeed_sens==1:
-            numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
-            self.kineticSensitivities = np.dstack(numpyMatrixsksens)
-            #print(np.shape(self.kineticSensitivities))
-            #self.solution=data
-            return (self.solution,self.kineticSensitivities,self.fsens)
-        elif self.kineticSens==0 and self.flamespeed_sens==1:
-            numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
-            self.kineticSensitivities = np.dstack(numpyMatrixsksens)
-            #print(np.shape(self.kineticSensitivities))
-            #self.solution=data
-            return (self.solution,[],self.fsens)
+        elif self.kineticSens==0:
+            #numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
+            
+            return (self.solution,[])
         else:
             #self.solution=data
             return (self.solution,[])
