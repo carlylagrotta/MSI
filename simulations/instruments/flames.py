@@ -134,7 +134,7 @@ class free_flame(sim.Simulation):
         
         self.flame.flame.set_steady_tolerances(default=self.tol_ss)   #Set steady state tolerances
         self.flame.flame.set_transient_tolerances(default=self.tol_ts) #Set transient tolerances
-        
+        print('Running simulation at T = '+str(round(gas.T,5))+', P = '+str(round(gas.P,5))+'\\Conditions: '+str(self.conditions))
         if re.match('[aA]diabatic',self.thermalBoundary):
             energycon = True
         self.flame.energy_enabled = energycon
@@ -156,7 +156,7 @@ class free_flame(sim.Simulation):
         
         
                
-        self.dk=0.01
+        
         
         if re.match('[Ff]lame [Ss]peed',self.flametype):
             columns=['T_in','P']+list(self.conditions.keys())+['u0']
@@ -177,7 +177,7 @@ class free_flame(sim.Simulation):
             tempdata=pd.DataFrame(columns=columnNames,data=self.flame.X)
             print(tempdata)
         if re.match('[Aa]diabatic [Ff]lame',self.flametype) and self.kineticSens==1 and bool(self.observables):
-        
+            self.dk=0.01
             #Calculate kinetic sensitivities
             sensIndex = [self.flame.grid.tolist(),gas.reaction_equations(),self.observables]
             
@@ -233,55 +233,18 @@ class free_flame(sim.Simulation):
             #self.solution=data
             return (self.solution,[])
         
+       
+
+class flamespeed_multi_condition(sim.Simulation):
         
-        
-        
-        
-#class JSR_multiTemp_steadystate2(sim.Simulation):
-#        
-#    def __init__(self,volume:float,pressure:float,temperatures:list,observables:list,
-#                 kineticSens:int,physicalSens:int,conditions:dict,thermalBoundary,mechanicalBoundary,
-#                 processor:ctp.Processor=None,cti_path="", 
-#                 save_physSensHistories=0,moleFractionObservables:list=[],
-#                 absorbanceObservables:list=[],concentrationObservables:list=[],
-#                 fullParsedYamlFile:dict={},residence_time:float=1.0,pvalveCoefficient:float=0.01,maxpRise:float=0.001):
-#        
-##    sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
-##                                conditions,processor,cti_path)
-#        self.volume=volume
-#        self.temperatures=temperatures
-#        self.JSR_objects=[]
-#        for i in range(len(self.temperatures)):
-#            a=[]
-#            a=copy.deepcopy(JSR_steadystate(pressure,self.temperatures[i],observables,
-#                 kineticSens,physicalSens,conditions,thermalBoundary,mechanicalBoundary,
-#                 processor,cti_path, 
-#                 save_physSensHistories,moleFractionObservables,
-#                 absorbanceObservables,concentrationObservables,
-#                 fullParsedYamlFile,residence_time,pvalveCoefficient,maxpRise))
-#            self.JSR_objects.append(a)
-#        for i in self.JSR_objects:
-#            print(i.temperature)
-#            
-#            
-#    def run_multitemp(self):
-#        
-#        for i in range(len(self.JSR_objects)):
-#            self.JSR_objects[i].set_geometry(self.volume)
-#            
-#            self.JSR_objects[i].run()
-#        
-#        
-#        
-class JSR_multiTemp_steadystate(sim.Simulation):
-        
-    def __init__(self,volume:float,pressure:float,temperatures:list,observables:list,
-                 kineticSens:int,physicalSens:int,conditions:dict,thermalBoundary,mechanicalBoundary,
-                 processor:ctp.Processor=None,cti_path="", 
-                 save_physSensHistories=0,moleFractionObservables:list=[],save_timeHistories:int=0,
+    def __init__(self,pressures:float,temperatures:float,observables:list,
+                 kineticSens:int,physicalSens:int,conditions:dict,thermalBoundary,
+                 processor:ctp.Processor=None, 
+                 save_physSensHistories=0,moleFractionObservables:list=[],
                  absorbanceObservables:list=[],concentrationObservables:list=[],
-                 fullParsedYamlFile:dict={},residence_time:float=1.0,pvalveCoefficient:float=0.01,
-                 maxpRise:float=0.001,atol:float=1e-15,rtol:float=1e-14):
+                 fullParsedYamlFile:dict={},flame_width:float=1.0,
+                 save_timeHistories:int=0,T_profile=pd.DataFrame(columns=['z','T']),soret=True,
+                 tol_ss=[1.0e-5, 1.0e-13],tol_ts=[1.0e-4, 1.0e-10],loglevel=1,flametype='Flame Speed',cti_path=""):
         
 #    sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
 #                                conditions,processor,cti_path)
@@ -296,27 +259,28 @@ class JSR_multiTemp_steadystate(sim.Simulation):
             self.processor = ctp.Processor(cti_path)        
         
         self.save_physSensHistories=save_physSensHistories
-        self.volume=volume
         self.temperatures=temperatures
         self.JSR_objects=[]
-        self.pressure=pressure
+        self.pressures=pressures
         self.observables=observables
         self.kineticSens=kineticSens
         self.physicalSens=physicalSens
         self.conditions=conditions
         self.thermalBoundary=thermalBoundary
-        self.mechanicalBoundary = mechanicalBoundary
         self.kineticSensitivities= None
         self.experimentalData = None
         self.concentrationObservables = concentrationObservables
         self.moleFractionObservables = moleFractionObservables
         self.absorbanceObservables = absorbanceObservables
         self.fullParsedYamlFile =  fullParsedYamlFile
-        self.pvalveCoefficient=pvalveCoefficient
-        self.maxPrise=maxpRise
         self.energycon='off'
-        self.residence_time=residence_time
-        
+        self.flame_width=flame_width
+        self.tol_ss=tol_ss
+        self.tol_ts=tol_ts
+        self.soret=soret
+        self.loglevel=loglevel
+        self.flametype=flametype
+        self.save_timeHistories=save_timeHistories
                
         if save_timeHistories == 1:
             self.timeHistories=[]
@@ -327,8 +291,7 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         
         #self.setTPX()
         self.dk = [0]
-        self.rtol=rtol
-        self.atol=atol
+       
             
     def run(self):
         
@@ -337,52 +300,39 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         ksens=[]
         ksens_1stIter=False
         for i in range(len(self.temperatures)):
-            temp_jsr=JSR_steadystate(pressure=self.pressure,
-                                     temperature=self.temperatures[i],
-                                     observables=self.observables,
-                                     kineticSens=self.kineticSens,
-                                     physicalSens=self.physicalSens,
-                                     conditions=self.conditions,
-                                     thermalBoundary=self.thermalBoundary,
-                                     mechanicalBoundary=self.mechanicalBoundary,
-                                     processor=self.processor,
-                                     save_physSensHistories=self.save_physSensHistories,
-                                     residence_time=self.residence_time,
-                                     rtol=self.rtol,
-                                     atol=self.atol)
-            temp_jsr.set_geometry(volume=self.volume)
-            try:
-                a,b=temp_jsr.run_single()
-            except Exception as e:
-                print(e)
-                temp_jsr=JSR_steadystate(pressure=self.pressure,
-                                     temperature=self.temperatures[i],
-                                     observables=self.observables,
-                                     kineticSens=self.kineticSens,
-                                     physicalSens=self.physicalSens,
-                                     conditions=self.conditions,
-                                     thermalBoundary=self.thermalBoundary,
-                                     mechanicalBoundary=self.mechanicalBoundary,
-                                     processor=self.processor,
-                                     save_physSensHistories=self.save_physSensHistories,
-                                     residence_time=self.residence_time,
-                                     rtol=self.rtol*10.0,
-                                     atol=self.atol*10.0)
-                temp_jsr.set_geometry(volume=self.volume)
-                a,b=temp_jsr.run_single()
-                print('Completed')
-            temp=[]
-            temp1=[]
-            temp=copy.deepcopy(a)
-            temp1=copy.deepcopy(b)
-            #print(a)
-            solution.append(temp)
-            if not ksens_1stIter and self.kineticSens==1:
-                ksens=temp1
-                ksens_1stIter=True
-            elif self.kineticSens==1 and ksens_1stIter:
-                ksens=np.vstack([ksens,temp1])
-            #print(ksens)
+            for j in range(len(self.pressures)):
+                for k in range(len(self.conditions)):
+                    temp_flame=free_flame(pressure=self.pressures[j],
+                                          temperature=self.temperatures[i],
+                                          observables=self.observables,
+                                          kineticSens=self.kineticSens,
+                                          physicalSens=self.physicalSens,
+                                          conditions=self.conditions[k],
+                                          thermalBoundary=self.thermalBoundary,
+                                          processor=self.processor,
+                                          save_physSensHistories=self.save_physSensHistories,
+                                          flame_width=self.flame_width,
+                                          save_timeHistories=self.save_timeHistories,
+                                          soret=self.soret,
+                                          tol_ss=self.tol_ss,
+                                          tol_ts=self.tol_ts,
+                                          loglevel=self.loglevel,
+                                          flametype=self.flametype)
+            
+                    a,b=temp_flame.run_single()
+            
+                    temp=[]
+                    temp1=[]
+                    temp=copy.deepcopy(a)
+                    temp1=copy.deepcopy(b)
+                    #print(a)
+                    solution.append(temp)
+                    if not ksens_1stIter and self.kineticSens==1:
+                        ksens=temp1
+                        ksens_1stIter=True
+                    elif self.kineticSens==1 and ksens_1stIter:
+                        ksens=np.vstack([ksens,temp1])
+                    #print(ksens)
         solution=pd.concat(solution)
         #print(np.shape(ksens))
         if self.timeHistories != None:
