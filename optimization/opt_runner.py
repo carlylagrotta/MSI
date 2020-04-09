@@ -49,6 +49,7 @@ class Optimization_Utility(object):
             exp_dict['ksens']              = interpolated_kinetic_sens
             exp_dict['temperature']        = interpolated_tp_sens[0]
             exp_dict['pressure']           = interpolated_tp_sens[1]
+            
             exp_dict['species']            = interpolated_species_sens
             
         exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
@@ -70,6 +71,7 @@ class Optimization_Utility(object):
         if re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',yaml_dict['simulationType']):
             exp_dict['concentration_observables'] = simulation.concentrationObservables
             exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
+            exp_dict['restime_sens']=interpolated_tp_sens[2]
             exp_dict['volume']=yaml_dict['volume']
             exp_dict['residence_time']=yaml_dict['residence_time']
             exp_dict['uncertainty']=self.build_uncertainty_jsr_dict(exp_dict['simulation'].fullParsedYamlFile)
@@ -120,6 +122,7 @@ class Optimization_Utility(object):
         uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
         uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['speciesUncertaintys'],
                         'species':experiment_dictionary['speciesNames']}
+        uncertainty_dict['restime_relative_uncertainty'] = experiment_dictionary['residenceTimeRelativeUncertainty']
         uncertainty_dict['mole_fraction_relative_uncertainty'] = experiment_dictionary['moleFractionRelativeUncertainty']
         uncertainty_dict['mole_fraction_absolute_uncertainty'] = experiment_dictionary['moleFractionAbsoluteUncertainty'] 
         return uncertainty_dict
@@ -190,11 +193,13 @@ class Optimization_Utility(object):
         tsoln=jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)
         psoln=jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)
         ssoln=jet_stirred_reactor.species_adjustment(dk)
+        rsoln=jet_stirred_reactor.sensitivity_adjustment(res_del = dk)
         tsen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],tsoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
         psen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],psoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
         ssens=[]
         for i in range(len(ssoln)):            
             ssens.append(jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],ssoln[i][jet_stirred_reactor.observables],jet_stirred_reactor.observables))
+        rsens=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],rsoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
         #print(ssens)
         #print(jet_stirred_reactor.physicalSens)
         csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] if x is not None]
@@ -204,7 +209,7 @@ class Optimization_Utility(object):
         experiment = self.build_single_exp_dict(exp_number,
                                            jet_stirred_reactor,
                                            int_ksens_exp_mapped,
-                                           [tsen,psen],
+                                           [tsen,psen,rsens],
                                            ssens,
                                            experimental_data = exp_data,
                                            yaml_dict=experiment_dictionary)
