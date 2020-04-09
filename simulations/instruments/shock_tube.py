@@ -529,8 +529,56 @@ class shockTube(sim.Simulation):
         
         #one_percent_of_first_timestep = 1e-6*dk
         #one_percent_of_first_timestep = simulation.timeHistories[0]['time'].loc[2]*01
+        #pick a single datapoint 
+        mean_data_point = simulation.timeHistories[0]['time'].mean()
         one_percent_of_first_timestep = simulation.timeHistories[0]['time'].mean()*.01
-        one_percent_of_first_timestep = 1e-6
+        #one_percent_of_first_timestep = 1e-6
+        
+
+
+        new_time = original_time + one_percent_of_first_timestep
+        observables_interpolate_against_original_time = []
+        observables_interpolated_against_new_time = []
+        lst_obs = simulation.moleFractionObservables + simulation.concentrationObservables
+        lst_obs = [i for i in lst_obs if i] 
+
+        for i,df in enumerate(experimental_data):
+            interpolated_original_observable = np.interp(df['Time'],simulation.timeHistories[0]['time'],simulation.timeHistories[0][lst_obs[i]])
+            s1 = pd.Series(interpolated_original_observable,name=lst_obs[i])
+            observables_interpolate_against_original_time.append(s1)
+
+            
+            interpolated_shited_observable = np.interp(df['Time'],new_time,simulation.timeHistories[0][lst_obs[i]])
+            #print(new_time)
+            s2 = pd.Series(interpolated_shited_observable,name=lst_obs[i])
+            observables_interpolated_against_new_time.append(s2)
+
+        observables_against_new_time_df = pd.concat(observables_interpolated_against_new_time,axis=1)
+        #print(observables_against_new_time_df)
+        observables_against_original_time_df = pd.concat(observables_interpolate_against_original_time,axis=1)
+        self.original_time = observables_against_original_time_df
+        self.new_time = observables_against_new_time_df
+        
+       
+        #observables_against_new_time_df = observables_against_new_time_df.applymap(np.log)
+        #observables_against_original_time_df = observables_against_original_time_df.applymap(np.log)
+        #sensitivity = (observables_against_new_time_df.subtract(observables_against_original_time_df)/dk)
+        sensitivity = (observables_against_new_time_df.subtract(observables_against_original_time_df)/one_percent_of_first_timestep)
+        print(sensitivity)
+
+        time_shift_sensitivity = sensitivity
+        self.time_shift_sensitivity = time_shift_sensitivity
+        #print(time_shift_sensitivity)
+        return time_shift_sensitivity
+    def calculate_time_shift_sensitivity(self,simulation,experimental_data,dk):
+        original_time = simulation.timeHistories[0]['time']
+        
+        #one_percent_of_first_timestep = 1e-6*dk
+        #one_percent_of_first_timestep = simulation.timeHistories[0]['time'].loc[2]*01
+        #pick a single datapoint 
+        mean_data_point = simulation.timeHistories[0]['time'].mean()
+        one_percent_of_first_timestep = simulation.timeHistories[0]['time'].mean()*.01
+        #one_percent_of_first_timestep = 1e-6
         
 
 

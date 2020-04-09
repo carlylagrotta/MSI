@@ -884,7 +884,7 @@ class OptMatrix(object):
                             pressure_sensitivity=np.array(exp['pressure'][observable])
                             pressure_sensitivity = pressure_sensitivity.reshape((pressure_sensitivity.shape[0], 1))
                         
-                        print("NEED TO ADD SPECIES SENSITIVITIES")
+                        if
                     
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
                         single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty,time_shift_sensitivity))
