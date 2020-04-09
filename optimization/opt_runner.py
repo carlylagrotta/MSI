@@ -104,14 +104,14 @@ class Optimization_Utility(object):
         for file in yaml_exp_file_list:
             continue
         
-    def build_uncertainty_flame_speed_dict(self,experiment_dictonary:dict={}):
+    def build_uncertainty_flame_speed_dict(self,experiment_dictionary:dict={}):
         uncertainty_dict={}
         uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['inletTemperatureRelativeUncertainty']
         uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
         uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['relativeUncertaintyBySpecies'],
-                        'species':experiment_dictionary['species'], 'type_dict':experiment_dictonary['typeDict']}
-        uncertainty_dict['flame_speed_relative_uncertainty'] = experiment_dictonarie['flameSpeedRelativeUncertainity']
-        uncertainty_dict['flame_speed_absolute_uncertainty'] = experiment_dictonarie['flameSpeedAbsoluteUncertainty']        
+                        'species':experiment_dictionary['species'], 'type_dict':experiment_dictionary['typeDict']}
+        uncertainty_dict['flame_speed_relative_uncertainty'] = experiment_dictionary['flameSpeedRelativeUncertainity']
+        uncertainty_dict['flame_speed_absolute_uncertainty'] = experiment_dictionary['flameSpeedAbsoluteUncertainty']        
         
         return uncertainty_dict
     
