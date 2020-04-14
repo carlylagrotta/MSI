@@ -199,7 +199,8 @@ Sij = sum(Sij_list)
 Y_difference = sum(Y_difference_list)
 S_new = sum(S_new_list)
 Percent_difference = sum(S_percent_difference_list)
-
+S_residuals = S_new-S_matrix_original
+S_residuals_rounded = np.around(S_residuals,decimals=3)
 
 
 

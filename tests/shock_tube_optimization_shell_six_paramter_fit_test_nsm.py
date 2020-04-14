@@ -32,8 +32,8 @@ files_to_include = [['Hong_0.yaml'],
 
 
 
-files_to_include = [['Hong_0_time_shift_test.yaml']]
-numer_of_iterations = 2
+#files_to_include = [['Hong_0_time_shift_test.yaml']]
+numer_of_iterations = 5
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
