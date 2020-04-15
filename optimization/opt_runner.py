@@ -6,6 +6,7 @@ import MSI.simulations.absorbance.curve_superimpose as csp
 import MSI.simulations.yaml_parser as yp
 import MSI.simulations.instruments.shock_tube as st
 import MSI.simulations.instruments.jsr_steadystate as jsr
+import MSI.simulations.instruments.flames as fl
 
 
 #acts as front end to the rest of the system
@@ -162,6 +163,29 @@ class Optimization_Utility(object):
                                  physicalSens =1,
                                  dk =0.01,
                                  exp_number = 1):
+        
+        flame_speed=fl.flamespeed_multi_condition(pressures:float,
+                                                  temperatures:float,
+                                                  observables:list,
+                                                  kineticSens:int,
+                                                  physicalSens:int,
+                                                  conditions:dict,
+                                                  thermalBoundary='Adiabatic',
+                                                  processor:ctp.Processor=None,
+                                                  save_physSensHistories=0,
+                                                  moleFractionObservables:list=[],
+                                                  absorbanceObservables:list=[],
+                                                  concentrationObservables:list=[],
+                                                  fullParsedYamlFile:dict={},
+                                                  flame_width:float=1.0,
+                                                  save_timeHistories:int=0,
+                                                  T_profile=pd.DataFrame(columns=['z','T']),
+                                                  soret=True,
+                                                  tol_ss=[1.0e-5, 1.0e-13],
+                                                  tol_ts=[1.0e-4, 1.0e-10],
+                                                  loglevel=1,
+                                                  flametype='Flame Speed',
+                                                  cti_path="")
         experiment = 'not yet installed'
         return experiment
     
