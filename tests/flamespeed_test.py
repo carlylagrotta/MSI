@@ -11,7 +11,7 @@ import numpy as np
 #test_p = pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke #Group\\Codes\\Mechanisms\\heptane_lowT\\Mech.cti')
 
 
-test_p=pr.Processor('C:\\Users\\Skoron\\Google Drive\\Burke Group\\Codes\\Mechanisms\\FFCM-1\\FFCM1.cti')
+test_p=pr.Processor('C:\\Users\\Skoron\\Google Drive\\Burke Group\\Codes\\Mechanisms\\FFCM-1\\FFCM1_custom_cheb.cti')
 f2 = f.free_flame(pressure=1.0,
                          temperature=298.0,
                          observables=['OH','H2O'],
@@ -20,7 +20,7 @@ f2 = f.free_flame(pressure=1.0,
                          conditions={'H2':1.0,'O2':0.5,'He':4.0},
                          thermalBoundary='Adiabatic'                         ,
                          processor=test_p,
-                         save_physSensHistories=0,save_timeHistories=1,log_name='C:\\Users\\Skoron\\Desktop\\log5.txt')						 
+                         save_physSensHistories=0,save_timeHistories=1,log_name='C:\\Users\\Skoron\\Desktop\\log8.txt')						 
 solution,ksens=f2.run_single()
 methane_profile=[]
 #for i in jsr1.JSR_objects:

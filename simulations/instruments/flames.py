@@ -13,6 +13,7 @@ import numpy as np
 import time
 import copy
 import re
+import scipy.optimize 
 
 class free_flame(sim.Simulation):
     
@@ -82,6 +83,7 @@ class free_flame(sim.Simulation):
         self.dk = 0.01
         self.solution=None
         
+    
         
     def printVars(self):
         print()
@@ -129,11 +131,23 @@ class free_flame(sim.Simulation):
         return data
     
     def run_single(self):
+        def chebyshev_zeros(da,*args):
+            i, m, k, gas, modified_rate, current_array=args
+            temp_r=gas.reactions()[i]
+            temp_array=copy.deepcopy(current_array)
+            temp_array[m,k]=current_array[m,k]+da
+            temp_r.set_parameters(temp_r.Tmin,temp_r.Tmax,temp_r.Pmin,temp_r.Pmax,temp_array)
+            #temp_r.coeffs[m,k]=gas.reactions()[i].coeffs[m,k]+da
+            gas.modify_reaction(i,temp_r)
+            adjusted_rate=gas.forward_rate_constants[i]
+            
+            diff=adjusted_rate-modified_rate
         
+            return diff
         gas=self.processor.solution       
         
         self.flame=ct.FreeFlame(gas,width=self.flame_width)
-        
+        self.TPX=copy.deepcopy(gas.TPX)
         self.flame.flame.set_steady_tolerances(default=self.tol_ss)   #Set steady state tolerances
         self.flame.flame.set_transient_tolerances(default=self.tol_ts) #Set transient tolerances
         print('Running simulation at T = '+str(round(gas.T,5))+', P = '+str(round(gas.P,5))+'\nConditions: '+str(self.conditions))
@@ -143,19 +157,27 @@ class free_flame(sim.Simulation):
         
         self.flame.transport_model = 'Multi'
         self.flame.set_max_jac_age(10,10)
-        self.flame.solve(self.loglevel,refine_grid=False)
+        #self.flame.solve(self.loglevel,refine_grid=False)
         self.flame.soret_enabled = self.soret
         
         
         
         
         self.flame.set_refine_criteria(ratio=2.0,slope=0.01,curve=0.025)
-        self.flame.transport_model = 'Multi'
+        #self.flame.transport_model = 'Multi'
         self.flame.solve(self.loglevel,refine_grid=True)
         self.forward_rates=self.flame.forward_rate_constants
         self.net_rates=self.flame.net_rates_of_progress
         self.reverse_rates=self.flame.reverse_rate_constants
-        
+        gas.TPX=self.TPX
+        #self.flame.solve(self.loglevel,refine_grid=False)
+        # self.flame.solve(self.loglevel,refine_grid=False)
+        # self.flame.solve(self.loglevel,refine_grid=False)
+        # self.flame.solve(self.loglevel,refine_grid=False)
+        # self.flame.solve(self.loglevel,refine_grid=False)
+        # self.flame.solve(self.loglevel,refine_grid=False)
+
+
         
                
         
@@ -209,32 +231,51 @@ class free_flame(sim.Simulation):
             nominal_u=self.flame.u[0]
             for i in range(len(gas.reactions())):
                 equation_type=type(gas.reaction(i)).__name__
+                gas.TPX=self.TPX
                 if equation_type=='ElementaryReaction' or equation_type=='ThreeBodyReaction':
+                    
                     tempA=copy.deepcopy(gas.reaction(i).rate.pre_exponential_factor)
                     tempn=copy.deepcopy(gas.reaction(i).rate.temperature_exponent)
                     tempEa=copy.deepcopy(gas.reaction(i).rate.activation_energy)
-                    gas.reaction(i).rate=ct.Arrhenius(tempA*(1.0+self.dk),tempn,tempEa)
+                    #gas.reaction(i).rate=ct.Arrhenius(tempA*(1.0+self.dk),tempn,tempEa)
                     #gas.reaction(i).rate=ct.Arrhenius(tempA,tempn,tempEa)
+                    temp_r=gas.reactions()[i]
+                    temp_r.rate=ct.Arrhenius(tempA*(1.0+self.dk),tempn,tempEa)
+                    gas.modify_reaction(i,temp_r)
                     print('Solving flame speed sensitivity with respect to Arrhenius parameters for reaction '+str(i))
-                    print(self.flame.gas.reaction(i).rate)
-                    print(tempA,tempn,tempEa)
+                    #print(self.flame.gas.reaction(i).rate)
+                    #print(tempA,tempn,tempEa)
                     if self.log_file:
                         with open(self.log_name,'a') as f:
                             f.write('Reaction '+str(i)+' Nominals: '+str(round(tempA,9))+', '+str(round(tempn,9))+', '+str(round(tempEa,9))+'\n')
                             f.write('Reaction '+str(i)+' Modified: '+str(round(gas.reaction(i).rate.pre_exponential_factor,9))+', '+str(round(tempn,9))+', '+str(round(tempEa,9))+'\n')
                     self.flame.solve(self.loglevel,refine_grid=False)
                     temp_u_A=copy.deepcopy(self.flame.u[0])
-                    print(temp_u_A)
+                    #print(temp_u_A)
                     if self.log_file:
                         with open(self.log_name,'a') as f:
                             f.write('Nominal u0: '+str(round(nominal_u,9))+'\n')
                             f.write('Modified A'+str(i) +' u0: '+str(round(temp_u_A,9))+'\n')
-                    gas.reaction(i).rate=ct.Arrhenius(tempA,tempn*(1.0+self.dk),tempEa)
+                    #gas.reaction(i).rate=ct.Arrhenius(tempA,tempn*(1.0+self.dk),tempEa)
+                    #gas.reaction(i).rate=ct.Arrhenius(tempA,tempn,tempEa)
+                    temp_r=gas.reactions()[i]
+                    dn=0.00136059
+                    temp_r.rate=ct.Arrhenius(tempA,tempn+dn,tempEa)
+                    gas.modify_reaction(i,temp_r)
+                    
+                    
                     self.flame.solve(self.loglevel,refine_grid=False)
                     temp_u_n=copy.deepcopy(self.flame.u[0])
-                    gas.reaction(i).rate=ct.Arrhenius(tempA,tempn,tempEa*(1.0+self.dk))
+                    #gas.reaction(i).rate=ct.Arrhenius(tempA,tempn,tempEa*(1.0+self.dk))
+                    #gas.reaction(i).rate=ct.Arrhenius(tempA,tempn,tempEa)
+                    temp_r=gas.reactions()[i]
+                    dEa=-14.9255*ct.gas_constant
+                    temp_r.rate=ct.Arrhenius(tempA,tempn,tempEa+dEa)
+                    gas.modify_reaction(i,temp_r)
+                    
                     self.flame.solve(self.loglevel,refine_grid=False)
                     temp_u_Ea=copy.deepcopy(self.flame.u[0])
+                    
                     tempChanges=np.array([temp_u_A,temp_u_n,temp_u_Ea])
                     nominals=nominal_u*np.ones(len(tempChanges))
                     nominal_df=pd.DataFrame(columns=['u0'])
@@ -242,10 +283,15 @@ class free_flame(sim.Simulation):
                     tempChanges_df = pd.DataFrame(columns=['u0'])
                     tempChanges_df['u0'] = tempChanges
                     
-                    temp_sens=self.sensitivityCalculation(nominal_df,tempChanges_df,'u0')
+                    temp_sens=np.zeros(3)
+                    temp_sens[0]=self.sensitivityCalculation(float(nominal_df['u0'][0]),float(tempChanges_df['u0'][0]),self.dk)
+                    temp_sens[1]=self.sensitivityCalculation(float(nominal_df['u0'][1]),float(tempChanges_df['u0'][1]),dn)
+                    temp_sens[2]=self.sensitivityCalculation(float(nominal_df['u0'][2]),float(tempChanges_df['u0'][2]),dEa)
                     sensdict['Reaction '+str(i)]=temp_sens
-                    gas.reaction(i).rate=ct.Arrhenius(tempA,tempn, tempEa)
-                    
+                    #gas.reaction(i).rate=ct.Arrhenius(tempA,tempn, tempEa)
+                    temp_r=gas.reactions()[i]
+                    temp_r.rate=ct.Arrhenius(tempA,tempn,tempEa)
+                    gas.modify_reaction(i,temp_r)
                     
                     
                 elif equation_type=='FalloffReaction':
@@ -256,16 +302,34 @@ class free_flame(sim.Simulation):
                     tempAh=copy.deepcopy(gas.reaction(i).high_rate.pre_exponential_factor)
                     tempnh=copy.deepcopy(gas.reaction(i).high_rate.temperature_exponent)
                     tempEah=copy.deepcopy(gas.reaction(i).high_rate.activation_energy)
-                    self.flame.gas.reaction(i).low_rate=ct.Arrhenius(tempAl*(1.0+self.dk),tempnl,tempEal)
-                    self.flame.gas.reaction(i).high_rate=ct.Arrhenius(tempAh*(1.0+self.dk),tempnh,tempEah)
+                    
+                    temp_r=gas.reactions()[i]
+                    temp_r.low_rate=ct.Arrhenius(tempAl*(1.0+self.dk),tempnl,tempEal)
+                    temp_r.high_rate=ct.Arrhenius(tempAh*(1.0+self.dk),tempnh,tempEah)
+                    gas.modify_reaction(i,temp_r)
+                    
+                    #self.flame.gas.reaction(i).low_rate=ct.Arrhenius(tempAl*(1.0+self.dk),tempnl,tempEal)
+                    #self.flame.gas.reaction(i).high_rate=ct.Arrhenius(tempAh*(1.0+self.dk),tempnh,tempEah)
                     self.flame.solve(self.loglevel,refine_grid=False)
                     temp_u_A=copy.deepcopy(self.flame.u[0])
-                    self.flame.gas.reaction(i).low_rate=ct.Arrhenius(tempAl,tempnl*(1.0+self.dk),tempEal)
-                    self.flame.gas.reaction(i).high_rate=ct.Arrhenius(tempAh,tempnh*(1.0+self.dk),tempEah)
+                    
+                    temp_r=gas.reactions()[i]
+                    dn=0.00136059
+                    temp_r.low_rate=ct.Arrhenius(tempAl,tempnl+dn,tempEal)
+                    temp_r.high_rate=ct.Arrhenius(tempAh,tempnh+dn,tempEah)
+                    gas.modify_reaction(i,temp_r)
+                    #self.flame.gas.reaction(i).low_rate=ct.Arrhenius(tempAl,tempnl*(1.0+self.dk),tempEal)
+                    #self.flame.gas.reaction(i).high_rate=ct.Arrhenius(tempAh,tempnh*(1.0+self.dk),tempEah)
                     self.flame.solve(self.loglevel,refine_grid=False)
                     temp_u_n=copy.deepcopy(self.flame.u[0])
-                    self.flame.gas.reaction(i).low_rate=ct.Arrhenius(tempAl,tempnl,tempEal*(1.0+self.dk))
-                    self.flame.gas.reaction(i).high_rate=ct.Arrhenius(tempAh,tempnh,tempEah*(1.0+self.dk))
+                    
+                    temp_r=gas.reactions()[i]
+                    dEa=-14.9255*ct.gas_constant
+                    temp_r.low_rate=ct.Arrhenius(tempAl,tempnl,tempEal+dEa)
+                    temp_r.high_rate=ct.Arrhenius(tempAh,tempnh,tempEah+dEa)
+                    gas.modify_reaction(i,temp_r)
+                    #self.flame.gas.reaction(i).low_rate=ct.Arrhenius(tempAl,tempnl,tempEal*(1.0+self.dk))
+                    #self.flame.gas.reaction(i).high_rate=ct.Arrhenius(tempAh,tempnh,tempEah*(1.0+self.dk))
                     self.flame.solve(self.loglevel,refine_grid=False)
                     temp_u_Ea=copy.deepcopy(self.flame.u[0])
                     tempChanges=np.array([temp_u_A,temp_u_n,temp_u_Ea])
@@ -274,13 +338,68 @@ class free_flame(sim.Simulation):
                     nominal_df['u0']=nominals
                     tempChanges_df = pd.DataFrame(columns=['u0'])
                     tempChanges_df['u0'] = tempChanges
-                    temp_sens=self.sensitivityCalculation(nominal_df,tempChanges_df,'u0')
+                    
+                    temp_sens=np.zeros(3)
+                    temp_sens[0]=self.sensitivityCalculation(float(nominal_df['u0'][0]),float(tempChanges_df['u0'][0]),self.dk)
+                    temp_sens[1]=self.sensitivityCalculation(float(nominal_df['u0'][1]),float(tempChanges_df['u0'][1]),dn)
+                    temp_sens[2]=self.sensitivityCalculation(float(nominal_df['u0'][2]),float(tempChanges_df['u0'][2]),dEa)
+                    
                     sensdict['Reaction '+str(i)]=temp_sens
-                    self.flame.gas.reaction(i).low_rate=ct.Arrhenius(tempAl,tempnl, tempEal)
-                    self.flame.gas.reaction(i).high_rate=ct.Arrhenius(tempAh,tempnh, tempEah)        
+                    
+                    
+                    temp_r=gas.reactions()[i]
+                    temp_r.low_rate=ct.Arrhenius(tempAl,tempnl,tempEal)
+                    temp_r.high_rate=ct.Arrhenius(tempAh,tempnh,tempEah)
+                    gas.modify_reaction(i,temp_r)
+                    #self.flame.gas.reaction(i).low_rate=ct.Arrhenius(tempAl,tempnl, tempEal)
+                    #self.flame.gas.reaction(i).high_rate=ct.Arrhenius(tempAh,tempnh, tempEah)        
                     
                 elif equation_type=='ChebyshevReaction':
-                    print('Chebyshev sensitivities not yet installed')
+                    #print('Chebyshev sensitivities not yet installed')
+                    
+                    current_array=copy.deepcopy(gas.reaction(i).coeffs)
+                    temp_u=np.zeros(np.shape(current_array))
+                    sens=np.zeros(np.shape(current_array))
+                    temp_gas=ct.Solution(self.processor.cti_path)
+                    #temp_gas.TPX=gas.TPX
+                    #temp_gas.TP=1500,gas.P
+                    #temp_range=np.linspace(gas.reactions()[i].Tmin,gas.reactions()[i].Tmax,len(gas.reactions()[i].coeffs[:,0])+1)
+                    temp_range=np.linspace(gas.reactions()[i].Tmin,gas.reactions()[i].Tmax,len(gas.reactions()[i].coeffs[:,0]))
+                    #midpoints=np.zeros(len(temp_range)-1)
+                    midpoints=copy.deepcopy(temp_range)
+                    midpoints[0]=(temp_range[0]+temp_range[1])/2
+                    midpoints[-1]=(temp_range[-1]+temp_range[-2])/2
+                    #for j,T in enumerate(midpoints):
+                        #midpoints[j]=(temp_range[j]+temp_range[j+1])/2.0
+                        
+                    for m in range(len(current_array[:,0])):
+                        for k in range(len(current_array[0,:])):
+                            gas.TPX=self.TPX
+                            temp_gas.TPX=gas.TPX
+                            temp_gas.TP=midpoints[m],gas.P
+                            current_rate=temp_gas.forward_rate_constants[i]
+                            modified_rate=1.01*current_rate
+                            print('Solving Chebyshev parameter sensitivity ['+str(m)+', '+str(k)+' for reaction ' +str(i))
+                            print(temp_gas.TP)
+                            temp_r=temp_gas.reactions()[i]
+                            args=(i,m,k,temp_gas,modified_rate,current_array)
+                            da=scipy.optimize.fsolve(chebyshev_zeros,current_array[m,k],args=args)
+                            gas.TPX=self.TPX
+                            print('Delta alpha '+str(m)+', '+str(k)+'= '+str(da))
+                            #temp_r.coeffs=current_array
+                            temp_r.set_parameters(temp_r.Tmin,temp_r.Tmax,temp_r.Pmin,temp_r.Pmax,current_array)
+                            temp_current_array=copy.deepcopy(current_array)
+                            temp_current_array[m,k]=current_array[m,k]+da
+                            temp_r.set_parameters(temp_r.Tmin,temp_r.Tmax,temp_r.Pmin,temp_r.Pmax,temp_current_array)
+                            gas.modify_reaction(i,temp_r)
+                            self.flame.solve(self.loglevel,refine_grid=True)
+                            temp_u[m,k]=copy.deepcopy(self.flame.u[0])
+                            nominals=nominal_u*np.ones(np.shape(current_array))
+                            sens[m,k]=self.sensitivityCalculation(nominals[m,k],temp_u[m,k],da)
+                            temp_r=gas.reactions()[i]
+                            temp_r.set_parameters(temp_r.Tmin,temp_r.Tmax,temp_r.Pmin,temp_r.Pmax,current_array)
+                            gas.modify_reaction(i,temp_r)
+                    sensdict['Reaction '+str(i)]=sens
                 self.fsens=sensdict
         
 
@@ -314,20 +433,11 @@ class free_flame(sim.Simulation):
             #self.solution=data
             return (self.solution,[])
         
-    def sensitivityCalculation(self,originalValues,newValues,thingToFindSensitivtyOf,dk=.01):
-        if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
-            
-            #newValues.columns = thingToFindSensitivtyOf
-            
-            newValues = newValues.applymap(np.log)
-            originalValues = originalValues.applymap(np.log)
-            #tab
-            
-            sensitivity = (newValues.subtract(originalValues)/dk)
-            return sensitivity
-        else:
-            print("Error: wrong datatype, both must be pandas data frames")
-            return -1
+    def sensitivityCalculation(self,originalValues,newValues,dk=.01):
+        sensitivity=(np.log(newValues)-np.log(originalValues))/dk
+                           
+        return sensitivity
+        
        
 
 class flamespeed_multi_condition(sim.Simulation):
