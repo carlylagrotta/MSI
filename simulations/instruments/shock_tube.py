@@ -206,13 +206,7 @@ class shockTube(sim.Simulation):
                             ignore_index=True)
             counter+=1
         if self.timeHistories != None:
-            ############################################################
 
-            #This maybe where I add in the time shift for each array
-            #STUB
-            ############################################################
-            print('THIS IS THE UPDATED TIME SHIFT VALUE')
-            print(self.time_shift_value)
             self.timeHistory.time = self.timeHistory.time + self.time_shift_value
             #self.timeHistory.time = self.timeHistory.time + 0
             

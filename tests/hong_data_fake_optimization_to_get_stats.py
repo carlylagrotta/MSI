@@ -42,11 +42,11 @@ files_to_include = [['Hong_0.yaml'],
                     ['Hong_HO2_fake_data_12.yaml','Hong_HO2_fake_data_12_abs.yaml'],
                     ['Hong_HO2_fake_data_13.yaml','Hong_HO2_fake_data_13_abs.yaml'],
                     ['Hong_HO2_fake_data_14.yaml','Hong_HO2_fake_data_14_abs.yaml'],
-                    ['Hong_HO2_fake_data_15.yaml','Hong_HO2_fake_data_15_abs.yaml'],
-                    ['Farooq_0_large_uncertainty.yaml'],
-                    ['Farooq_1_large_uncertainty_2.yaml'],
-                    ['Farooq_2_large_uncertainty.yaml'],
-                    ['Farooq_3_large_uncertainty.yaml']] 
+                    ['Hong_HO2_fake_data_15.yaml','Hong_HO2_fake_data_15_abs.yaml']]
+                    # ['Farooq_0_large_uncertainty.yaml'],
+                    # ['Farooq_1_large_uncertainty_2.yaml'],
+                    # ['Farooq_2_large_uncertainty.yaml'],
+                    # ['Farooq_3_large_uncertainty.yaml']] 
 #lock in physical model paramters 
 #update cti file to have the hong paramters for that temperature in them 
 numer_of_iterations = 2                                     

@@ -344,43 +344,43 @@ for i in range(df.shape[0]):
     
     
     
-    plotting_instance = plotter.Plotting(S_matrix,
-                                         s_matrix,
-                                         Y_matrix,
-                                         Y_matrix,
-                                         z_matrix,
-                                         X,
-                                         sigma,
-                                         covarience,
-                                         original_covariance,
-                                         S_matrix_original,
-                                         experimental_dicts,
-                                         exp_dict_list_original,
-                                         parsed_yaml_list,
-                                         Ydf,
-                                         target_value_rate_constant_csv= MSI_st_instance_two.data_directory +'/'+ rate_constant_target_value_data_for_plotting ,
-                                         target_value_rate_constant_csv_extra_values = MSI_st_instance_two.data_directory +'/'+rate_constant_target_value_data_extra,
-                                         k_target_value_S_matrix =k_target_value_S_matrix,
-                                         k_target_values=run_with_k_target_values,
-                                         working_directory = working_directory,
-                                         sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma,
-                                         simulation_run = i)
-    #csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_updated.csv'
-    observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
-    sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
-    sigmas_original,test2 = plotting_instance.calculating_sigmas(S_matrix_original,original_covariance)
-    plotting_instance.plotting_observables(sigmas_original = sigmas_original,sigmas_optimized= sigmas_optimized)
-    diag = plotting_instance.getting_matrix_diag(covarience)
+    # plotting_instance = plotter.Plotting(S_matrix,
+    #                                       s_matrix,
+    #                                       Y_matrix,
+    #                                       Y_matrix,
+    #                                       z_matrix,
+    #                                       X,
+    #                                       sigma,
+    #                                       covarience,
+    #                                       original_covariance,
+    #                                       S_matrix_original,
+    #                                       experimental_dicts,
+    #                                       exp_dict_list_original,
+    #                                       parsed_yaml_list,
+    #                                       Ydf,
+    #                                       target_value_rate_constant_csv= MSI_st_instance_two.data_directory +'/'+ rate_constant_target_value_data_for_plotting ,
+    #                                       target_value_rate_constant_csv_extra_values = MSI_st_instance_two.data_directory +'/'+rate_constant_target_value_data_extra,
+    #                                       k_target_value_S_matrix =k_target_value_S_matrix,
+    #                                       k_target_values=run_with_k_target_values,
+    #                                       working_directory = working_directory,
+    #                                       sigma_uncertainty_weighted_sensitivity_csv='',
+    #                                       simulation_run = i)
+    # #csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_updated.csv'
+    # observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
+    # sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
+    # sigmas_original,test2 = plotting_instance.calculating_sigmas(S_matrix_original,original_covariance)
+    # plotting_instance.plotting_observables(sigmas_original = sigmas_original,sigmas_optimized= sigmas_optimized)
+    # diag = plotting_instance.getting_matrix_diag(covarience)
 
 
                                 
 
     
-    sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
-    obs = plotting_instance.plotting_uncertainty_weighted_sens()
+    # sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
+    # obs = plotting_instance.plotting_uncertainty_weighted_sens()
 
-    sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
-    obs = plotting_instance.plotting_uncertainty_weighted_sens()
+    # sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
+    # obs = plotting_instance.plotting_uncertainty_weighted_sens()
 
     
 

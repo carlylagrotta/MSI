@@ -33,7 +33,7 @@ files_to_include = [['Hong_0.yaml'],
 
 
 #files_to_include = [['Hong_0_time_shift_test.yaml']]
-numer_of_iterations = 5
+numer_of_iterations = 50
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
@@ -273,27 +273,27 @@ observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_inst
 sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
 sigmas_original,test2 = plotting_instance.calculating_sigmas(S_matrix_original,original_covariance)
 plotting_instance.plotting_observables(sigmas_original = sigmas_original,sigmas_optimized= sigmas_optimized)
-# diag = plotting_instance.getting_matrix_diag(covarience)
+diag = plotting_instance.getting_matrix_diag(covarience)
 
 
-# #plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
+#plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
 
 
 
                                 
 
 
-# sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
-# obs = plotting_instance.plotting_uncertainty_weighted_sens()
+sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
+obs = plotting_instance.plotting_uncertainty_weighted_sens()
 
-# plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MSI_st_instance_two.new_cti_file,
-#                                 original_cti_file=original_cti_file,
-#                                initial_temperature=250,
-#                                 final_temperature=2500,
-#                                 master_equation_reactions = master_equation_reactions,
-#                                 six_parameter_fit_dict_optimized = six_parameter_fit_dict_optimized,
-#                                 six_parameter_fit_dict_nominal = six_parameter_fit_nominal_parameters_dict,
-#                                 six_parameter_fit_sensitivity_dict =six_parameter_fit_sensitivities )
+plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MSI_st_instance_two.new_cti_file,
+                                original_cti_file=original_cti_file,
+                                initial_temperature=250,
+                                final_temperature=2500,
+                                master_equation_reactions = master_equation_reactions,
+                                six_parameter_fit_dict_optimized = six_parameter_fit_dict_optimized,
+                                six_parameter_fit_dict_nominal = six_parameter_fit_nominal_parameters_dict,
+                                six_parameter_fit_sensitivity_dict =six_parameter_fit_sensitivities )
 
 
 
