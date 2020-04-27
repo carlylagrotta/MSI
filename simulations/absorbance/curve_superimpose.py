@@ -485,29 +485,40 @@ class Absorb:
         flat_list = list(set(flat_list))
         wavelengths = flat_list
 
-        
+        one_percent_of_average = 1e-8
         original_time = simulation.timeHistories[0]['time']
-        #last_timestep_in_simulation = simulation.timeHistories[0]['time'].tail(1).values[0]
-        first_timestep_in_simulation = simulation.timeHistories[0]['time'].loc[2]
-        
+        new_time = original_time + one_percent_of_average
 
-        #one_percent_of_last_timestep = last_timestep_in_simulation*dk  
-        #one_percent_of_first_timestep = first_timestep_in_simulation*dk  
-        one_percent_of_first_timestep = 1e-6*dk
-        #one_percent_of_first_timestep = 1e-12
-        #new_time = original_time + one_percent_of_last_timestep
-        new_time = original_time + one_percent_of_first_timestep
+        interpolated_against_original_time = []
+        for i,wl in enumerate(wavelengths):
+            interpolated_original_wl_against_original_time = np.interp(original_time,new_time,absorabnce_from_model[wl])
+    
+            s1 = pd.Series(interpolated_original_wl_against_original_time,name=wl)
+            interpolated_against_original_time.append(s1)
+        
+        observables_interpolated_against_original_time_df = pd.concat(interpolated_against_original_time,axis=1)
+
+
+        calculated_sensitivity = []
+        for i,wl in enumerate(wavelengths):
+                      
+           sens = (observables_interpolated_against_original_time_df[wl].apply(np.log).values - np.log(absorabnce_from_model[wl]))/one_percent_of_average
+           s1 = pd.Series(sens,name=wl)
+           calculated_sensitivity.append(s1)    
+        calculated_sensitivity_df = pd.concat(calculated_sensitivity,axis=1)
+
+                
         
         time_shift_sensitivity_dict = {}
         for i,wl in enumerate(wavelengths):
-            original_absorabnce_interpolated = np.interp(absorbance_experimental_data[i]['time'],simulation.timeHistories[0]['time'],absorabnce_from_model[wl])
-            original_absorabnce_interpolated = original_absorabnce_interpolated.reshape((original_absorabnce_interpolated.shape[0],1))
-            time_shifted_absorabnce_interpolated = np.interp(absorbance_experimental_data[i]['time'],new_time,absorabnce_from_model[wl])
-            time_shifted_absorabnce_interpolated = time_shifted_absorabnce_interpolated.reshape((time_shifted_absorabnce_interpolated.shape[0],1))
             
-            #sensitivity = (np.log(time_shifted_absorabnce_interpolated) - np.log(original_absorabnce_interpolated))/dk
-            sensitivity = time_shifted_absorabnce_interpolated - original_absorabnce_interpolated/one_percent_of_first_timestep
-
-            time_shift_sensitivity_dict[wl] = sensitivity
+            interpolated_sensitivty_per_original_observable = np.interp(absorbance_experimental_data[i]['time'],simulation.timeHistories[0]['time'],calculated_sensitivity_df[wl])
+            interpolated_sensitivty_per_original_observable = interpolated_sensitivty_per_original_observable.reshape((interpolated_sensitivty_per_original_observable.shape[0],1))
+            
+            time_shift_sensitivity_dict[wl] = interpolated_sensitivty_per_original_observable
+        
         self.time_shift_sensitivity_dict = time_shift_sensitivity_dict
         return time_shift_sensitivity_dict
+    
+   
+

@@ -55,11 +55,14 @@ class testing_code(object):
                 stop = self.simulation_lengths_of_experimental_data[x][y] + start
                 original = self.S_matrix[start:stop,self.shape_of_X_counter]
                 original = original.reshape(original.shape[0],1)
-                numerator =  self.Y_matrix_original[start:stop,:] -self.Y_matrix[start:stop,:]
+                #numerator =   self.Y_matrix[start:stop,:] -self.Y_matrix_original[start:stop,:]
+                numerator =   self.Y_matrix_original[start:stop,:] - self.Y_matrix[start:stop,:]
+                
                 denominator = self.value_to_perturb_by
 
-                if (self.shape_of_X_counter > self.number_of_reactions_in_cti_file*2)-6 and self.shape_of_X_counter < (self.number_of_reactions_in_cti_file*3)-6:
-                    denominator = self.value_to_perturb_by * ct.gas_constant
+                #if (self.shape_of_X_counter > self.number_of_reactions_in_cti_file*2)-6 and self.shape_of_X_counter < (self.number_of_reactions_in_cti_file*3)-6:
+                    #denominator = self.value_to_perturb_by * ct.gas_constant
+                
                 Sij = np.divide(numerator,denominator)
                 S_temp = Sij
                 S_temp = S_temp.reshape(S_temp.shape[0],)

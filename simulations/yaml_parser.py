@@ -346,6 +346,7 @@ class Parser(object):
            # print(simtype)
             simtype=str(simtype)
             experiment_type=str(experiment_type)
+
             #simtype = 'shock tube'
             #if simtype=='shock tube' or simtype=='Shock Tube' or simtype=='Shock tube':
             if re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
@@ -471,12 +472,10 @@ class Parser(object):
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
                     updatedTemp = round(updatedTemp,9)
+                    #updatedTimeShift =  (np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * experiment_dict_list[yaml_file]['average_time']) - experiment_dict_list[yaml_file]['average_time']
                     
-                    #updatedTimeShift =  np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * time_shift 
                     updatedTimeShift = physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)] + time_shift
 
-                    print('THIS IS UPDATED TIME SHIFT')
-                    print(updatedTimeShift)
                     updatedTimeShift = round(updatedTimeShift,9)
                     
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):
