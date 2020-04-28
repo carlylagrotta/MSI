@@ -22,7 +22,7 @@ class ignition_delay(sim.Simulation):
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={}, save_timeHistories:int=0,
                  log_file=True,log_name='log.txt',timeshift:float=0.0,initialTime:float=0.0,
-                 finalTime:float=1.0,target:str='temperature',target_type:str='max derivative'):
+                 finalTime:float=1.0,target:str='temperature',target_type:str='max derivative',n_processors:int=2):
         
         
         if processor!=None and cti_path!="":
@@ -33,7 +33,7 @@ class ignition_delay(sim.Simulation):
             self.processor = processor 
         elif cti_path!="":
             self.processor = ctp.Processor(cti_path)
-        
+        self.n_processors=n_processors
         self.pressure=pressure
         self.temperature=temperature
         self.observables=observables
@@ -140,7 +140,7 @@ class ignition_delay(sim.Simulation):
         if self.kineticSens:   
                 
                 sens=self.BFM(delay)
-                #sens=self.BFM_pool(delay)
+                #sens=self.BFM_pool(delay,self.n_processors)
             
         
         toc=time.time()
@@ -225,7 +225,7 @@ class ignition_delay(sim.Simulation):
                     self.processor.solution.set_multiplier(1.0,i)
          return sens
         
-    def BFM_pool(self,nominal):
+    def BFM_pool(self,nominal,n_procs):
          info=[]
          sens=[]
          args=(self.pressure,self.temperature,self.observables,self.kineticSens,self.conditions,self.initialTime,self.finalTime,
@@ -265,11 +265,268 @@ class ignition_delay(sim.Simulation):
                      
                      
                      
-         pool = ThreadPool(4) 
+         pool = ThreadPool(n_procs) 
          #results = results+pool.map(solver,conditionsTups)
          sens=pool.map(solver,info)
          #sens=np.zeros(self.processor.solution.n_reactions)
          
          return sens
+        
+class ignition_delay_wrapper(sim.Simulation):
+    
+    def __init__(self,pressures,temperatures,observables:list,
+                 kineticSens:int,physicalSens:int,conditions,thermalBoundary,
+                 mechanicalBoundary,
+                 processor:ctp.Processor=None,cti_path="", 
+                 save_physSensHistories=0,moleFractionObservables:list=[],
+                 absorbanceObservables:list=[],concentrationObservables:list=[],
+                 fullParsedYamlFile:dict={}, save_timeHistories:int=0,
+                 log_file=True,log_name='log.txt',timeshift:float=0.0,initialTime:float=0.0,
+                 finalTime:float=1.0,target:str='temperature',target_type:str='max derivative',n_processors:int=2):
+        
+        
+        
+        
+        if processor!=None and cti_path!="":
+            print("Error: Cannot give both a processor and a cti file path, pick one")
+        elif processor==None and cti_path=="":
+            print("Error: Must give either a processor or a cti file path")
+        if processor != None:
+            self.processor = processor 
+        elif cti_path!="":
+            self.processor = ctp.Processor(cti_path)
+        self.n_processors=n_processors
+        self.pressures=pressures
+        self.temperatures=temperatures
+        self.observables=observables
+        self.kineticSens=kineticSens
+        self.physicalSens=physicalSens
+        self.conditions=conditions
+        self.cti_path=cti_path
+        self.thermalBoundary = thermalBoundary
+        self.mechanicalBoundary=mechanicalBoundary
+        self.kineticSensitivities= None
+        self.experimentalData = None
+        self.concentrationObservables = concentrationObservables
+        self.moleFractionObservables = moleFractionObservables
+        self.absorbanceObservables = absorbanceObservables
+        self.fullParsedYamlFile =  fullParsedYamlFile
+        #self.energycon='off'
+        self.timeshift=timeshift
+        self.timeHistory = None
+        self.experimentalData = None
+        self.initialTime=initialTime
+        self.finalTime=finalTime
+        self.log_name=log_name
+        self.log_file=log_file
+        #self.yaml_file=yaml_file
+        if save_timeHistories == 1:
+            self.timeHistories=[]
+            self.timeHistoryInterpToExperiment = None
+            self.pressureAndTemperatureToExperiment = None
+        else:
+            self.timeHistories=None
+        if save_physSensHistories == 1:
+            self.physSensHistories = []
+        self.setTPX()
+        self.dk = 0.01
+        self.solution=None
+        self.target=target
+        self.target_type=target_type
+        
+        
+        
+    def run(self):
+        
+        
+        
+        solution=[]
+        ksens=[]
+        ksens_1stIter=False
+        for i in range(len(self.temperatures)):
+            for j in range(len(self.pressures)):
+                for k in range(len(self.conditions)):
+                    temp_ig=ignition_delay(self,pressure=self.pressures[j],
+                                           temperature=self.temperatures[i],
+                                           observables=self.observables,
+                                           kineticSens=self.kineticSens,
+                                           physicalSens=self.physicalSens,
+                                           conditions=self.conditions[k],
+                                           thermalBoundary=self.thermalBoundary,
+                                           mechanicalBoundary=self.mechanicalBoundary,
+                                           processor=self.processor,
+                                           cti_path=self.cti_path, 
+                                           save_physSensHistories=self.saave_physSensHistories,
+                                           moleFractionObservables=self.moleFractionObservables,
+                                           absorbanceObservables=self.absorbanceObservables,
+                                           concentrationObservables=self.concentrationObservables,
+                                           fullParsedYamlFile=self.fullParsedYamlFile, 
+                                           save_timeHistories=self.save_timeHistories,
+                                           log_file=self.log_file,
+                                           log_name=self.log_name,
+                                           timeshift=self.timeshift,
+                                           initialTime=self.initialTime,
+                                           finalTime=self.finalTime,
+                                           target=self.target,
+                                           target_type=self.target_type,
+                                           n_processors=self.n_processors)
+            
+                    a,b=temp_ig.run_single()
+            
+                    temp=[]
+                    temp1=[]
+                    temp=copy.deepcopy(a)
+                    temp1=copy.deepcopy(b)
+                    #print(a)
+                    solution.append(temp)
+                    if not ksens_1stIter and self.kineticSens==1:
+                        ksens=temp1
+                        ksens_1stIter=True
+                    elif self.kineticSens==1 and ksens_1stIter:
+                        ksens=np.vstack([ksens,temp1])
+                    #print(ksens)
+        solution=pd.concat(solution)
+        #print(np.shape(ksens))
+        if self.timeHistories != None:
+            self.timeHistories.append(solution)
+        self.kineticSensitivities=ksens
+        return (solution,ksens)
+        
+        
+    def sensitivity_adjustment(self,temp_del:float=0.0,
+                               pres_del:float=0.0,
+                               spec_pair:(str,float)=('',0.0),
+                               res_del:float=0.0):
+        
+        #this is where we would make the dk fix
+        if temp_del != 0.0:
+            self.dk.append(temp_del)
+        if pres_del != 0.0:       
+            self.dk.append(pres_del) 
+        if spec_pair[1] != 0.0:
+            self.dk.append(spec_pair[1])
+        
+        temptemp=copy.deepcopy(self.temperatures)
+        temppres=copy.deepcopy(self.pressure)
+        tempcond=copy.deepcopy(self.conditions)
+        kin_temp = self.kineticSens
+        self.kineticSens = 0
+        '''
+          Passes the Perturbed observable to the setTPX function. Temperature and pressure 
+        are passed and set directly species need to go through an additional step in the 
+        setTPX function. 
+        '''
+        if spec_pair[0] != '':
+            self.temperatures=np.array(self.temperatures)+temp_del*np.array(self.temperatures)
+            self.pressure=self.pressure+pres_del*self.pressure
+            xj=self.conditions[spec_pair[0]]
+            delxj=spec_pair[1]*self.conditions[spec_pair[0]]
+            #print(xj,delxj)
+            self.conditions[spec_pair[0]]=np.divide(np.multiply(xj+delxj,1-xj),1-xj-delxj)
+#           self.setTPX(self.temperature+self.temperature*temp_del,
+#                   self.pressure+self.pressure*pres_del,
+#                   {spec_pair[0]:self.conditions[spec_pair[0]]*spec_pair[1]})
+          
+           
+        else:
+           self.temperatures=np.array(self.temperatures)+temp_del*np.array(self.temperatures)
+           self.pressure=self.pressure+pres_del*self.pressure
+           self.residence_time=self.residence_time+res_del*self.residence_time
+           
+#           self.setTPX(self.temperature+self.temperature*temp_del,
+#                       self.pressure+self.pressure*pres_del)
+        
+        data,trash = self.run() #Ignore trash, just temp storage for empty kinetic sens array
+        #print(data)
+        
+        #data = sim.Simulation.sensitivity_adjustment(self,temp_del,pres_del,spec_pair)
+        self.temperatures=temptemp
+        self.pressure=temppres
+        self.conditions=tempcond
+        self.kineticSens = kin_temp
+        
+        
+        return data
+    
+    def species_adjustment(self,spec_del:float=0.0):
+        inert_species=['Ar','AR','HE','He','Kr','KR',
+                       'Xe','XE','NE','Ne']
+        
+        '''
+        Creates tuples of specie that need to be perturbed and the
+        percent value by which to perturb its mole fraction 
+        '''
+        # gets the mole fraction and the species which are going to be 
+        #perturbed in order to run a sensitivity calculation 
+        data = []
+        for x in self.conditions.keys():
+            if x not in inert_species:
+                data.append(self.sensitivity_adjustment(spec_pair=(x,spec_del)))
+
+        return data
+    
+    def importExperimentalData(self,csvFileList):
+        print('Importing jsr data the following csv files...') 
+        print(csvFileList)
+        experimentalData = [pd.read_csv(csv) for csv in csvFileList]
+        experimentalData = [experimentalData[x].dropna(how='any') for x in range(len(experimentalData))]
+        experimentalData = [experimentalData[x].apply(pd.to_numeric, errors = 'coerce').dropna() for x in range(len(experimentalData))]
+        for x in range(len(experimentalData)):
+            experimentalData[x] = experimentalData[x][~(experimentalData[x][experimentalData[x].columns[1]] < 0)]
+        self.experimentalData = experimentalData
+        return experimentalData
+    
+    def map_and_interp_ksens(self,temp_history=None):
+        A = self.kineticSensitivities
+        N = np.zeros(A.shape)
+        Ea = np.zeros(A.shape)
+        for i in range(0,A.shape[2]):
+            sheetA = A[:,:,i] #sheet for specific observable
+            for x,column in enumerate(sheetA.T):
+                N[:,x,i]= np.multiply(column,np.log(self.timeHistories[0]['temperature'])) if temp_history is None else np.multiply(column,np.log(temp_history['temperature']))
+                #not sure if this mapping is correct, check with burke and also update absorption mapping
+                #to_mult_ea = np.divide(-1,np.multiply(1/ct.gas_constant,self.timeHistories[0]['temperature'])) if time_history is None else np.divide(-1,np.multiply(ct.gas_constant,time_history['temperature']))
+                to_mult_ea = np.divide(-1,np.multiply(1,self.timeHistories[0]['temperature'])) if temp_history is None else np.divide(-1,np.multiply(1,temp_history['temperature']))
+                Ea[:,x,i]= np.multiply(column,to_mult_ea)
+        #print(np.shape(A))
+        tempA=[]
+        tempn=[]
+        tempEa=[]
+        for i in range(0,A.shape[2]):
+            tempA.append(A[:,:,i])
+            tempn.append(N[:,:,i])
+            tempEa.append(Ea[:,:,i])
+        A=tempA
+        N=tempn
+        Ea=tempEa
+        return {'A':A,
+                'N':N,
+                'Ea':Ea}
+    def sensitivityCalculation(self,originalValues,newValues,thingToFindSensitivtyOf,dk=.01):
+        if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
+            
+            #newValues.columns = thingToFindSensitivtyOf
+            
+            newValues = newValues.applymap(np.log)
+            originalValues = originalValues.applymap(np.log)
+            #tab
+            
+            sensitivity = (newValues.subtract(originalValues)/dk)
+            return sensitivity
+        else:
+            print("Error: wrong datatype, both must be pandas data frames")
+            return -1
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
