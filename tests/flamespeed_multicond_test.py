@@ -13,7 +13,6 @@ import numpy as np
 test_p=pr.Processor('C:\\Users\\Skoron\\Google Drive\\Burke Group\\Codes\\Mechanisms\\FFCM-1\\FFCM1.cti')
 f1 = f.flamespeed_multi_condition(pressures=[1.00],
                          temperatures=[298.0],
-                         observables=['OH','H2O'],
                          kineticSens=1,
 						 physicalSens=0,
                          conditions=[{'H2':0.5,'O2':0.5,'He':4.0},

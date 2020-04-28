@@ -462,7 +462,7 @@ class flamespeed_multi_condition(sim.Simulation):
             self.processor = processor 
         elif cti_path!="":
             self.processor = ctp.Processor(cti_path)        
-        
+        self.flamespeedObservables=['u0']
         self.save_physSensHistories=save_physSensHistories
         self.temperatures=temperatures
         self.JSR_objects=[]

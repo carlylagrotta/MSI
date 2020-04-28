@@ -57,6 +57,7 @@ class ignition_delay(sim.Simulation):
         self.finalTime=finalTime
         self.log_name=log_name
         self.log_file=log_file
+        self.ignitionDelayObservables=['tau']
         #self.yaml_file=yaml_file
         if save_timeHistories == 1:
             self.timeHistories=[]
@@ -139,13 +140,31 @@ class ignition_delay(sim.Simulation):
         sens=[]        
         if self.kineticSens:   
                 
-                sens=self.BFM(delay)
-                #sens=self.BFM_pool(delay,self.n_processors)
-            
+                #sens=self.BFM(delay)
+                sens=self.BFM_pool(delay,self.n_processors)
+                dfs = [pd.DataFrame() for x in range(len(self.ignitionDelayObservables))]
+                dfs[0] = dfs[0].append(((pd.DataFrame(sens)).transpose()),ignore_index=True)
+                numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
+                self.kineticSensitivities = np.dstack(numpyMatrixsksens)
         
         toc=time.time()
         print('Simulation took '+str(round(toc-tic,9))+' seconds.')
-        return delay,sens
+        
+        columns=['temperature','pressure']
+        for species in self.conditions.keys():
+            columns=columns+[species]
+        columns=columns+['delay']
+        data=pd.DataFrame(columns=columns)    
+        data['temperature']=self.temperature
+        data['pressure']=self.pressure
+        for species in self.conditions.keys():
+            data[species]=self.conditions[species]
+        data['delay']=delay
+        
+        if self.kineticSens:  
+            return data,self.kineticSensitivities
+        else:
+            return data,[]
             
         
         
@@ -319,6 +338,7 @@ class ignition_delay_wrapper(sim.Simulation):
         self.finalTime=finalTime
         self.log_name=log_name
         self.log_file=log_file
+        self.ignitionDelayObservables=['tau']
         #self.yaml_file=yaml_file
         if save_timeHistories == 1:
             self.timeHistories=[]
@@ -516,8 +536,14 @@ class ignition_delay_wrapper(sim.Simulation):
         else:
             print("Error: wrong datatype, both must be pandas data frames")
             return -1
+    
+    def calculate_time_shift_sens(self,nominal, dtau=1e-8):
+        
+        new_delay=np.array(nominal)+dtau*np.ones(len(np.array(nominal)))
+        sens=(np.log(new_delay)-np.log(np.array(nominal)))/dtau
         
         
+        return new_delay,sens
         
         
         
