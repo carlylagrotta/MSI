@@ -324,7 +324,7 @@ class Parser(object):
                    'timeShift':time_shift,
                    'experimentType':experiment_type
                    }
-     def parse_ignition_dealy_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+    def parse_ignition_delay_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
     
         simulation_type = loaded_exp['apparatus']['kind']
         pressure_list = loaded_exp['common-properties']['pressure']['value-list']
@@ -378,6 +378,25 @@ class Parser(object):
                 mole_fractions.append(dictonary['mole-fraction']['value-list'])
         
         conditions = dict(zip(species,mole_fractions))
+        
+        max_cond_length=0
+        for species in conditions.keys():
+            if len(conditions[species])>max_cond_length:
+                max_cond_length=len(conditions[species])
+        temp_dict={}
+        for species in conditions.keys():
+            if len(conditions[species])==1:
+                temp_dict[species]=max_cond_length*[conditions[species]]
+            else:
+                temp_dict[species]=conditions[species]
+                
+        conditions_to_run = [{key:value[index] for key, value in temp_dict.items()}
+                             for index in range(len(list(temp_dict.values())[0]))]
+        for i in range(len(conditions_to_run)):
+            for j in conditions_to_run[i].keys():
+                if type(conditions_to_run[i][j])==list:
+                    conditions_to_run[i][j]=conditions_to_run[i][j][0]
+        
         species_by_group = dict(zip(species_group_numbers,species_in_group_list))
     
         for i,group in enumerate(attribute_group):
@@ -406,9 +425,9 @@ class Parser(object):
     
         if loaded_absorption == {}:
             return{
-                   'pressure':pressure_list,
+                   'pressures':pressure_list,
                    'pressureRelativeUncertainty': pressure_relative_uncertainty,
-                   'temperature':temperature_list,
+                   'temperatures':temperature_list,
                     'tempRelativeUncertainty':temp_relative_uncertainty,
                    'conditions':conditions,
                    'thermalBoundary':thermal_boundary,
@@ -426,7 +445,7 @@ class Parser(object):
                    'ignitionDelayAbsoluteUncertainty':ignition_dealy_absolute_uncertainty,
                    'csvFiles': csv_files,
                    'simulationType':  simulation_type,
-                   'timeShift':time_shift,
+                   'time_shift':time_shift,
                    'experimentType':experiment_type,
                     'speciesGroupNumbers':species_group_numbers,
                     'speciesInGroupList':species_in_group_list,
@@ -434,8 +453,10 @@ class Parser(object):
                     'relativeUncertaintyBySpecies':relative_uncertainty_by_species,
                     'speciesByGroup':species_by_group,
                     'overallDict': overall_dict,
-                    'typeToSpeciesDict':type_dict
-    
+                    'typeToSpeciesDict':type_dict,
+                    'target':ignition_target,
+                    'target_type':ignition_type,
+                    'conditions_to_run':conditions_to_run
                    }       
         else:
             print('We do not have absorbance installed for ignition delay')
@@ -486,12 +507,12 @@ class Parser(object):
                 else:
                     experiment_dictonaries.append(self.parse_flame_speed_obj(loaded_exp = tup[0]))
                 
-            elif re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ii]gnition[ -][Dd]elay'):
+            elif re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ii]gnition[ -][Dd]elay',experiment_type):
                 if len(tup)>1:
-                    experiment_dictonaries.append(self.parse_ignition_dealy_obj(loaded_exp = tup[0],
+                    experiment_dictonaries.append(self.parse_ignition_delay_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
                 else:
-                    experiment_dictonaries.append(self.parse_ignition_dealy_obj(loaded_exp = tup[0]))                
+                    experiment_dictonaries.append(self.parse_ignition_delay_obj(loaded_exp = tup[0]))                
             else:
                 print('Failed to parse Yaml files- unrecognized simulation type for tuple index: '+str(counter))
             counter=counter+1

@@ -80,7 +80,7 @@ class ignition_delay(sim.Simulation):
             shock_tube = st.shockTube(pressure =self.pressure,
                          temperature = self.temperature,
                          observables = self.observables,
-                         kineticSens = self.kineticSens,
+                         kineticSens = 0,
                          physicalSens = 0,
                          conditions = self.conditions,
                          initialTime = self.initialTime,
@@ -98,7 +98,7 @@ class ignition_delay(sim.Simulation):
             shock_tube = st.shockTube(pressure =args[0],
                          temperature = args[1],
                          observables = args[2],
-                         kineticSens = args[3],
+                         kineticSens = 0,
                          physicalSens = 0,
                          conditions = args[4],
                          initialTime = args[5],
@@ -247,7 +247,7 @@ class ignition_delay(sim.Simulation):
     def BFM_pool(self,nominal,n_procs):
          info=[]
          sens=[]
-         args=(self.pressure,self.temperature,self.observables,self.kineticSens,self.conditions,self.initialTime,self.finalTime,
+         args=(self.pressure,self.temperature,self.observables,0,self.conditions,self.initialTime,self.finalTime,
                self.thermalBoundary,self.mechanicalBoundary,self.moleFractionObservables,self.concentrationObservables,
                self.fullParsedYamlFile,self.timeshift)
          for i in range(self.processor.solution.n_reactions):
@@ -320,6 +320,7 @@ class ignition_delay_wrapper(sim.Simulation):
         self.observables=observables
         self.kineticSens=kineticSens
         self.physicalSens=physicalSens
+        self.save_physSensHistories=save_physSensHistories
         self.conditions=conditions
         self.cti_path=cti_path
         self.thermalBoundary = thermalBoundary
@@ -338,6 +339,7 @@ class ignition_delay_wrapper(sim.Simulation):
         self.finalTime=finalTime
         self.log_name=log_name
         self.log_file=log_file
+        self.save_timeHistories=save_timeHistories
         self.ignitionDelayObservables=['tau']
         #self.yaml_file=yaml_file
         if save_timeHistories == 1:
@@ -348,7 +350,7 @@ class ignition_delay_wrapper(sim.Simulation):
             self.timeHistories=None
         if save_physSensHistories == 1:
             self.physSensHistories = []
-        self.setTPX()
+        #self.setTPX()
         self.dk = 0.01
         self.solution=None
         self.target=target
@@ -363,10 +365,11 @@ class ignition_delay_wrapper(sim.Simulation):
         solution=[]
         ksens=[]
         ksens_1stIter=False
+        print(self.conditions)
         for i in range(len(self.temperatures)):
             for j in range(len(self.pressures)):
                 for k in range(len(self.conditions)):
-                    temp_ig=ignition_delay(self,pressure=self.pressures[j],
+                    temp_ig=ignition_delay(pressure=self.pressures[j],
                                            temperature=self.temperatures[i],
                                            observables=self.observables,
                                            kineticSens=self.kineticSens,
@@ -376,7 +379,7 @@ class ignition_delay_wrapper(sim.Simulation):
                                            mechanicalBoundary=self.mechanicalBoundary,
                                            processor=self.processor,
                                            cti_path=self.cti_path, 
-                                           save_physSensHistories=self.saave_physSensHistories,
+                                           save_physSensHistories=self.save_physSensHistories,
                                            moleFractionObservables=self.moleFractionObservables,
                                            absorbanceObservables=self.absorbanceObservables,
                                            concentrationObservables=self.concentrationObservables,

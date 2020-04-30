@@ -186,28 +186,28 @@ class Optimization_Utility(object):
                                  dk =0.01,
                                  exp_number = 1):
         
-        flame_speed=fl.flamespeed_multi_condition(pressures:float,
-                                                  temperatures:float,
-                                                  observables:list,
-                                                  kineticSens:int,
-                                                  physicalSens:int,
-                                                  conditions:dict,
-                                                  thermalBoundary='Adiabatic',
-                                                  processor:ctp.Processor=None,
-                                                  save_physSensHistories=0,
-                                                  moleFractionObservables:list=[],
-                                                  absorbanceObservables:list=[],
-                                                  concentrationObservables:list=[],
-                                                  fullParsedYamlFile:dict={},
-                                                  flame_width:float=1.0,
-                                                  save_timeHistories:int=0,
-                                                  T_profile=pd.DataFrame(columns=['z','T']),
-                                                  soret=True,
-                                                  tol_ss=[1.0e-5, 1.0e-13],
-                                                  tol_ts=[1.0e-4, 1.0e-10],
-                                                  loglevel=1,
-                                                  flametype='Flame Speed',
-                                                  cti_path="")
+        # flame_speed=fl.flamespeed_multi_condition(pressures:float,
+        #                                           temperatures:float,
+        #                                           observables:list,
+        #                                           kineticSens:int,
+        #                                           physicalSens:int,
+        #                                           conditions:dict,
+        #                                           thermalBoundary='Adiabatic',
+        #                                           processor:ctp.Processor=None,
+        #                                           save_physSensHistories=0,
+        #                                           moleFractionObservables:list=[],
+        #                                           absorbanceObservables:list=[],
+        #                                           concentrationObservables:list=[],
+        #                                           fullParsedYamlFile:dict={},
+        #                                           flame_width:float=1.0,
+        #                                           save_timeHistories:int=0,
+        #                                           T_profile=pd.DataFrame(columns=['z','T']),
+        #                                           soret=True,
+        #                                           tol_ss=[1.0e-5, 1.0e-13],
+        #                                           tol_ts=[1.0e-4, 1.0e-10],
+        #                                           loglevel=1,
+        #                                           flametype='Flame Speed',
+        #                                           cti_path="")
         experiment = 'not yet installed'
         return experiment
     def running_ignition_delay(self,processor=None,
@@ -217,12 +217,12 @@ class Optimization_Utility(object):
                                dk=0.01,
                                exp_number=1):
         
-        ig_delay=ig.ignition_delay_wrapper(self,pressures=experiment_dictionary['pressures'],
+        ig_delay=ig.ignition_delay_wrapper(pressures=experiment_dictionary['pressures'],
                                            temperatures=experiment_dictionary['temperatures'],
                                            observables=experiment_dictionary['observables'],
                                            kineticSens=kineticSens,
                                            physicalSens=physicalSens,
-                                           conditions=experiment_dictionary['conditions'],
+                                           conditions=experiment_dictionary['conditions_to_run'],
                                            thermalBoundary=experiment_dictionary['thermalBoundary'],
                                            mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
                                            processor=processor,
@@ -237,7 +237,7 @@ class Optimization_Utility(object):
                                            finalTime=experiment_dictionary['finalTime'],
                                            target=experiment_dictionary['target'],
                                            target_type=experiment_dictionary['target_type'],
-                                           n_processors:int=2)
+                                           n_processors=2)
         
         
         soln,ksen=ig_delay.run()
@@ -571,9 +571,9 @@ class Optimization_Utility(object):
             experiment_type = yamlDict['experimentType']
             
             if re.match('[Ss]hock [Tt]ube',simulation_type) and re.match('[Ss]pecies[- ][Pp]rofile',experiment_type):
-                #simulation_type = 'shock tube'
+                
 
-                if simulation_type == 'shock tube':
+                
                     if 'absorbanceObservables' not in yamlDict.keys():
                         experiment = self.running_full_shock_tube(processor=processor,
                                            experiment_dictonary=yamlDict,
@@ -606,9 +606,45 @@ class Optimization_Utility(object):
                                            exp_number=i)
                         experiment_list.append(experiment)
                         
+                        
+            elif re.match('[Ss]hock [Tt]ube',simulation_type) and re.match('[Ii]gnition[- ][Dd]elay',experiment_type):
+                 if 'absorbanceObservables' not in yamlDict.keys():
+                        experiment = self.running_ignition_delay(processor=processor,
+                                           experiment_dictionary=yamlDict,
+                                           kineticSens = kineticSens,
+                                           physicalSens = physicalSens,
+                                           dk = dk,
+                                           exp_number=i)
+                        experiment_list.append(experiment)
+                
+                 elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
+#                        path = list_of_yaml_paths[i][1]
+#                        print(path)
+#                        experiment = self.running_shock_tube_absorption_only(processor=processor,
+#                                                                             experiment_dictonary = yamlDict,
+#                                                                             absorbance_yaml_file_path = path,
+#                                                                             kineticSens = kineticSens,
+#                                                                             physicalSens = physicalSens,
+#                                                                             dk = dk,
+#                                                                             exp_number=i)
+#                        experiment_list.append(experiment)
+                        print('Absorbance currently not enabled for ignition delay')
+                 else:
+#                        path = list_of_yaml_paths[i][1]
+#                        experiment = self.running_full_shock_tube_absorption(processor=processor,
+#                                           experiment_dictonary=yamlDict,
+#                                           absorbance_yaml_file_path = path,
+#                                           kineticSens = kineticSens,
+#                                           physicalSens = physicalSens,
+#                                           dk = dk,
+#                                           exp_number=i)
+#                        experiment_list.append(experiment)
+                        print('Absorbance currently not enabled for ignition delay')
+                        
+                
             elif re.match('[Jj][Ss][Rr]',simulation_type) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',simulation_type):
-                simulation_type='jsr'
-                if simulation_type=='jsr':
+                
+                
                     if 'absorbanceObservables' not in yamlDict.keys():
                         experiment = self.running_full_jsr(processor=processor,
                                            experiment_dictionary=yamlDict,
