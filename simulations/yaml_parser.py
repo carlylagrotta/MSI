@@ -324,7 +324,7 @@ class Parser(object):
                    'timeShift':time_shift,
                    'experimentType':experiment_type
                    }
-     def parse_ignition_dealy_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+    def parse_ignition_dealy_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
     
         simulation_type = loaded_exp['apparatus']['kind']
         pressure_list = loaded_exp['common-properties']['pressure']['value-list']

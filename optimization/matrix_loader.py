@@ -60,7 +60,28 @@ class OptMatrix(object):
                 press_uncertainties = list(temp_uncertainties)
             return press_uncertainties            
 
-        
+        def igdelay_temp_uncertainties(experiment_dict):
+            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'Temperature' in list(experiment_dict['experimental_data'][0].columns):
+                temp_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
+                temp_uncertainties = list(temp_uncertainties)
+            elif 'Temperature' in list(experiment_dict['experimental_data'][0].columns):
+                temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['Temperature'].values))
+                temp_uncertainties = list(temp_uncertainties) 
+            elif 'Pressure' in list(experiment_dict['experimental_data'][0].columns):
+                temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']
+                temp_uncertainties = list(temp_uncertainties)
+            return temp_uncertainties
+        def igdelay_press_uncertainties(experiment_dict):
+            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'Pressure' in list(experiment_dict['experimental_data'][0].columns):
+                press_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
+                press_uncertainties = list(press_uncertainties)
+            elif 'Pressure' in list(experiment_dict['experimental_data'][0].columns):
+                press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['Pressure'].values))
+                press_uncertainties = list(temp_uncertainties) 
+            elif 'Temperature' in list(experiment_dict['experimental_data'][0].columns):
+                press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']
+                press_uncertainties = list(temp_uncertainties)
+            return press_uncertainties           
         
         #need to append to sigma
         def uncertainty_calc(relative_uncertainty,absolute_uncertainty,data,experimental_data):
@@ -151,11 +172,20 @@ class OptMatrix(object):
                         un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))               
 
                     elif observable in exp_dic['flame_speed_observables'] and '_cm/s' in exp_dic['experimental_data'][counter].columns[1]:
-                        total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['flame_speed_relative_uncertainty'][counter], exp_dic['uncertainty']['flame_speed_absolute_uncertainty'][counter], exp_dic['experimental_data'][counter][observable+'_cm/s'].values,exp_dic['experimental_data'][counter])
+                        total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['flame_speed_relative_uncertainty'][counter], 
+                                                                                     exp_dic['uncertainty']['flame_speed_absolute_uncertainty'][counter], 
+                                                                                     exp_dic['experimental_data'][counter][observable+'_cm/s'].values,exp_dic['experimental_data'][counter])
                        
                         total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
-                        un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))                         
-                        
+                        un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))        
+                    elif observable in exp_dic['ignition_delay_observables'] and '_s'in exp_dic['experimental_data'][counter].columns[1]:
+                        total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['ignition_delay_relative_uncertainty'][counter], 
+                                                                                     exp_dic['uncertainty']['ignition_delay_absolute_uncertainty'][counter], 
+                                                                                     exp_dic['experimental_data'][counter][observable+'_s'].values,exp_dic['experimental_data'][counter])
+                        total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
+
+                        un_weighted_uncertainty = un_weighted_uncertainty.reshape((un_weighted_uncertainty.shape[0], 1))               
+
                     else: 
                         raise Exception('We Do Not Have This Unit Installed, Please Use Mole Fraction, ppm, mol/cm^3 or cm/s')               
 
@@ -274,7 +304,7 @@ class OptMatrix(object):
         #This is going to have to be simulation specific 
         if exp_dict_list[0]['simulation'].physicalSens ==1:
            for i, exp_dic in enumerate(exp_dict_list):
-               if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+               if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type'] and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
                #for i,exp_dic in enumerate(exp_dict_list):
                     experiment_physical_uncertainty = []
                     #Temperature Uncertainty 
@@ -310,6 +340,8 @@ class OptMatrix(object):
                     sigma = np.vstack((sigma,experiment_physical_uncertainty))
                     
                if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
+                   #ASK MARK WHAT TO ADD HERE
+                   
                 #for i,exp_dic in enumerate(exp_dict_list):
                     experiment_physical_uncertainty = []
                     #Temperature Uncertainty 
@@ -380,7 +412,47 @@ class OptMatrix(object):
                                                        1))
                     Z = np.vstack((Z,experiment_physical_uncertainty))
                     sigma = np.vstack((sigma,experiment_physical_uncertainty))                    
+
+
+               if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type'] and re.match('[Ii]gnition[- ]Dd]elay',exp_dict_list[i]['experiment_type']):
+                #for i,exp_dic in enumerate(exp_dict_list):
+                    experiment_physical_uncertainty = []
+                    #Temperature Uncertainty 
+                    temp_uncertainties=igdelay_temp_uncertainties(exp_dic)
+                    experiment_physical_uncertainty=experiment_physical_uncertainty+temp_uncertainties
+                    Z_data_Frame=Z_data_Frame+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+                    active_parameters=active_parameters+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+                    #Pressure Uncertainty
                     
+                    press_uncertainties = igdelay_press_uncertainties(exp_dic)
+                    Z_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))*len(press_uncertainties)
+                    active_parameters.append('P'+'_'+'experiment'+'_'+str(i))*len(press_uncertainties)
+                    #Species Uncertainty
+                    conditions = exp_dic['conditions']
+                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                    species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
+                    
+                    list_with_most_species_in_them = []
+                    for specie in species_to_loop:
+                        list_with_most_species_in_them.append(len(conditions[specie]))
+                    max_species = max(list_with_most_species_in_them)
+                        
+                    if 'Diluant' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluant' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
+                        diluant = exp_dic['uncertainty']['species_relative_uncertainty']['type_dict']['diluant']
+                             
+                    for nmbr_of_species_sets in range(max_species):
+                         for specie in species_to_loop:
+                             if specie in dilluant:
+                                 continue
+                             experiment_physical_uncertainty.append(species_uncertainties[specie])
+                             Z_data_Frame.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
+                             active_parameters.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
+
+                    experiment_physical_uncertainty = np.array(experiment_physical_uncertainty)
+                    experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],
+                                                       1))
+                    Z = np.vstack((Z,experiment_physical_uncertainty))
+                    sigma = np.vstack((sigma,experiment_physical_uncertainty))                     
                     
         #building dictonary to keep track of independtend coupled coefficients 
         count = 0
