@@ -509,7 +509,7 @@ class OptMatrix(object):
         for i,exp_dic in enumerate(exp_dict_list):
             counter = 0
             for j,observable in enumerate((exp_dic['mole_fraction_observables']+
-                                           exp_dic['concentration_observables'] + exp_dic['flame_speed_observables'])):
+                                           exp_dic['concentration_observables'] + exp_dic['flame_speed_observables'],  exp_dic['ignition_delay_observables'])):
                 if observable == None:
                     pass
                 else:
@@ -556,6 +556,12 @@ class OptMatrix(object):
                                                                       exp_dic['simulation'].timeHistories[0][observable])
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
                     
+                    elif 's' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
+                        if re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['simulation_type']):
+                            #check these units would be in seconds of ms?
+                            natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_s'].to_numpy(),
+                                                                      exp_dic['simulation'].timeHistories[0][observable])
+                            natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
                     else:
                         if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable].values,
@@ -669,7 +675,7 @@ class OptMatrix(object):
             for i,exp_dic in enumerate(exp_dict_list):
                 
                 if loop_counter ==0:
-                    if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+                    if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp_dict_list[i]['experiment_type']):
                         dic_of_conditions = exp_dic['simulation'].conditions
                         #subtract out the dilluant 
                         species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
@@ -685,7 +691,7 @@ class OptMatrix(object):
                             Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
                         Y_data_Frame.append('Time_shift'+'_'+'experiment'+'_'+str(i)) 
                         
-                    if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
+                    if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp_dict_list[i]['experiment_type']):
                         dict_of_conditions = exp_dic['simulation'].conditions
                         species_in_simulation = len(set(dict_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
                         temperatures_in_simulation = len(exp_dic['simulation'].temperatures)
@@ -713,8 +719,7 @@ class OptMatrix(object):
                         
                         if 'Diluant' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluant' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
                             diluant = exp_dic['uncertainty']['species_relative_uncertainty']['type_dict']['diluant']
-                             
-
+                                                     
                              
     
                         species_in_simulation = len(set(dict_of_conditions.keys()).difference(diluant)) * max_species
@@ -729,7 +734,33 @@ class OptMatrix(object):
                         for value in range(pressures_in_simulation):
                             Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
                         for variable in range(species_in_simulation):
-                            Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))                    
+                            Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))  
+                    if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp_dict_list[i]['experiment_type']):
+
+                        species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
+                        list_with_most_species_in_them = []
+                        for specie in species_to_loop:
+                            list_with_most_species_in_them.append(len(conditions[specie]))
+                        max_species = max(list_with_most_species_in_them)
+                        
+                        if 'Diluant' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluant' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
+                            diluant = exp_dic['uncertainty']['species_relative_uncertainty']['type_dict']['diluant']
+                                                     
+                             
+    
+                        species_in_simulation = len(set(dict_of_conditions.keys()).difference(diluant)) * max_species
+                        temperatures_in_simulation = len(exp_dic['simulation'].temperatures)
+                        pressure_in_simulation = len(exp_dic['simulation'].pressures)
+                        len_of_phsycial_observables_in_simulation = species_in_simulation+temperatures_in_simulation+pressure_in_simulation
+                        temp_zeros = np.zeros((len_of_phsycial_observables_in_simulation,1))
+                        
+                        Y = np.vstack((Y,temp_zeros))
+                        for value in range(temperatures_in_simulation):
+                            Y_data_Frame.append('T'+'_'+'experiment'+'_'+str(i))
+                        for value in range(pressures_in_simulation):
+                            Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
+                        for variable in range(species_in_simulation):
+                            Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))                              
 
                 else:
                     if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):

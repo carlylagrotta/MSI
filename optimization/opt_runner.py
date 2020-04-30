@@ -66,8 +66,18 @@ class Optimization_Utility(object):
             exp_dict['uncertainty']        = self.build_uncertainty_shock_tube_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
             exp_dict['flame_speed_observables']= [None]
+            exp_dict['ignition_delay_observables'] = [None]
+
         #decide how we want to build uncertainty dict and if we want to pass in the parsed yaml file?
-        
+        if re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']):
+            exp_dict['time_shift'] = interpolated_time_shift_sens
+            exp_dict['uncertainty']= self.build_uncertainty_ignition_delay_dict(exp_dict['simulation'].fullParsedYamlFile)
+            exp_dict['flame_speed_observables']= [None]
+            exp_dict['concentration_observables'] = [None]
+            exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
+            exp_dict['ignition_delay_observables'] = simulation.ignitionDelayObservables
+            
+            
         if re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',yaml_dict['simulationType']):
             exp_dict['concentration_observables'] = simulation.concentrationObservables
             exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
@@ -77,13 +87,15 @@ class Optimization_Utility(object):
             exp_dict['uncertainty']=self.build_uncertainty_jsr_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['simulation_type'] = yaml_dict['simulationType']
             exp_dict['flame_speed_observables']= [None]
-        
+            exp_dict['ignition_delay_observables'] = [None]
+
         if re.match('[Ff]lame[ -][Ss]peed',yaml_dict['simulationType']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',yaml_dict['experimentType']):
             
             exp_dict['flame_speed_observables']= simulation.flameSpeedObservables
             exp_dict['concentration_observables'] = [None]
             exp_dict['mole_fraction_observables'] = [None]
             exp_dict['uncertainty']=self.build_uncertainty_flame_speed_dict(exp_dict['simulation'].fullParsedYamlFile)
+            exp_dict['ignition_delay_observables'] = [None]
 
         if len(interpolated_absorbance) != 0:
             exp_dict['absorbance_model_data'] = interpolated_absorbance[0]
