@@ -325,6 +325,7 @@ class Parser(object):
                    'experimentType':experiment_type
                    }
     def parse_ignition_delay_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+
     
         simulation_type = loaded_exp['apparatus']['kind']
         pressure_list = loaded_exp['common-properties']['pressure']['value-list']

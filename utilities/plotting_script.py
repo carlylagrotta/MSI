@@ -230,8 +230,8 @@ class Plotting(object):
                         low_error_optimized = np.exp(np.array(sigmas_optimized[i][observable_counter])*-1)
                         low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
                         
-                       # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
-                       # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--')                    
+                        plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
+                        plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--')                    
                         
     
     
@@ -4548,7 +4548,7 @@ class Plotting(object):
                     #ax1.hist(new_y_test,bins=bins ,align='mid',density=True,label='Hong Experiments')
                     n,bins_test_1,patches = ax1.hist(new_y_test,bins=bins ,align='mid',density=True,label='#1')
                     #comment
-                    #ax1.set_xlim(left=-.3, right=.3, emit=True, auto=False)
+                    ax1.set_xlim(left=-1, right=1, emit=True, auto=False)
                     ax1.set_ylim(top=7,bottom=0)
 
                     ax1.set_xlabel('Y')
@@ -4560,7 +4560,7 @@ class Plotting(object):
                     (mu, sigma) = norm.fit(new_y_test)
                     yy = norm.pdf(bins_test_1,mu,sigma)
                     xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
-                    l = ax1.plot(bins_test_1, yy, color='blue', linestyle='--',linewidth=2)
+                    #l = ax1.plot(bins_test_1, yy, color='blue', linestyle='--',linewidth=2)
                     ax1.plot(xx, stats.norm.pdf(xx, mu, sigma),color='blue')
                     ax1.text(.04,3,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='blue', fontsize=11)
 
@@ -4574,7 +4574,7 @@ class Plotting(object):
                         (mu, sigma) = norm.fit(new_Y_test_2)
                         yy = norm.pdf(bins_test_1,mu,sigma)
                         xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
-                        l = ax1.plot(bins_test_1, yy, color='orange',linestyle='--', linewidth=2)
+                        #l = ax1.plot(bins_test_1, yy, color='orange',linestyle='--', linewidth=2)
                         ax1.plot(xx, stats.norm.pdf(xx, mu, sigma),color='orange')
                         ax1.text(.04,2,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='orange', fontsize=11)
                     if bool(csv):
@@ -4599,7 +4599,7 @@ class Plotting(object):
                     (mu, sigma) = norm.fit(new_y_test)
                     yy = norm.pdf(bins_test_2,mu,sigma)
                     xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
-                    l = ax2.plot(bins_test_2, yy, color='blue', linestyle='--', linewidth=2)
+                    #l = ax2.plot(bins_test_2, yy, color='blue', linestyle='--', linewidth=2)
                     ax2.plot(xx, stats.norm.pdf(xx, mu, sigma),color='blue')
                     ax2.text(.015,15,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='blue', fontsize=11)
                     
@@ -4612,7 +4612,7 @@ class Plotting(object):
                         (mu, sigma) = norm.fit(new_Y_test_2)
                         yy = norm.pdf(bins_test_2,mu,sigma)
                         xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
-                        l = ax2.plot(bins_test_2, yy, color='orange',linestyle='--', linewidth=2)
+                        #l = ax2.plot(bins_test_2, yy, color='orange',linestyle='--', linewidth=2)
                         ax2.plot(xx, stats.norm.pdf(xx, mu, sigma),color='orange')
                         ax2.text(.015,12.8,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='orange', fontsize=11)
                     if bool(csv):
@@ -4637,7 +4637,7 @@ class Plotting(object):
                     (mu, sigma) = norm.fit(new_y_test)
                     yy = norm.pdf(bins_test_3,mu,sigma)
                     xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
-                    l = ax3.plot(bins_test_3, yy, color='blue',linestyle='--',linewidth=2)
+                    #l = ax3.plot(bins_test_3, yy, color='blue',linestyle='--',linewidth=2)
                     ax3.plot(xx, stats.norm.pdf(xx, mu, sigma),color='blue')
                     ax3.text(.037,10.5,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='blue', fontsize=11)
 
@@ -4652,7 +4652,7 @@ class Plotting(object):
                         (mu, sigma) = norm.fit(new_Y_test_2)
                         yy = norm.pdf(bins_test_3,mu,sigma)
                         xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
-                        l = ax3.plot(bins_test_3, yy, color='orange',linestyle='--', linewidth=2)
+                        #l = ax3.plot(bins_test_3, yy, color='orange',linestyle='--', linewidth=2)
                         ax3.plot(xx, stats.norm.pdf(xx, mu, sigma),color='orange')
                         ax3.text(.037,8.5,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='orange', fontsize=11)
                     if bool(csv):
