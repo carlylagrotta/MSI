@@ -8,6 +8,8 @@ import MSI.simulations.instruments.shock_tube as st
 import MSI.simulations.instruments.jsr_steadystate as jsr
 import MSI.simulations.instruments.flames as fl
 import MSI.simulations.instruments.ignition_delay as ig
+import pandas as pd
+import numpy as np
 
 #acts as front end to the rest of the system
 
@@ -60,7 +62,9 @@ class Optimization_Utility(object):
         #needs to be in the order of mole fraction csv files + concentration csv files 
         exp_dict['experimental_data']  = experimental_data
         # start here 
-        if re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ss]pecies[- ][Pp]rofile',simulation.fullParsedYamlFile['simulationType']):
+        #print(exp_dict['simulation_type'])
+        
+        if re.match('[Ss]pecies[- ][Pp]rofile',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['simulationType']):
             exp_dict['concentration_observables'] = simulation.concentrationObservables
             exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
             exp_dict['time_shift'] = interpolated_time_shift_sens
@@ -68,18 +72,20 @@ class Optimization_Utility(object):
             exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
             exp_dict['flame_speed_observables']= [None]
             exp_dict['ignition_delay_observables'] = [None]
+            #print('FUCK SPYDER')
 
         #decide how we want to build uncertainty dict and if we want to pass in the parsed yaml file?
-        if re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']):
+        elif re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ss]hock[- ][Tt]ube',simulation.fullParsedYamlFile['simulationType']):
             exp_dict['time_shift'] = interpolated_time_shift_sens
             exp_dict['uncertainty']= self.build_uncertainty_ignition_delay_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['flame_speed_observables']= [None]
             exp_dict['concentration_observables'] = [None]
             exp_dict['mole_fraction_observables'] = [None]
             exp_dict['ignition_delay_observables'] = simulation.ignitionDelayObservables
-            
+            exp_dict['conditions_dict_list'] = simulation.fullParsedYamlFile['conditions_dict_list']
+            exp_dict['conditions_to_run']=simulation.fullParsedYamlFile['conditions_to_run']
 
-        if re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',yaml_dict['simulationType']):
+        elif re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',yaml_dict['simulationType']):
             exp_dict['concentration_observables'] = simulation.concentrationObservables
             exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
             exp_dict['restime_sens']=interpolated_tp_sens[2]
@@ -90,7 +96,7 @@ class Optimization_Utility(object):
             exp_dict['flame_speed_observables']= [None]
             exp_dict['ignition_delay_observables'] = [None]
 
-        if re.match('[Ff]lame[ -][Ss]peed',yaml_dict['simulationType']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',yaml_dict['experimentType']):
+        elif re.match('[Ff]lame[ -][Ss]peed',yaml_dict['simulationType']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',yaml_dict['experimentType']):
             
             exp_dict['flame_speed_observables']= simulation.flameSpeedObservables
             exp_dict['concentration_observables'] = [None]
@@ -137,10 +143,12 @@ class Optimization_Utility(object):
         uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['tempRelativeUncertainty']
         uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
         uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['relativeUncertaintyBySpecies'],
-                        'species':experiment_dictionary['species'], 'type_dict':experiment_dictionary['typeDict']}
+                        'type_dict':experiment_dictionary['typeToSpeciesDict']}
         uncertainty_dict['ignition_delay_relative_uncertainty'] = experiment_dictionary['ignitionDelayRelativeUncertainty']
         uncertainty_dict['ignition_delay_absolute_uncertainty'] = experiment_dictionary['ignitionDelayAbsoluteUncertainty']
+        uncertainty_dict['time_shift_absolute_uncertainty'] = experiment_dictionary['timeShiftUncertainty']
         
+        return uncertainty_dict
     
     def build_uncertainty_jsr_dict(self,experiment_dictionary:dict={}):
         uncertainty_dict={}
@@ -248,17 +256,43 @@ class Optimization_Utility(object):
         int_ksens_exp_mapped= ig_delay.map_and_interp_ksens()
         tsoln=ig_delay.sensitivity_adjustment(temp_del = dk)
         psoln=ig_delay.sensitivity_adjustment(pres_del = dk)
-        ssoln=ig_delay.species_adjustment(dk)
-        deltatsoln,deltatausens=ig_delay.calculate_time_shift_sensitivity(soln['delay'].values,dtau=1e-8)
+        diluent=[]
+        if 'Diluent' in experiment_dictionary['typeToSpeciesDict'].keys() or 'diluent' in experiment_dictionary['typeToSpeciesDict'].keys():
+                        diluent.append(experiment_dictionary['typeToSpeciesDict']['diluent'])
+        diluent=[item for sublist in diluent for item in sublist]
+        ssoln=ig_delay.species_adjustment(dk,diluents=diluent)
+        deltatsoln,deltatausens=ig_delay.calculate_time_shift_sens(soln['delay'].values,dtau=1e-8)
+        tsen=ig_delay.sensitivityCalculation(soln['delay'],tsoln['delay'])
+        psen=ig_delay.sensitivityCalculation(soln['delay'],psoln['delay'])
+        ssens=[]
+        
+        # for j in range(len(experiment_dictionary['conditions_to_run'])):
+        for i in range(len(ssoln)):                  
+                ssens.append(ig_delay.sensitivityCalculation(soln['delay'],ssoln[i]['delay']))
+        species_length=len(set(experiment_dictionary['speciesNames']).difference(diluent))
+        list_of_ssens=[]
+        chunksize=int(len(ssens)/species_length)
+        for i in range(species_length):
+            tempdata=[]
+            tempdata=pd.DataFrame(columns=['delay'])
+            tempdata['delay']=np.zeros(len(experiment_dictionary['conditions_to_run']))
+            for k in range(chunksize):
+                tempdata['delay']=np.array(ssens[i+int(k*(chunksize))]['delay'])+np.array(tempdata['delay'])
+            list_of_ssens.append(tempdata)
+        ssens=list_of_ssens
+               
+                
         csv_paths = [x for x in  experiment_dictionary['ignitionDelayCsvFiles'] if x is not None]
         exp_data = ig_delay.importExperimentalData(csv_paths)
         experiment = self.build_single_exp_dict(exp_number,
                                            ig_delay,
                                            int_ksens_exp_mapped,
-                                           [tsen,psen,rsens],
+                                           [tsen,psen],
                                            ssens,
                                            experimental_data = exp_data,
-                                           yaml_dict=experiment_dictionary)
+                                           yaml_dict=experiment_dictionary,
+                                           interpolated_time_shift_sens=deltatausens)
+        return experiment
         
         
         

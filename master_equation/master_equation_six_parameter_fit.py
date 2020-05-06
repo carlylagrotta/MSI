@@ -45,7 +45,7 @@ class Master_Equation_Six_Parameter_Fit(object):
                 vertically_stacked_single_experiment_A = []
                 vertically_stacked_single_experiment_N = []
                 vertically_stacked_single_experiment_Ea = []
-                if parsed_yaml_file_list[i]['moleFractionObservables'][0] != None or parsed_yaml_file_list[i]['concentrationObservables'][0] !=None:
+                if parsed_yaml_file_list[i]['moleFractionObservables'][0] != None or parsed_yaml_file_list[i]['concentrationObservables'][0] !=None or parsed_yaml_file_list[i]['ignitionDelayObservables'][0]!=None:
                     As = exp['ksens']['A']
                     A_observable_arrays = []
                     for observable in As:

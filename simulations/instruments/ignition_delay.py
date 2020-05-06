@@ -155,12 +155,12 @@ class ignition_delay(sim.Simulation):
             columns=columns+[species]
         columns=columns+['delay']
         data=pd.DataFrame(columns=columns)    
-        data['temperature']=self.temperature
-        data['pressure']=self.pressure
+        data['temperature']=[self.temperature]
+        data['pressure']=[self.pressure]
         for species in self.conditions.keys():
-            data[species]=self.conditions[species]
-        data['delay']=delay
-        
+            data[species]=[self.conditions[species]]
+        data['delay']=[delay]
+        #('Delay: '+str(delay))
         if self.kineticSens:  
             return data,self.kineticSensitivities
         else:
@@ -351,7 +351,7 @@ class ignition_delay_wrapper(sim.Simulation):
         if save_physSensHistories == 1:
             self.physSensHistories = []
         #self.setTPX()
-        self.dk = 0.01
+        self.dk = [0]
         self.solution=None
         self.target=target
         self.target_type=target_type
@@ -365,7 +365,7 @@ class ignition_delay_wrapper(sim.Simulation):
         solution=[]
         ksens=[]
         ksens_1stIter=False
-        print(self.conditions)
+        #print(self.conditions)
         for i in range(len(self.temperatures)):
             for j in range(len(self.pressures)):
                 for k in range(len(self.conditions)):
@@ -395,10 +395,11 @@ class ignition_delay_wrapper(sim.Simulation):
                                            n_processors=self.n_processors)
             
                     a,b=temp_ig.run_single()
-            
+                    
                     temp=[]
                     temp1=[]
                     temp=copy.deepcopy(a)
+                    #print(temp)
                     temp1=copy.deepcopy(b)
                     #print(a)
                     solution.append(temp)
@@ -410,6 +411,8 @@ class ignition_delay_wrapper(sim.Simulation):
                     #print(ksens)
         solution=pd.concat(solution)
         #print(np.shape(ksens))
+        #print(self.timeHistories)
+        #print(solution)
         if self.timeHistories != None:
             self.timeHistories.append(solution)
         self.kineticSensitivities=ksens
@@ -418,7 +421,7 @@ class ignition_delay_wrapper(sim.Simulation):
         
     def sensitivity_adjustment(self,temp_del:float=0.0,
                                pres_del:float=0.0,
-                               spec_pair:(str,float)=('',0.0),
+                               spec_triplet:(str,float,int)=('',0.0,0),
                                res_del:float=0.0):
         
         #this is where we would make the dk fix
@@ -426,12 +429,12 @@ class ignition_delay_wrapper(sim.Simulation):
             self.dk.append(temp_del)
         if pres_del != 0.0:       
             self.dk.append(pres_del) 
-        if spec_pair[1] != 0.0:
-            self.dk.append(spec_pair[1])
+        if spec_triplet[1] != 0.0:
+            self.dk.append(spec_triplet[1])
         
         temptemp=copy.deepcopy(self.temperatures)
-        temppres=copy.deepcopy(self.pressure)
-        tempcond=copy.deepcopy(self.conditions)
+        temppres=copy.deepcopy(self.pressures)
+        tempcond=copy.deepcopy(self.conditions[spec_triplet[2]])
         kin_temp = self.kineticSens
         self.kineticSens = 0
         '''
@@ -439,13 +442,14 @@ class ignition_delay_wrapper(sim.Simulation):
         are passed and set directly species need to go through an additional step in the 
         setTPX function. 
         '''
-        if spec_pair[0] != '':
+        if spec_triplet[0] != '':
             self.temperatures=np.array(self.temperatures)+temp_del*np.array(self.temperatures)
-            self.pressure=self.pressure+pres_del*self.pressure
-            xj=self.conditions[spec_pair[0]]
-            delxj=spec_pair[1]*self.conditions[spec_pair[0]]
+            self.pressures=np.array(self.pressures)+pres_del*np.array(self.pressures)
+            #self.pressure=self.pressure+pres_del*self.pressure
+            xj=self.conditions[spec_triplet[2]][spec_triplet[0]]
+            delxj=spec_triplet[1]*self.conditions[spec_triplet[2]][spec_triplet[0]]
             #print(xj,delxj)
-            self.conditions[spec_pair[0]]=np.divide(np.multiply(xj+delxj,1-xj),1-xj-delxj)
+            self.conditions[spec_triplet[2]][spec_triplet[0]]=np.divide(np.multiply(xj+delxj,1-xj),1-xj-delxj)
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                   self.pressure+self.pressure*pres_del,
 #                   {spec_pair[0]:self.conditions[spec_pair[0]]*spec_pair[1]})
@@ -453,8 +457,9 @@ class ignition_delay_wrapper(sim.Simulation):
            
         else:
            self.temperatures=np.array(self.temperatures)+temp_del*np.array(self.temperatures)
-           self.pressure=self.pressure+pres_del*self.pressure
-           self.residence_time=self.residence_time+res_del*self.residence_time
+           self.pressures=np.array(self.pressures)+pres_del*np.array(self.pressures)
+           #self.pressure=self.pressure+pres_del*self.pressure
+           #self.residence_time=self.residence_time+res_del*self.residence_time
            
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                       self.pressure+self.pressure*pres_del)
@@ -464,17 +469,36 @@ class ignition_delay_wrapper(sim.Simulation):
         
         #data = sim.Simulation.sensitivity_adjustment(self,temp_del,pres_del,spec_pair)
         self.temperatures=temptemp
-        self.pressure=temppres
-        self.conditions=tempcond
+        self.pressures=temppres
+        self.conditions[spec_triplet[2]]=tempcond
         self.kineticSens = kin_temp
         
         
         return data
     
-    def species_adjustment(self,spec_del:float=0.0):
-        inert_species=['Ar','AR','HE','He','Kr','KR',
-                       'Xe','XE','NE','Ne']
+    # def species_adjustment(self,spec_del:float=0.0):
+    #     inert_species=['Ar','AR','HE','He','Kr','KR',
+    #                    'Xe','XE','NE','Ne']
         
+    #     '''
+    #     Creates tuples of specie that need to be perturbed and the
+    #     percent value by which to perturb its mole fraction 
+    #     '''
+    #     # gets the mole fraction and the species which are going to be 
+    #     #perturbed in order to run a sensitivity calculation 
+    #     data = []
+    #     for i in range(len(self.conditions)):
+    #         for x in self.conditions[i].keys():
+    #             if x not in inert_species:
+    #                 data.append(self.sensitivity_adjustment(spec_triplet=(x,spec_del,i)))
+
+    #     return data
+    
+    
+    def species_adjustment(self,spec_del:float=0.0, diluents=[]):
+        # inert_species=['Ar','AR','HE','He','Kr','KR',
+        #                'Xe','XE','NE','Ne']
+        inert_species=diluents
         '''
         Creates tuples of specie that need to be perturbed and the
         percent value by which to perturb its mole fraction 
@@ -482,10 +506,11 @@ class ignition_delay_wrapper(sim.Simulation):
         # gets the mole fraction and the species which are going to be 
         #perturbed in order to run a sensitivity calculation 
         data = []
-        for x in self.conditions.keys():
-            if x not in inert_species:
-                data.append(self.sensitivity_adjustment(spec_pair=(x,spec_del)))
-
+        for i in range(len(self.conditions)):
+            for x in self.conditions[i].keys():
+                if x not in inert_species:
+                    data.append(self.sensitivity_adjustment(spec_triplet=(x,spec_del,i)))
+        print(len(data))
         return data
     
     def importExperimentalData(self,csvFileList):
@@ -501,10 +526,13 @@ class ignition_delay_wrapper(sim.Simulation):
     
     def map_and_interp_ksens(self,temp_history=None):
         A = self.kineticSensitivities
+        #print(np.shape(A))
         N = np.zeros(A.shape)
         Ea = np.zeros(A.shape)
         for i in range(0,A.shape[2]):
             sheetA = A[:,:,i] #sheet for specific observable
+
+            #print(sheetA)
             for x,column in enumerate(sheetA.T):
                 N[:,x,i]= np.multiply(column,np.log(self.timeHistories[0]['temperature'])) if temp_history is None else np.multiply(column,np.log(temp_history['temperature']))
                 #not sure if this mapping is correct, check with burke and also update absorption mapping
@@ -525,9 +553,13 @@ class ignition_delay_wrapper(sim.Simulation):
         return {'A':A,
                 'N':N,
                 'Ea':Ea}
-    def sensitivityCalculation(self,originalValues,newValues,thingToFindSensitivtyOf,dk=.01):
-        if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
-            
+    def sensitivityCalculation(self,originalValues,newValues,dk=.01):
+        #print(originalValues)
+        #print(newValues)
+        if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame) or isinstance(originalValues,pd.Series) and isinstance(newValues,pd.Series):
+            if isinstance(originalValues,pd.Series) or isinstance(newValues,pd.Series):
+                originalValues=originalValues.to_frame()
+                newValues=newValues.to_frame()
             #newValues.columns = thingToFindSensitivtyOf
             
             newValues = newValues.applymap(np.log)
@@ -544,9 +576,10 @@ class ignition_delay_wrapper(sim.Simulation):
         
         new_delay=np.array(nominal)+dtau*np.ones(len(np.array(nominal)))
         sens=(np.log(new_delay)-np.log(np.array(nominal)))/dtau
+        sensdata=pd.DataFrame(columns=['delay'])
+        sensdata['delay']=sens
         
-        
-        return new_delay,sens
+        return new_delay,sensdata
         
         
         
