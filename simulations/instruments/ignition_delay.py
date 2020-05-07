@@ -74,6 +74,29 @@ class ignition_delay(sim.Simulation):
         self.target_type=target_type
     
     
+    def run_shocktube_ksens(self,observables=['temperature'],temp_proc=None):
+        
+        shock_tube = st.shockTube(pressure =self.pressure,
+                         temperature = self.temperature,
+                         observables = observables,
+                         kineticSens = 1,
+                         physicalSens = 0,
+                         conditions = self.conditions,
+                         initialTime = self.initialTime,
+                         finalTime = self.finalTime,
+                         thermalBoundary = self.thermalBoundary,
+                         mechanicalBoundary = self.mechanicalBoundary,
+                         processor = self.processor,
+                         save_timeHistories = 1,
+                         save_physSensHistories = 0,
+                         moleFractionObservables = self.moleFractionObservables,
+                         concentrationObservables = self.concentrationObservables,
+                         fullParsedYamlFile = self.fullParsedYamlFile,
+                         time_shift_value = self.timeshift)
+        
+        shock_tube.run()
+        return shock_tube
+    
     def run_shocktube(self,args=[],temp_proc=None):
         
         if not args:
@@ -138,14 +161,22 @@ class ignition_delay(sim.Simulation):
                 delay=self.ig_dXdt(self.timehistory,self.target)
                 
         sens=[]        
+        self.direct_ksens('a')
         if self.kineticSens:   
+                ##############################################################
+                #Function to calculate sensitivity
+                #Replace to use different method
+            
+                sens=self.BFM(delay)
+                #sens=self.BFM_pool(delay,self.n_processors)
+                ##############################################################
                 
-                #sens=self.BFM(delay)
-                sens=self.BFM_pool(delay,self.n_processors)
+                
                 dfs = [pd.DataFrame() for x in range(len(self.ignitionDelayObservables))]
                 dfs[0] = dfs[0].append(((pd.DataFrame(sens)).transpose()),ignore_index=True)
                 numpyMatrixsksens = [dfs[dataframe].values for dataframe in range(len(dfs))]
                 self.kineticSensitivities = np.dstack(numpyMatrixsksens)
+                
         
         toc=time.time()
         print('Simulation took '+str(round(toc-tic,9))+' seconds.')
@@ -208,6 +239,15 @@ class ignition_delay(sim.Simulation):
         sensitivity=(np.log(newValues)-np.log(originalValues))/dk
                            
         return sensitivity
+    
+    
+    def direct_ksens(self,nominal):
+        
+        temp_st=self.run_shocktube_ksens()
+        print(temp_st.kineticSensitivities)
+        print(temp_st.kineticSensitivities.shape)
+        
+    
         
     def BFM(self,nominal):
          
@@ -241,6 +281,7 @@ class ignition_delay(sim.Simulation):
                     temp_history=copy.deepcopy(self.run_shocktube().timeHistory)                    
                     delay=self.ig_dXdt(temp_history,self.target)
                     sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    #print(nominal,delay,sens[i])
                     self.processor.solution.set_multiplier(1.0,i)
          return sens
         
@@ -514,7 +555,7 @@ class ignition_delay_wrapper(sim.Simulation):
         return data
     
     def importExperimentalData(self,csvFileList):
-        print('Importing jsr data the following csv files...') 
+        print('Importing ignition delay data the following csv files...') 
         print(csvFileList)
         experimentalData = [pd.read_csv(csv) for csv in csvFileList]
         experimentalData = [experimentalData[x].dropna(how='any') for x in range(len(experimentalData))]

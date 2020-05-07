@@ -804,11 +804,12 @@ class OptMatrix(object):
     
                         #species_in_simulation = len(set(dict_of_conditions.keys()).difference(diluant)) * max_species
                         species = copy.deepcopy(species_to_loop)
-                        species_in_simulation = int(len(singular_species)+((len(exp_dic['simulation'].fullParsedYamlFile['speciesNames'])-len(singular_species))*len(exp_dic['simulation'].fullParsedYamlFile['conditions_to_run'])))
+                        species_in_simulation = int(len(singular_species)+((len(set(exp_dic['simulation'].fullParsedYamlFile['speciesNames']).difference(diluent))-len(singular_species))*len(exp_dic['simulation'].fullParsedYamlFile['conditions_to_run'])))
 
                         temperatures_in_simulation = len(exp_dic['simulation'].temperatures)
                         pressures_in_simulation = len(exp_dic['simulation'].pressures)
                         time_shift_length = 1
+                        #print(species_in_simulation,temperatures_in_simulation,pressures_in_simulation)
                         len_of_phsycial_observables_in_simulation = species_in_simulation+temperatures_in_simulation+pressures_in_simulation + time_shift_length
                         temp_zeros = np.zeros((len_of_phsycial_observables_in_simulation,1))
                         
@@ -1605,7 +1606,7 @@ class OptMatrix(object):
                     physical_observables.append(temp_dict)
                     ##come back to this and do a test on paper
                     previous_value = new_value
-                    
+                    #print(temp_dict)
                 elif re.match('[Jj][Ss][Rr]',exp_dic['simulation_type']):
                     dic_of_conditions = exp_dic['simulation'].conditions
                         #subtract out the dilluant 

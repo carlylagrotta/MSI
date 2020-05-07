@@ -253,6 +253,7 @@ class Optimization_Utility(object):
         
         
         soln,ksen=ig_delay.run()
+        
         int_ksens_exp_mapped= ig_delay.map_and_interp_ksens()
         tsoln=ig_delay.sensitivity_adjustment(temp_del = dk)
         psoln=ig_delay.sensitivity_adjustment(pres_del = dk)
@@ -272,12 +273,19 @@ class Optimization_Utility(object):
         species_length=len(set(experiment_dictionary['speciesNames']).difference(diluent))
         list_of_ssens=[]
         chunksize=int(len(ssens)/species_length)
+        #print(species_length,chunksize)
         for i in range(species_length):
             tempdata=[]
             tempdata=pd.DataFrame(columns=['delay'])
-            tempdata['delay']=np.zeros(len(experiment_dictionary['conditions_to_run']))
+            #print(tempdata)
+            tempdata['delay']=np.zeros(len(experiment_dictionary['conditions_to_run'])*len(experiment_dictionary['temperatures'])*len(experiment_dictionary['pressures']))
             for k in range(chunksize):
+                #print(ssens[i+int(k*(chunksize))]['delay'])
+                #print('Second array')
+                #print(np.array(tempdata['delay']))
                 tempdata['delay']=np.array(ssens[i+int(k*(chunksize))]['delay'])+np.array(tempdata['delay'])
+                
+            #print(tempdata)
             list_of_ssens.append(tempdata)
         ssens=list_of_ssens
                
@@ -321,6 +329,7 @@ class Optimization_Utility(object):
                     fullParsedYamlFile = experiment_dictionary)
         
         soln,ksen=jet_stirred_reactor.run()
+    
         int_ksens_exp_mapped= jet_stirred_reactor.map_and_interp_ksens()
         tsoln=jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)
         psoln=jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)

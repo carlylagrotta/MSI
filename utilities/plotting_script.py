@@ -80,7 +80,7 @@ class Plotting(object):
         for i,exp in enumerate(self.exp_dict_list_optimized):
             length_of_experimental_data=[]
             observable_counter=0
-            for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables']):
+            for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables'] + exp['ignition_delay_observables']):
                 if observable == None:
                     continue
                 if observable in exp['mole_fraction_observables']:
@@ -97,6 +97,17 @@ class Plotting(object):
                     if re.match('[Jj][Ss][Rr]',exp['simulation_type']):
                         length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Temperature'].shape[0])
                         observable_counter+=1
+                if observable in exp['ignition_delay_observables']:
+                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[iI]gnition[- ][Dd]elay',exp['experiment_type']):
+                        if 'temperature' in list(exp['experimental_data'][observable_counter].columns):
+                            length_of_experimental_data.append(exp['experimental_data'][observable_counter]['temperature'].shape[0])
+                            observable_counter+=1
+                        elif 'pressure' in list(exp['experimental_data'][observable_counter].columns):
+                            length_of_experimental_data.append(exp['experimental_data'][observable_counter]['pressure'].shape[0])
+                            observable_counter+=1
+                        else:
+                            length_of_experimental_data.append(exp['experimental_data'][observable_counter].shape[0])
+                            observable_counter+=1
             if 'perturbed_coef' in exp.keys():
                 wavelengths = self.parsed_yaml_list[i]['absorbanceCsvWavelengths']
                 absorbance_wl=0
@@ -144,13 +155,13 @@ class Plotting(object):
         
         for i,exp in enumerate(self.exp_dict_list_optimized):
             observable_counter=0
-            for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables']):
+            for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables'] + exp['ignition_delay_observables']):
                 if observable == None:
                     continue
                 plt.figure()
                 
                 if observable in exp['mole_fraction_observables']:
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
                         plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable],'b',label='MSI')
                         plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original['simulation'].timeHistories[0][observable],'r',label= "$\it{A priori}$ model")
                         plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable],'o',color='black',label='Experimental Data')
@@ -264,6 +275,37 @@ class Plotting(object):
 
 
                     observable_counter+=1
+                if observable in exp['ignition_delay_observables']:
+                    if len(exp['simulation'].temperatures)>1:
+                        plt.semilogy(1000/exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0]['delay'],'b',label='MSI')
+                        plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay'],'r',label= "$\it{A priori}$ model")
+                        plt.semilogy(1000/exp['experimental_data'][observable_counter]['temperature'],exp['experimental_data'][observable_counter][observable+'_s'],'o',color='black',label='Experimental Data')
+                        plt.xlabel('1000/T (1000/K)')
+                        plt.ylabel('Time (s)')
+                        plt.title('Experiment_'+str(i+1))
+                        
+                        if bool(sigmas_optimized) == True:
+                            
+                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                            high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
+                            low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
+                            low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
+                            #plt.figure()
+                            plt.plot(1000/exp['experimental_data'][observable_counter]['temperature'],  high_error_optimized,'b--')
+                            plt.plot(1000/exp['experimental_data'][observable_counter]['temperature'],low_error_optimized,'b--')
+                            
+                            
+                            
+                            #high_error_original = np.exp(sigmas_original[i][observable_counter])
+                           # high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            #low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
+                            #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            #plt.figure()
+                           # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
+                            #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                        
+                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
+                        observable_counter+=1
                     
 
             if 'perturbed_coef' in exp.keys():

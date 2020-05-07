@@ -689,6 +689,9 @@ class Parser(object):
                     
                 elif re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
                     updatedTemp=[]
+                    diluent=[]   
+                    if 'Diluent' in experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
+                        diluent = experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict']['diluent']
                     for i,T in enumerate(temp):
                         updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))
                     updatedPress=[]
@@ -696,11 +699,16 @@ class Parser(object):
                         updatedPress.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['P'+str(i+1)+'_experiment_'+str(yaml_file)]) * P,9)))
                     updated_mole_fractions = {}
                     #print(physical_observables_updates_list[yaml_file])
+                    counter=0
                     for i,species in enumerate(self.original_experimental_conditions[yaml_file]['conditions'].keys()):
                         temp_spec_list=[]
-                        for j,value in enumerate(self.original_experimental_conditions[yaml_file]['conditions'][species]):
-                            temp_spec_list.append(np.exp(physical_observables_updates_list[yaml_file]['X'+str(i+1)+'_cond'+str(j)+'_'+species+'_experiment_'+str(yaml_file)])*self.original_experimental_conditions[yaml_file]['conditions'][species][j])
-                            temp_spec_list[-1]=float(round(temp_spec_list[-1],9))
+                        if species in diluent:
+                            continue
+                        else:   
+                            for j,value in enumerate(self.original_experimental_conditions[yaml_file]['conditions'][species]):
+                                temp_spec_list.append(np.exp(physical_observables_updates_list[yaml_file]['X'+str(counter+1)+'_cond'+str(j)+'_'+species+'_experiment_'+str(yaml_file)])*self.original_experimental_conditions[yaml_file]['conditions'][species][j])
+                                temp_spec_list[-1]=float(round(temp_spec_list[-1],9))
+                            counter=counter+1
                         updated_mole_fractions[species]=copy.deepcopy(temp_spec_list)
                     updatedTimeShift = physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)] + time_shift
 
@@ -733,7 +741,8 @@ class Parser(object):
                     for j,group in enumerate(config2['common-properties']['composition']):
                        #print(group['mixture'])
                        for n,obj in enumerate(group['mixture']):
-                           obj['mole-fraction']['value-list']=updated_mole_fractions[obj['name']]
+                           if obj['name'] not in diluent:
+                               obj['mole-fraction']['value-list']=updated_mole_fractions[obj['name']]
                            #print(updated_mole_fractions[obj['name']])
                     #config2['common-properties']['composition'][i]['mole-fraction']=updated_mole_fractions[species]
                     config2['common-properties']['time-shift']['value']=float(updatedTimeShift)
