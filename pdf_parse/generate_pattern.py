@@ -1,5 +1,5 @@
 import glob, sys, os
-import torch as tc
+#import torch as tc
 import numpy as np
 import pandas as pd
 import skimage as sk

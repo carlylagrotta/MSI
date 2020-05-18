@@ -120,6 +120,7 @@ class Graph_Parser(object):
             self.pattern = self.img[pt[0]:pt[0]+kernel, pt[1]:pt[1]+kernel]
         else:
             self.pattern = self.img[self.color_pt[0]:self.color_pt[0]+kernel, self.color_pt[1]:self.color_pt[1]+kernel]
+    
     # Approximate time-series      
     def get_pts(self, step:int = 1, mode:str='color', pattern:bool=False, kernel:int = 30):
         if(mode == 'color'):

@@ -3,6 +3,7 @@ matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+from PIL import Image, ImageTk
 import graph_parser as gp
 import tkinter as tk
 import pandas as pd
@@ -16,7 +17,7 @@ from tkinter import ttk
 from skimage import io
 
 if(len(sys.argv)==1):
-    fname = '../data/pdf_data/Hong_2013_ppm.png'
+    fname = input("Filename: ")
 else:
     fname = sys.argv[1].rstrip()
 imgCV = io.imread(fname);
@@ -27,16 +28,24 @@ class Graphify(ttk.Frame):
     def __init__(self):
         super().__init__()
         self.savename = 'test.csv'
+        self.pattern = imgCV[0:30, 0:30]
         self.initUI()
 
     def click(self, event):
+        # Upon click show locations and colors at location
         self.px = imgCV[event.y, event.x]
         #print(self.px)
         self.pos = [event.y, event.x]
         #print(self.pos)
         self.pname.set("Color %d %d %d" % (self.px[0], self.px[1], self.px[2]))
-        self.lname.set("Location %d %d" % (self.pos[0], self.pos[1]))         
+        self.lname.set("Location %d %d" % (self.pos[0], self.pos[1]))
 
+        # Show pattern on screen:
+        self.pattern = imgCV[self.pos[0]:self.pos[0]+30,
+                             self.pos[1]:self.pos[1]+30]
+
+        self.pattern_im = ImageTk.PhotoImage(image=Image.fromarray(self.pattern))
+        self.patt.create_image(0,0, anchor=tk.NW, image=self.pattern_im)        
 
     def calc_graph(self):
         #if(not self.x[0].get().replace('.','',1).isdigit() or not self.x[1].get().replace('.','',1).isdigit()):
@@ -45,7 +54,9 @@ class Graphify(ttk.Frame):
         #if(not self.y[0].get().replace('.','',1).isdigit() or not self.y[1].get().replace('.','',1).isdigit()):
          #   print("Y Range needs to be number")
           #  return
-    
+        
+        # Based on established settings save the data and run the parser
+
         if(self.spath.get().replace(' ','')):
             self.savename = self.spath.get().rstrip()
 
@@ -57,6 +68,7 @@ class Graphify(ttk.Frame):
                                 (self.xpos[1][0],self.xpos[1][1]),
                                 yval, xval,
                                 (self.pos[0], self.pos[1]), fname)
+
         print((self.ypos[1][0],self.ypos[1][1]),
                                 (self.ypos[0][0],self.ypos[0][0]),
                                 (self.xpos[0][0],self.xpos[0][1]),
@@ -66,7 +78,7 @@ class Graphify(ttk.Frame):
 
         if(self.opt == 0):
             pt = graph.get_pts()
-        else:
+        elif(self.opt == 1):
             pt = graph.get_pts(mode='color-all')
 
         x, y = zip(*pt)
@@ -96,6 +108,11 @@ class Graphify(ttk.Frame):
     def set_color(self):
         self.color = self.pos
         print(self.color)
+
+    def set_pattern(self):
+        self.opt = 2
+        self.pattern_use = self.pattern
+        print("pattern_set")
 
     def initUI(self):
         self.master.title("Graphify")
@@ -141,7 +158,7 @@ class Graphify(ttk.Frame):
                     borderwidth=1).grid(row=4, column=2)
 
         # Set radiobuttons
-        self.opt = tk.IntVar() # 0=one line 1=all
+        self.opt = tk.IntVar() # 0=one line 1=all 2=pattern
         self.opt.set(0)
         self.rb = []
         self.rb.append(tk.Radiobutton(self, text="Single Line",
@@ -167,7 +184,9 @@ class Graphify(ttk.Frame):
             command=self.set_yhigh).grid(row=4, column=4))
 
         pos_but.append(tk.Button(self, text = 'Color',
-            command=self.set_color).grid(row=3, column=5, rowspan=2))
+            command=self.set_color).grid(row=3, column=5, rowspan=1))
+        pos_but.append(tk.Button(self, text = 'Pattern',
+            command=self.set_pattern).grid(row=4, column=5, rowspan=1))
 
         # Savepath and filename options
         tk.Label(self, text='Savepath', 
@@ -175,8 +194,15 @@ class Graphify(ttk.Frame):
         self.spath = tk.Entry(self, borderwidth=1, width=15)
         self.spath.grid(row=6,column=2)
 
+        # Screen Handler
+        self.pattern_im = ImageTk.PhotoImage(image=Image.fromarray(self.pattern))
+
+        self.patt = tk.Canvas(self, width=30, height=30, bg='white')
+        self.patt.grid(row=4,column=6)
+        self.patt.create_image(0,0, anchor=tk.NW, image=self.pattern_im)
+
         # Image Handler
-        self.canvas = tk.Canvas(width=800, height=800, bg='white')
+        self.canvas = tk.Canvas(width=1000, height=1000, bg='white')
         self.canvas.pack()
         self.img = tk.PhotoImage(file=fname)        
         self.canvas.create_image(0,0,image=self.img, anchor=tk.NW)
