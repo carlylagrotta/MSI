@@ -69,7 +69,7 @@ class Optimization_Utility(object):
             exp_dict['ignition_delay_observables'] = [None]
 
         #decide how we want to build uncertainty dict and if we want to pass in the parsed yaml file?
-        if re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']):
+        elif re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']):
             exp_dict['time_shift'] = interpolated_time_shift_sens
             exp_dict['uncertainty']= self.build_uncertainty_ignition_delay_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['flame_speed_observables']= [None]
@@ -78,7 +78,7 @@ class Optimization_Utility(object):
             exp_dict['ignition_delay_observables'] = simulation.ignitionDelayObservables
             
             
-        if re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',yaml_dict['simulationType']):
+        elif re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',yaml_dict['simulationType']):
             exp_dict['concentration_observables'] = simulation.concentrationObservables
             exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
             exp_dict['restime_sens']=interpolated_tp_sens[2]
@@ -89,7 +89,7 @@ class Optimization_Utility(object):
             exp_dict['flame_speed_observables']= [None]
             exp_dict['ignition_delay_observables'] = [None]
 
-        if re.match('[Ff]lame[ -][Ss]peed',yaml_dict['simulationType']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',yaml_dict['experimentType']):
+        elif re.match('[Ff]lame[ -][Ss]peed',yaml_dict['simulationType']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',yaml_dict['experimentType']):
             
             exp_dict['flame_speed_observables']= simulation.flameSpeedObservables
             exp_dict['concentration_observables'] = [None]

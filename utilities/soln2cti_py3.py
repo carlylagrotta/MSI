@@ -324,8 +324,16 @@ def write(solution,cwd='',file_name='',original_cti=''):
                                 ))
  
         #Write species data to file
- 
+        #Define missing elements
+        section_break('Element data')
+        
+        for element in trimmed_solution.element_names:
+            if element not in ct.Element.element_symbols:
+                #print(element,trimmed_solution.atomic_weights[trimmed_solution.element_names.index(element)])
+                f.write('element(symbol='+'\''+str(element)+'\''+',atomic_mass='+str(trimmed_solution.atomic_weights[trimmed_solution.element_names.index(element)])+')'+' \n')
+                #element(symbol='Ci', atomic_mass=13.003)
         section_break('Species data')
+        
         for sp_index, name in enumerate(trimmed_solution.species_names):
             #joules/kelvin, boltzmann constant
             boltzmann = ct.boltzmann

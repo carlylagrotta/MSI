@@ -437,11 +437,14 @@ class Absorb:
            #multiplying by 1000 to convert from L to cm^3 from the epsilon given in paper 
            #this applies if the units on epsilon are given as they are in kappl paper 
            #must calcuate and pass in reactor volume 
+        
         concentration = np.true_divide(1,temperature_matrix.flatten())*pressure_matrix.flatten()
         concentration *= (1/(8.314e6))*time_history[species].values.flatten()
         
         
         absorb = pathlength*(epsilon*concentration)
+        
+
         return absorb
      
     def get_wavelengths(self,absorb:dict):

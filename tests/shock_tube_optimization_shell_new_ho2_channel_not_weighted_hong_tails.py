@@ -54,22 +54,25 @@ files_to_include = [['Hong_0.yaml'],
                     ['Troe_6.yaml','Troe_6_abs.yaml'],
                     ['Troe_7.yaml','Troe_7_abs.yaml'],
                     ['Troe_8.yaml','Troe_8_abs.yaml'],
-                    ['Hong_HO2_fake_data_0.yaml','Hong_HO2_fake_data_0_abs.yaml'],
-                    ['Hong_HO2_fake_data_1.yaml','Hong_HO2_fake_data_1_abs.yaml'],
-                    ['Hong_HO2_fake_data_2.yaml','Hong_HO2_fake_data_2_abs.yaml'],
-                    ['Hong_HO2_fake_data_3.yaml','Hong_HO2_fake_data_3_abs.yaml'],
-                    ['Hong_HO2_fake_data_4.yaml','Hong_HO2_fake_data_4_abs.yaml'],
-                    ['Hong_HO2_fake_data_5.yaml','Hong_HO2_fake_data_5_abs.yaml'],
-                    ['Hong_HO2_fake_data_6.yaml','Hong_HO2_fake_data_6_abs.yaml'],
-                    ['Hong_HO2_fake_data_7.yaml','Hong_HO2_fake_data_7_abs.yaml'],
-                    ['Hong_HO2_fake_data_8.yaml','Hong_HO2_fake_data_8_abs.yaml'],
-                    ['Hong_HO2_fake_data_9.yaml','Hong_HO2_fake_data_9_abs.yaml'],
-                    ['Hong_HO2_fake_data_10.yaml','Hong_HO2_fake_data_10_abs.yaml'],
-                    ['Hong_HO2_fake_data_11.yaml','Hong_HO2_fake_data_11_abs.yaml'],
-                    ['Hong_HO2_fake_data_12.yaml','Hong_HO2_fake_data_12_abs.yaml'],
-                    ['Hong_HO2_fake_data_13.yaml','Hong_HO2_fake_data_13_abs.yaml'],
-                    ['Hong_HO2_fake_data_14.yaml','Hong_HO2_fake_data_14_abs.yaml'],
-                    ['Hong_HO2_fake_data_15.yaml','Hong_HO2_fake_data_15_abs.yaml']] 
+                    ['Hong_5.yaml','Hong_5_abs.yaml']]
+
+files_to_include = [['Hong_5.yaml','Hong_5_abs.yaml']]
+                    # ['Hong_HO2_fake_data_0.yaml','Hong_HO2_fake_data_0_abs.yaml'],
+                    # ['Hong_HO2_fake_data_1.yaml','Hong_HO2_fake_data_1_abs.yaml'],
+                    # ['Hong_HO2_fake_data_2.yaml','Hong_HO2_fake_data_2_abs.yaml'],
+                    # ['Hong_HO2_fake_data_3.yaml','Hong_HO2_fake_data_3_abs.yaml'],
+                    # ['Hong_HO2_fake_data_4.yaml','Hong_HO2_fake_data_4_abs.yaml'],
+                    # ['Hong_HO2_fake_data_5.yaml','Hong_HO2_fake_data_5_abs.yaml'],
+                    # ['Hong_HO2_fake_data_6.yaml','Hong_HO2_fake_data_6_abs.yaml'],
+                    # ['Hong_HO2_fake_data_7.yaml','Hong_HO2_fake_data_7_abs.yaml'],
+                    # ['Hong_HO2_fake_data_8.yaml','Hong_HO2_fake_data_8_abs.yaml'],
+                    # ['Hong_HO2_fake_data_9.yaml','Hong_HO2_fake_data_9_abs.yaml'],
+                    # ['Hong_HO2_fake_data_10.yaml','Hong_HO2_fake_data_10_abs.yaml'],
+                    # ['Hong_HO2_fake_data_11.yaml','Hong_HO2_fake_data_11_abs.yaml'],
+                    # ['Hong_HO2_fake_data_12.yaml','Hong_HO2_fake_data_12_abs.yaml'],
+                    # ['Hong_HO2_fake_data_13.yaml','Hong_HO2_fake_data_13_abs.yaml'],
+                    # ['Hong_HO2_fake_data_14.yaml','Hong_HO2_fake_data_14_abs.yaml'],
+                    # ['Hong_HO2_fake_data_15.yaml','Hong_HO2_fake_data_15_abs.yaml']] 
 #
 #
 #files_to_include = [['Hong_0.yaml'],
@@ -83,32 +86,32 @@ files_to_include = [['Hong_0.yaml'],
 #                    ['Troe_8.yaml','Troe_8_abs.yaml']]
 
 
-files_to_include = [['Hong_0.yaml'],
-                    ['Hong_2.yaml'],
-                    ['Hong_3.yaml'],
-                    ['Hong_1.yaml'],
-                    ['Troe_4.yaml','Troe_4_abs.yaml'],
-                    ['Troe_5.yaml','Troe_5_abs.yaml'],
-                    ['Troe_6.yaml','Troe_6_abs.yaml'],
-                    ['Troe_7.yaml','Troe_7_abs.yaml'],
-                    ['Troe_8.yaml','Troe_8_abs.yaml'],
-                    ['Hong_4.yaml','Hong_4_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_0.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_0_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_1.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_1_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_2.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_2_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_3.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_3_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_4.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_4_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_5.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_5_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_6.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_6_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_7.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_7_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_8.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_8_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_9.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_9_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_10.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_10_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_11.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_11_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_12.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_12_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_13.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_13_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_14.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_14_abs.yaml'],
-                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_15.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_15_abs.yaml']] 
+# files_to_include = [['Hong_0.yaml'],
+#                     ['Hong_2.yaml'],
+#                     ['Hong_3.yaml'],
+#                     ['Hong_1.yaml'],
+#                     ['Troe_4.yaml','Troe_4_abs.yaml'],
+#                     ['Troe_5.yaml','Troe_5_abs.yaml'],
+#                     ['Troe_6.yaml','Troe_6_abs.yaml'],
+#                     ['Troe_7.yaml','Troe_7_abs.yaml'],
+#                     ['Troe_8.yaml','Troe_8_abs.yaml'],
+#                     ['Hong_4.yaml','Hong_4_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_0.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_0_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_1.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_1_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_2.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_2_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_3.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_3_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_4.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_4_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_5.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_5_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_6.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_6_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_7.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_7_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_8.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_8_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_9.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_9_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_10.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_10_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_11.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_11_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_12.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_12_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_13.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_13_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_14.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_14_abs.yaml'],
+#                     ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_15.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_15_abs.yaml']] 
 
 #files_to_include = [['Hong_0.yaml'],
 #                    ['Hong_2.yaml'],
@@ -168,14 +171,16 @@ files_to_include = [['Hong_0.yaml'],
 #                    ['Farooq_1.yaml'],
 #                    ['Farooq_2.yaml'],
 #                    ['Farooq_3.yaml']]                                  
-numer_of_iterations = 3
-cti_file = 'FFCM1_custom_extra_reaction.cti'
+numer_of_iterations = 2
+cti_file = 'FFCM1_custom_rebuttal.cti'
 working_directory = 'MSI/data/klip_optimization_not_weighted_hong_tails'
-reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_extra_reaction.csv'
+reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_rebuttal_reverse_reaction.csv'
+#reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_rebuttal.csv'
+
 ############################################################################################
 #reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_extra_reaction_no_kinetics.csv'
 ##########################################################################################
-master_reaction_equation_cti_name = 'master_reactions_FFCM1.cti'
+master_reaction_equation_cti_name = 'master_reactions_FFCM1_rebuttal.cti'
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
 
 #this would be an empty string '' if you do not want to include it 
@@ -190,14 +195,17 @@ master_equation_reactions = ['H2O2 + OH <=> H2O + HO2',
 master_index = [2,3,4,5,6]
 
 master_equation_uncertainty_df = pd.read_csv('MSI/data/klip_optimization/six_parameter_fit_uncertainty_df.csv')
+master_equation_uncertainty_df = pd.read_csv('MSI/data/klip_optimization_not_weighted_hong_tails/six_parameter_fit_uncertainty_df_rebuttal.csv')
+
+#klip_optimization_not_weighted_hong_tails/six_parameter_fit_uncertainty_df_rebuttal
 ##########################################################################################
 #master_equation_uncertainty_df = pd.read_csv('MSI/data/klip_optimization/six_parameter_fit_uncertainty_df_no_kinetics.csv')
 ##########################################################################################
 #this could be 'On'
 
-rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting_extra_reaction.csv'
-rate_constant_target_value_data = 'FFCM1_target_reactions_1_extra_reaction.csv'
-rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data_extra_reaction.csv'
+rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting_rebubttal.csv'
+rate_constant_target_value_data = 'FFCM1_target_reactions_1_rebuttal.csv'
+rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data_rebbuttal_reverse_reaction.csv'
 
 #start here 
 

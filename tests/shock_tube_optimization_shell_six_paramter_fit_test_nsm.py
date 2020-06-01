@@ -30,10 +30,9 @@ files_to_include = [['Hong_0.yaml'],
                     ['Troe_8.yaml','Troe_8_abs.yaml'],            
                     ['Hong_5.yaml','Hong_5_abs.yaml']]
 
-
-
+#files_to_include = [['Hong_0.yaml']]
 #files_to_include = [['Hong_0_time_shift_test.yaml']]
-numer_of_iterations = 50
+numer_of_iterations = 5
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
@@ -56,8 +55,8 @@ master_equation_reactions = ['H2O2 + OH <=> H2O + HO2',
 #master_index = [2,3,4,5,6,7]
 master_index = [2,3,4,5,6,7]
 
-master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df.csv')
-#master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df_rebuttle_uncertainty.csv')
+#master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df.csv')
+master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df_rebuttle_uncertainty.csv')
 
 #this could be 'On'
 

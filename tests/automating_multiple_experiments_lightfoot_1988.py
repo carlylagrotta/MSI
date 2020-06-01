@@ -23,7 +23,7 @@ import MSI.simulations.yaml_parser as yp
 
 results_dataframe = pd.DataFrame(columns = ['T','P','k_original','k_optimized','k_table','A'])
 #df = pd.read_csv('Columbia/⁨MSI/⁩⁨data/⁨automating_HO2/experiment_conditions')
-df = pd.read_csv('MSI/data/automating_lightfoot_1988/experiment_conditions_corrected_values.csv')
+df = pd.read_csv('MSI/data/automating_lightfoot_1988/experiment_conditions_corrected_values_test.csv')
 pressure = df['Pressure']
 density = df['Density']
 temperature = df['Temperature']
@@ -85,7 +85,7 @@ for i in range(df.shape[0]):
     abs_loaded = parser.load_to_obj('MSI/data/automating_lightfoot_1988/automation_template_abs.yaml')
     
     abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,140.0,kinetic_sens=0)
-    plt.plot(test_tube.timeHistories[0]['time']*1e3,abs_data[wavelength],label='constant value rate constants')
+    plt.plot(test_tube.timeHistories[0]['time'],abs_data[wavelength],label='constant value rate constants')
 
 #    fall_off = time_History['O'][0]/time_History['O']
 #    temp=None
@@ -97,7 +97,7 @@ for i in range(df.shape[0]):
     abs_time = pd.DataFrame(test_tube.timeHistories[0]['time'])
     absorb = pd.DataFrame(abs_data[wavelength])
     abs_df = pd.concat([abs_time,absorb],axis=1)
-    abs_df.columns = ['time','Absorbance_215']
+    abs_df.columns = ['time','Absorbance_210']
     abs_df.to_csv('MSI/data/automating_lightfoot_1988/'+'lightfoot_abs_'+str(i)+'.csv',index=False)
     csv_file_name = 'MSI/data/automating_lightfoot_1988/'+'lightfoot_abs_'+str(i)+'.csv'
     yaml_template = 'MSI/data/automating_lightfoot_1988/automation_template.yaml'

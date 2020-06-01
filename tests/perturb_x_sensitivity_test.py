@@ -158,8 +158,8 @@ S_percent_difference_list = []
 print('_________________________perturbing______________________________')
 
 
-#for row_in_X in range(np.shape(X_one_itteration)[0]):
-for row_in_X in range(5):
+for row_in_X in range(np.shape(X_one_itteration)[0]):
+#for row_in_X in range(5):
     MSI_st_perturb_instance = perturbX.perturb_X_Shell(cti_file,
                                                           .01,
                                                            1,
@@ -184,10 +184,10 @@ for row_in_X in range(5):
     MSI_st_perturb_instance.multiple_shock_tube_runs(2)
     
     experimental_dict_perturbed = MSI_st_perturb_instance.experiment_dictonaries
-    plt.figure()
-    plt.title(str(row_in_X))
-    plt.plot(time,OH)
-    plt.plot(experimental_dict_perturbed[0]['simulation'].timeHistories[0]['time'], experimental_dict_perturbed[0]['simulation'].timeHistories[0]['OH'])
+   # plt.figure()
+    #plt.title(str(row_in_X))
+    #plt.plot(time,OH)
+    #plt.plot(experimental_dict_perturbed[0]['simulation'].timeHistories[0]['time'], experimental_dict_perturbed[0]['simulation'].timeHistories[0]['OH'])
     y_new = MSI_st_perturb_instance.Y_matrix
     Sij_list.append(MSI_st_perturb_instance.Sij)
     Y_difference_list.append(MSI_st_perturb_instance.Y_difference)

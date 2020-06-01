@@ -28,13 +28,13 @@ files_to_include = [['Hong_0.yaml'],
                     ['Troe_6.yaml','Troe_6_abs.yaml'],
                     ['Troe_7.yaml','Troe_7_abs.yaml'],
                     ['Troe_8.yaml','Troe_8_abs.yaml'],            
-                    ['Hong_5.yaml','Hong_5_abs.yaml'],
-                    ['Sir_1.yaml']]
+                    ['Hong_5.yaml','Hong_5_abs.yaml']]
+                        #'Sir_1.yaml']]
 
 
-
+files_to_include = [['Hong_5.yaml','Hong_5_abs.yaml']]
 #files_to_include = [['Hong_0_time_shift_test.yaml']]
-numer_of_iterations = 20
+numer_of_iterations = 50
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 

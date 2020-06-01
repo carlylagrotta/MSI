@@ -136,6 +136,7 @@ class OptMatrix(object):
                     total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
 
             #make this return a tuple 
+            #print(total_uncertainty.shape , 'uncertainty shape')
             return total_uncertainty,un_weighted_uncertainty
         #tab, start working here tomorrow with how we want to read in csv file     
         for i,exp_dic in enumerate(exp_dict_list):
@@ -304,7 +305,7 @@ class OptMatrix(object):
         #This is going to have to be simulation specific 
         if exp_dict_list[0]['simulation'].physicalSens ==1:
            for i, exp_dic in enumerate(exp_dict_list):
-               if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type'] and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
+               if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
                #for i,exp_dic in enumerate(exp_dict_list):
                     experiment_physical_uncertainty = []
                     #Temperature Uncertainty 
@@ -414,7 +415,7 @@ class OptMatrix(object):
                     sigma = np.vstack((sigma,experiment_physical_uncertainty))                    
 
 
-               if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type'] and re.match('[Ii]gnition[- ]Dd]elay',exp_dict_list[i]['experiment_type']):
+               if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
                 #for i,exp_dic in enumerate(exp_dict_list):
                     experiment_physical_uncertainty = []
                     #Temperature Uncertainty 
@@ -488,6 +489,8 @@ class OptMatrix(object):
         Z_data_Frame = pd.DataFrame({'value': Z_data_Frame,'Uncertainty': Z.reshape((Z.shape[0],))})       
         self.z_matrix = Z
         self.sigma = sigma
+        #print(Z.shape)
+        #print(Z_data_Frame)
         return Z,Z_data_Frame,sigma,active_parameters
 
 
@@ -502,6 +505,8 @@ class OptMatrix(object):
         
         def natural_log_difference(experiment,model):
             natural_log_diff = np.log(np.array(experiment)) - np.log(np.array(model))
+            #print(np.log(np.array(experiment)) - np.log(np.array(model)))
+            #print(natural_log_diff.shape, 'natural log diff shape')
             return natural_log_diff
         
         Y = []
@@ -509,13 +514,14 @@ class OptMatrix(object):
         for i,exp_dic in enumerate(exp_dict_list):
             counter = 0
             for j,observable in enumerate((exp_dic['mole_fraction_observables']+
-                                           exp_dic['concentration_observables'] + exp_dic['flame_speed_observables'],  exp_dic['ignition_delay_observables'])):
+                                           exp_dic['concentration_observables'])):
                 if observable == None:
                     pass
                 else:
                     #if you need to add something with concentration add it here 
                     if 'ppm' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
                         if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+                            
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_ppm'].values,
                                                                   (exp_dic['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)*1e6)
                         
@@ -691,7 +697,7 @@ class OptMatrix(object):
                             Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
                         Y_data_Frame.append('Time_shift'+'_'+'experiment'+'_'+str(i)) 
                         
-                    if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp_dict_list[i]['experiment_type']):
+                    elif re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp_dict_list[i]['experiment_type']):
                         dict_of_conditions = exp_dic['simulation'].conditions
                         species_in_simulation = len(set(dict_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
                         temperatures_in_simulation = len(exp_dic['simulation'].temperatures)
@@ -709,7 +715,7 @@ class OptMatrix(object):
                         Y_data_Frame.append('R_experiment_'+str(i))
 
                             
-                    if re.match('[Ff]lame [Ss]peed',exp_dict_list[i]['simulation_type']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',exp_dict_list[i]['experimentType']):
+                    elif re.match('[Ff]lame [Ss]peed',exp_dict_list[i]['simulation_type']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',exp_dict_list[i]['experimentType']):
                         
                         species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
                         list_with_most_species_in_them = []
@@ -735,7 +741,7 @@ class OptMatrix(object):
                             Y_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
                         for variable in range(species_in_simulation):
                             Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))  
-                    if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp_dict_list[i]['experiment_type']):
+                    elif re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp_dict_list[i]['experiment_type']):
 
                         species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
                         list_with_most_species_in_them = []
@@ -775,7 +781,7 @@ class OptMatrix(object):
                         Y_data_Frame.append('Time_shift'+'_'+'experiment'+'_'+str(i))
                         
 
-                    if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
+                    elif re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
                         dict_of_conditions = exp_dic['simulation'].conditions
                         species_in_simulation = len(set(dict_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
                         temperatures_in_simulation = len(exp_dic['simulation'].temperatures)
@@ -790,7 +796,7 @@ class OptMatrix(object):
                         Y_data_Frame.append('R_experiment_'+str(i))
 
                     
-                    if re.match('[Ff]lame [Ss]peed',exp_dict_list[i]['simulation_type']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',exp_dict_list[i]['experimentType']):
+                    elif re.match('[Ff]lame [Ss]peed',exp_dict_list[i]['simulation_type']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',exp_dict_list[i]['experimentType']):
                         species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
                         list_with_most_species_in_them = []
                         for specie in species_to_loop:
@@ -861,6 +867,7 @@ class OptMatrix(object):
  
         Y_data_Frame = pd.DataFrame({'value': Y_data_Frame,'ln_difference': Y.reshape((Y.shape[0],))})  
         self.Y_matrix = Y
+        #print(Y_data_Frame,'Y')
         return Y, Y_data_Frame       
 
     def load_S(self, exp_dict_list:list,parsed_yaml_list:list,
@@ -1191,7 +1198,6 @@ class OptMatrix(object):
                 
                 
                 single_experiment_absorption.append(combined)     
-            
             single_experiment_absorption = np.vstack((single_experiment_absorption))
             absorb_coef_whole_simulation_with_padding.append(single_experiment_absorption) 
             
@@ -1460,17 +1466,17 @@ class OptMatrix(object):
 
         #RUnning test to link up to paramters 
     ##################################################
-        #s_temp = np.zeros((1,S_matrix.shape[1]))
-        #s_temp[0,886]=1
-        #s_temp[0,888]=-1
-        #y_temp = np.zeros((1,1))
-        #y_temp[0,0]=0
-        #z_temp=np.zeros((1,1))
-        #z_temp[0,0]=.00001
+        # s_temp = np.zeros((1,S_matrix.shape[1]))
+        # s_temp[0,886]=1
+        # s_temp[0,888]=-1
+        # y_temp = np.zeros((1,1))
+        # y_temp[0,0]=0
+        # z_temp=np.zeros((1,1))
+        # z_temp[0,0]=.00001
         
-        #S_matrix=np.vstack((S_matrix,s_temp))
-        #Y_matrix = np.vstack((Y_matrix,y_temp))
-        #z_matrix = np.vstack((z_matrix,z_temp))
+        # S_matrix=np.vstack((S_matrix,s_temp))
+        # Y_matrix = np.vstack((Y_matrix,y_temp))
+        # z_matrix = np.vstack((z_matrix,z_temp))
         
         ##################################################
        # print("ONLY CONSIDERING RATE CONSTANT TARGETS")

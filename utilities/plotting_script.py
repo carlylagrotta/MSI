@@ -1018,6 +1018,7 @@ class Plotting(object):
                 Eas = []
                     
                 Number_of_MP = []
+                #print(reactions_in_cti_file)
                 #nested_reaction_list = [[] for x in range(len(master_equation_reaction_list))]
                 #print(six_parameter_fit_sensitivity_dict.keys())
                 
@@ -1058,6 +1059,7 @@ class Plotting(object):
                         N_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
                         Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
                             #decide if this mapping is correct             
+                    
                         A_temp[0,reactions_in_cti_file.index(reaction)] = 1
                         N_temp [0,reactions_in_cti_file.index(reaction)] = np.log(target_temp[i]) 
                         Ea_temp[0,reactions_in_cti_file.index(reaction)] = (-1/target_temp[i])
@@ -1138,7 +1140,6 @@ class Plotting(object):
                     Temp.append(temperature)
                 #start editing here
                 else:
-                
                     gas.TPX = temperature,pressure*101325,conditions
                     Temp.append(temperature)
                     k.append(gas.forward_rate_constants[reaction_number]*1000)
@@ -1185,6 +1186,8 @@ class Plotting(object):
                         pressure = target_press[i]
                         
                     gas.TPX = target_temp[i],pressure*101325,{'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237}
+                    
+                    
                     reaction_number_in_cti = reactions_in_cti_file.index(reaction)
                     k = gas.forward_rate_constants[reaction_number_in_cti]
                     indx = reactions_in_cti_file.index(reaction)
@@ -1302,8 +1305,8 @@ class Plotting(object):
                                                                   master_equation_reactions = master_equation_reactions)
                 
                 plt.semilogy(Temp_original,k_original,'r')
-               # plt.xlim((0,3000))
-                #plt.ylim((10**9,10**15))
+                #plt.xlim((0,2600))
+                #plt.ylim((10**10,10**13))
                 #print(unique_reactions_original)
                # print(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))
                 #print(unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction])))
@@ -1335,8 +1338,10 @@ class Plotting(object):
                 plt.tick_params(axis ='both', direction ='in') 
                 plt.tick_params(axis ='both', direction ='in',which='minor') 
 
-                #plt.savefig(os.path.join(self.working_directory,reaction_list_from_mechanism[reaction]+'.pdf'), bbox_inches='tight')
-                #plt.savefig(os.path.join(self.working_directory,reaction_list_from_mechanism[reaction]+'.svg'), bbox_inches='tight')
+
+            
+                plt.savefig(os.path.join(self.working_directory,reaction_list_from_mechanism[reaction]+'.pdf'), bbox_inches='tight')
+                plt.savefig(os.path.join(self.working_directory,reaction_list_from_mechanism[reaction]+'.svg'), bbox_inches='tight')
 
         elif bool(self.target_value_rate_constant_csv) and self.k_target_values=='Off':
             
@@ -5093,8 +5098,8 @@ class Plotting(object):
     def plotting_3_figre_observables(self,experiment_number_want_to_plot,sigmas_original=[],sigmas_optimized=[]):
         
         
-        df = pd.read_csv('MSI/data/klip_optimization_comparison/graph_read_hong_data_1072.csv')
-        df = pd.read_csv('MSI/data/klip_optimization_comparison/graph_read_hong_1283.csv')
+        #df = pd.read_csv('MSI/data/klip_optimization_comparison/graph_read_hong_data_1072.csv')
+        #df = pd.read_csv('MSI/data/klip_optimization_comparison/graph_read_hong_1283.csv')
 
         for i,exp in enumerate(self.exp_dict_list_optimized):
             if i==experiment_number_want_to_plot:
@@ -5109,23 +5114,24 @@ class Plotting(object):
                     if observable in exp['concentration_observables']:
                         if observable == 'H2O':
                             plt.subplot(3,1,1)
+                            plt.xlim(0,3)
                             #plt.xlim(-.005,3.5)
                             #plt.ylim(1000,3500)
                             
-                            plt.xlim(-.005,1)
-                            plt.plot(df['hong_h2o_time'],df['hong_h2o'],'g:')
+                            #plt.xlim(-.005,1)
+                            #plt.plot(df['hong_h2o_time'],df['hong_h2o'],'g:')
                     
                         if observable =='OH':
                             plt.subplot(3,1,2)
                             #plt.xlim(-.005,1)
-                            #plt.ylim(0,25)
+                            plt.xlim(0,.5)
                            
-                            plt.xlim(-.005,1)
-                            plt.plot(df['hong_oh_time'],df['hong_oh'],'g:')
+                           # plt.xlim(-.005,1)
+                            #plt.plot(df['hong_oh_time'],df['hong_oh'],'g:')
                             #plt.plot(df['hong_oh_time_2'],df['hong_oh_2'],'g:')
                         if observable == 'H2O2':
                             plt.subplot(3,1,1)
-                            plt.xlim(-.005,.8)
+                            #plt.xlim(-.005,.8)
 
                         plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
                         plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{a}$ $\it{priori}$ model")
@@ -5188,13 +5194,14 @@ class Plotting(object):
                 if 'perturbed_coef' in exp.keys():
                     wavelengths = self.parsed_yaml_list[i]['absorbanceCsvWavelengths']
                     plt.subplot(3,1,3)
-                    #plt.xlim(-.005,3)
+                    plt.xlim(0,.5)
+                    plt.ylim(0,.125)
                     
-                    plt.xlim(-.005,.2)
+                    #plt.xlim(-.005,.2)
                     #plt.xlim(-.005,.6)
                     #plt.xlim(-.005,1.5)
 
-                    plt.plot(df['hong_abs_time'],df['hong_abs'],'g:',zorder=10,label='Hong et al. model')
+#                    plt.plot(df['hong_abs_time'],df['hong_abs'],'g:',zorder=10,label='Hong et al. model')
                     
 
 

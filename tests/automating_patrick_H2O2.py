@@ -23,7 +23,7 @@ import MSI.simulations.yaml_parser as yp
 
 results_dataframe = pd.DataFrame(columns = ['T','P','k_original','k_optimized','k_table','A'])
 #df = pd.read_csv('Columbia/⁨MSI/⁩⁨data/⁨automating_HO2/experiment_conditions')
-df = pd.read_csv('MSI/data/automating_kircher_Ar_1983/experiment_conditions_Ar_average_species.csv')
+df = pd.read_csv('MSI/data/automating_H2O2_patrick/experiment_conditions.csv')
 print(df)
 pressure = df['Pressure']
 density = df['Density']
@@ -32,7 +32,7 @@ k = df['k1']
 Cl = df['Cl']
 CH3OH = df['CH3OH']
 O2 = df['O2']
-Ar = df['Ar']
+N2 = df['N2']
 wavelength = 227.5
 for i in range(df.shape[0]):
     Press = pressure[i]
@@ -41,13 +41,13 @@ for i in range(df.shape[0]):
     Cl_mf = Cl[i]
     CH3OH_mf = CH3OH[i]
     O2_mf = O2[i]
-    Ar_mf = Ar[i]
-    species_list = [Cl_mf,CH3OH_mf,O2_mf,Ar_mf]
-    species_string = ['cl','ch3oh','o2','ar']
+    N2_mf = N2[i]
+    species_list = [Cl_mf,CH3OH_mf,O2_mf,N2_mf]
+    species_string = ['cl','ch3oh','o2','n2']
     uncertainty_string = [2.3,2.3,2.3,2.3]
 #    
 ##    
-    test_p = pr.Processor('MSI/data/automating_kircher_Ar_1983/i-pentanol_one_reaction.cti')
+    test_p = pr.Processor('MSI/data/automating_H2O2_patrick/i-pentanol_one_reaction.cti')
     test_p.solution.set_multiplier(k_value,i_reaction=0)
     print(test_p.solution.multiplier(0))
     conditions_dict = {}
@@ -82,13 +82,10 @@ for i in range(df.shape[0]):
 
 
 
-    abs_loaded = parser.load_to_obj('MSI/data/automating_kircher_Ar_1983/abs_kircher.yaml')
+    abs_loaded = parser.load_to_obj('MSI/data/automating_H2O2_patrick/abs_patrick.yaml')
     
-    abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,670.0,kinetic_sens=0)
-    plt.plot(test_tube.timeHistories[0]['time']*1e3,abs_data[wavelength],label='constant value rate constants')
-    
-    temp_absorbance_file ='MSI/data/automating_kircher_Ar_1983/abs_kircher.yaml'
-    new_abs_file_name = 'MSI/data/automating_kircher_Ar_1983/'+'Kircher_'+str(i)+'_abs.yaml'
+    temp_absorbance_file ='MSI/data/automating_H2O2_patrick/abs_patrick.yaml'
+    new_abs_file_name = 'MSI/data/automating_H2O2_patrick/'+'Patrick_'+str(i)+'_abs.yaml'
     
     shutil.copy2(temp_absorbance_file,new_abs_file_name)
     with open(new_abs_file_name) as f:
@@ -96,6 +93,8 @@ for i in range(df.shape[0]):
     
     with open(new_abs_file_name,'w') as f:
         yaml.safe_dump(config2, f,default_flow_style=False)
+    abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,17.3,kinetic_sens=0)
+    plt.plot(test_tube.timeHistories[0]['time']*1e3,abs_data[wavelength],label='constant value rate constants')
 
 #    fall_off = time_History['O'][0]/time_History['O']
 #    temp=None
@@ -108,12 +107,12 @@ for i in range(df.shape[0]):
     absorb = pd.DataFrame(abs_data[wavelength])
     abs_df = pd.concat([abs_time,absorb],axis=1)
     abs_df.columns = ['time','Absorbance_227']
-    abs_df.to_csv('MSI/data/automating_kircher_Ar_1983/'+'kircher_abs_'+str(i)+'.csv',index=False)
-    csv_file_name = 'MSI/data/automating_kircher_Ar_1983/'+'kircher_abs_'+str(i)+'.csv'
-    yaml_template = 'MSI/data/automating_kircher_Ar_1983/automation_template.yaml'
+    abs_df.to_csv('MSI/data/automating_H2O2_patrick/'+'patrick_abs_'+str(i)+'.csv',index=False)
+    csv_file_name = 'MSI/data/automating_H2O2_patrick/'+'patrick_abs_'+str(i)+'.csv'
+    yaml_template = 'MSI/data/automating_H2O2_patrick/automation_template.yaml'
     tempName = yaml_template[0:(len(yaml_template)-24)]
     yamlExtention = yaml_template[(len(yaml_template)-5):]
-    NewName = tempName +'Kircher_'+str(i)+yamlExtention
+    NewName = tempName +'Patrick_'+str(i)+yamlExtention
     shutil.copy2(yaml_template,NewName)
     with open(NewName) as f:
         config2 = yaml.safe_load(f)
@@ -131,8 +130,6 @@ for i in range(df.shape[0]):
     
     with open(NewName,'w') as f:
         yaml.safe_dump(config2, f,default_flow_style=False)
-    
-    
                     
 #   
 #    files_to_include = [['Sutherland_'+str(i)+'.yaml']]                                                                            
@@ -401,6 +398,7 @@ for i in range(df.shape[0]):
     
 
 #make list of files to include 
+
 
 
 
