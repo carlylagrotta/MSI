@@ -16,6 +16,8 @@ import sys
 from tkinter import ttk
 from skimage import io
 
+win = 30
+
 if(len(sys.argv)==1):
     fname = input("Filename: ")
 else:
@@ -28,7 +30,7 @@ class Graphify(ttk.Frame):
     def __init__(self):
         super().__init__()
         self.savename = 'test.csv'
-        self.pattern = imgCV[0:30, 0:30]
+        self.pattern = imgCV[0:win, 0:win]
         self.initUI()
 
     def click(self, event):
@@ -41,8 +43,9 @@ class Graphify(ttk.Frame):
         self.lname.set("Location %d %d" % (self.pos[0], self.pos[1]))
 
         # Show pattern on screen:
-        self.pattern = imgCV[self.pos[0]:self.pos[0]+30,
-                             self.pos[1]:self.pos[1]+30]
+        self.pattern = imgCV[self.pos[0]:self.pos[0]+win,
+                             self.pos[1]:self.pos[1]+win]
+        self.pattern_use = self.pattern
 
         self.pattern_im = ImageTk.PhotoImage(image=Image.fromarray(self.pattern))
         self.patt.create_image(0,0, anchor=tk.NW, image=self.pattern_im)        
@@ -67,22 +70,18 @@ class Graphify(ttk.Frame):
                                 (self.xpos[0][0],self.xpos[0][1]),
                                 (self.xpos[1][0],self.xpos[1][1]),
                                 yval, xval,
-                                (self.pos[0], self.pos[1]), fname)
+                                (self.pos[0], self.pos[1]), self.pattern_use, fname)
 
-        print((self.ypos[1][0],self.ypos[1][1]),
-                                (self.ypos[0][0],self.ypos[0][0]),
-                                (self.xpos[0][0],self.xpos[0][1]),
-                                (self.xpos[1][0],self.xpos[1][1]),
-                                xval, yval,
-                                (self.pos[0], self.pos[1]), fname)
-
-        if(self.opt == 0):
+        if(self.opt.get() == 0):
             pt = graph.get_pts()
-        elif(self.opt == 1):
+        elif(self.opt.get() == 1):
             pt = graph.get_pts(mode='color-all')
+        elif(self.opt.get() == 2):
+            self.corr = self.slide.get()
+            pt = graph.get_pts(mode='pattern', corr=self.corr)
 
         x, y = zip(*pt)
-        plt.scatter(x,y)
+        plt.scatter(x,y, marker='o')
         plt.show(block=False)
 
         df = pd.DataFrame(pt)
@@ -110,7 +109,6 @@ class Graphify(ttk.Frame):
         print(self.color)
 
     def set_pattern(self):
-        self.opt = 2
         self.pattern_use = self.pattern
         print("pattern_set")
 
@@ -169,6 +167,10 @@ class Graphify(ttk.Frame):
             variable=self.opt, value=1))
         self.rb[1].grid(row=2, column=7)
 
+        self.rb.append(tk.Radiobutton(self, text="Pattern",
+            variable=self.opt, value=2))
+        self.rb[2].grid(row=3, column=7)
+
         # Buttons for submission
         coordButton = tk.Button(self, text='Approximate Data', command=self.calc_graph)
         coordButton.grid(row=1, column=5, rowspan=2)
@@ -197,12 +199,20 @@ class Graphify(ttk.Frame):
         # Screen Handler
         self.pattern_im = ImageTk.PhotoImage(image=Image.fromarray(self.pattern))
 
-        self.patt = tk.Canvas(self, width=30, height=30, bg='white')
+        self.patt = tk.Canvas(self, width=win, height=win, bg='white')
         self.patt.grid(row=4,column=6)
         self.patt.create_image(0,0, anchor=tk.NW, image=self.pattern_im)
 
+        # Slider for correlation
+        # For pattern assign correlation threshold
+        self.slide = tk.Scale(self, from_=0, to_=1, resolution=0.05, orient
+                = tk.HORIZONTAL, label="correlation threshold", width=10,
+                length=200)
+        self.slide.grid(row=7,column=5, columnspan=10)
+
+
         # Image Handler
-        self.canvas = tk.Canvas(width=1000, height=1000, bg='white')
+        self.canvas = tk.Canvas(width=800, height=800, bg='white')
         self.canvas.pack()
         self.img = tk.PhotoImage(file=fname)        
         self.canvas.create_image(0,0,image=self.img, anchor=tk.NW)
