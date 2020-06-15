@@ -79,6 +79,9 @@ class Graph_Parser(object):
                        pt:tuple = None,
                        pattern = None,
                        path:str = None):
+        self.hp1 = hp1
+        self.hp2 = hp2
+        self.vval = vval
         self.vax      = Axis(vp2, vp1, vval)
         self.hax      = Axis(hp1, hp2, hval)
         self.pattern = pattern
@@ -149,11 +152,14 @@ class Graph_Parser(object):
         if(mode =='pattern'):
             pts = []
             xpt, ypt = pattern_match(self.img, self.pattern, threshold=corr)
-
+            ypt = 2*self.img.shape[0] - self.hp1[0] - ypt
+            #plt.scatter(xpt, ypt)
+            #plt.show()
+            
             for x,y in zip(xpt,ypt):
-                vval = self.vax.pt_approx((x, y))
-                tval = self.hax.pt_approx((x, y))
-                pts.append((tval, vval)) 
+                vval = self.vax.pt_approx((y,x))
+                tval = self.hax.pt_approx((y,x))
+                pts.append((tval, self.vval[1]-vval+self.vval[0])) 
             
             return pts
 
