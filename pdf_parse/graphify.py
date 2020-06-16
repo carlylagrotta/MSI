@@ -45,7 +45,6 @@ class Graphify(ttk.Frame):
         # Show pattern on screen:
         self.pattern = imgCV[self.pos[0]:self.pos[0]+win,
                              self.pos[1]:self.pos[1]+win]
-        self.pattern_use = self.pattern
 
         self.pattern_im = ImageTk.PhotoImage(image=Image.fromarray(self.pattern))
         self.patt.create_image(0,0, anchor=tk.NW, image=self.pattern_im)        
@@ -87,7 +86,6 @@ class Graphify(ttk.Frame):
         df = pd.DataFrame(pt)
         df.to_csv(self.savename)
 
-    
     def set_xlow(self):
         self.xpos[0] = self.pos
         print(self.xpos)

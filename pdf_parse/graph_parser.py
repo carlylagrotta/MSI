@@ -152,7 +152,7 @@ class Graph_Parser(object):
         if(mode =='pattern'):
             pts = []
             xpt, ypt = pattern_match(self.img, self.pattern, threshold=corr)
-            ypt = 2*self.img.shape[0] - self.hp1[0] - ypt
+            ypt = self.img.shape[0] - ypt
             #plt.scatter(xpt, ypt)
             #plt.show()
             
