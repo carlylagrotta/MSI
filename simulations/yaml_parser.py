@@ -14,6 +14,7 @@ class Parser(object):
     def load_to_obj(self, path:str = ''):
         with open(path) as f:
             config = yaml.load(f,Loader=yaml.FullLoader)
+            #print(config)
         return config
     
     def get_sim_type(self,loaded_exp:dict={}):
@@ -124,10 +125,17 @@ class Parser(object):
         thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
         mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
         mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
+        for i in range(len(mole_fraction_observables)):
+            if not mole_fraction_observables[i]:
+                mole_fraction_observables[i]='NO'
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
         species_uncertainties = dict(zip(species_names,species_uncertainties))
         observables = [x for x in mole_fraction_observables if x is not None]
+        for i in range(len(observables)):
+            if not observables[i]:
+                observables[i]='NO'
+        #print(observables)
         mole_fraction_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['mole-fraction']]
         csv_files = [x for x in mole_fraction_csv_files if x is not None]
         temp_relative_uncertainty = loaded_exp['common-properties']['temperature']['relative-uncertainty']
@@ -479,7 +487,8 @@ class Parser(object):
                 #print(file)
                 temp.append(self.load_to_obj(file))
             list_of_yaml_objects.append(temp) 
-        list_of_yaml_objects = [tuple(lst) for lst in list_of_yaml_objects ]               
+        list_of_yaml_objects = [tuple(lst) for lst in list_of_yaml_objects ] 
+        #print(list_of_yaml_objects[0][0])              
         return list_of_yaml_objects
     
     def parsing_multiple_dictonaries(self,list_of_yaml_objects:list = [],loop_counter=0):

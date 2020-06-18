@@ -16,7 +16,8 @@ class shockTube(sim.Simulation):
                  save_physSensHistories=0,moleFractionObservables:list=[],
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={},
-                 time_shift_value = 0):
+                 time_shift_value = 0, atol=1e-15, rtol=1e-9,rtol_sens=0.0001,
+                 atol_sens=1e-6):
 
         '''
         Child class of shock Tubes. Inherits all attributes and
@@ -57,6 +58,10 @@ class shockTube(sim.Simulation):
             self.physSensHistories = []
         self.setTPX()
         self.dk = [0]
+        self.atol=atol
+        self.rtol=rtol
+        self.rtol_sensitivity=rtol_sens
+        self.atol_sensitivity=atol_sens
         
     def printVars(self):
         print('initial time: {0}\nfinal time: {1}\n'.format(self.initialTime,self.finalTime),
@@ -171,7 +176,11 @@ class shockTube(sim.Simulation):
                                            name = 'R1',
                                            energy = conditions[0])
         sim = ct.ReactorNet([shockTube])
-
+        sim.rtol=self.rtol
+        sim.atol=self.atol
+        sim.rtol_sensitivity=self.rtol_sensitivity
+        sim.atol_sensitivity=self.atol_sensitivity
+        
         columnNames = [shockTube.component_name(item) for item in range(shockTube.n_vars)]
         columnNames = ['time']+['pressure']+columnNames
         self.timeHistory = pd.DataFrame(columns=columnNames)
@@ -184,6 +193,7 @@ class shockTube(sim.Simulation):
 
         t = self.initialTime
         counter = 0
+        #print(sim.rtol_sensitivity,sim.atol_sensitivity)
         while t < self.finalTime:
             t = sim.step()
             if mechanicalBoundary =='constant volume':

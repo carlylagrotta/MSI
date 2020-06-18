@@ -7,8 +7,8 @@ import MSI.optimization.matrix_loader as ml
 import MSI.optimization.opt_runner as opt
 import MSI.simulations.absorbance.curve_superimpose as csp
 import MSI.simulations.yaml_parser as yp
-import MSI.optimization.shock_tube_optimization_shell as stMSI
-import MSI.optimization.shock_tube_optimization_shell_six_param_fit as stMSIspf
+import MSI.optimization.optimization_shell as stMSI
+import MSI.optimization.optimization_shell_six_param_fit as stMSIspf
 
 import cantera as ct
 import MSI.utilities.plotting_script as plotter
@@ -17,33 +17,31 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
  #burke_target_value_test.csv                
-cti_file = 'FFCM1_custom.cti'
+cti_file = 'chem.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
 
-files_to_include = [['Hong_0.yaml']]
-working_directory = 'MSI/data/test_data'
-reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty.csv'
-master_reaction_equation_cti_name = 'master_reactions_FFCM1.cti'
+files_to_include = [['ignition_delay_template_new.yaml']]
+working_directory = 'C:\\Users\\Skoron\\Desktop\\MSI\data\\igdelay_test_H2_O2'
+reaction_uncertainty_csv = 'h2o2_reaction_uncertainty.csv'
+master_reaction_equation_cti_name = 'master_reactions_h2o2.cti'
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
 
 #this would be an empty string '' if you do not want to include it 
 run_with_k_target_values = 'On'
-master_equation_reactions = ['H2O2 + OH <=> H2O + HO2',
-                             '2 HO2 <=> H2O2 + O2',
+master_equation_reactions = ['2 OH <=> H2O + O',
                              'HO2 + OH <=> H2O + O2',
-                             '2 OH <=> H2O + O',
-                             'CH3 + HO2 <=> CH4 + O2',
-                             'CH3 + HO2 <=> CH3O + OH']
+                             '2 HO2 <=> H2O2 + O2',
+                             'H2O2 + OH <=> H2O + HO2']
 
 #master_index = [2,3,4,5,6,7]
-master_index = [2,3,4,5,6,7]
+master_index = [5,19,20,25]
 
-master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df.csv')
+master_equation_uncertainty_df = pd.read_csv(working_directory+'\\six_parameter_fit_uncertainty_df.csv')
 
-rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting.csv'
-rate_constant_target_value_data = 'FFCM1_target_reactions_1.csv'
-rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data.csv'
+rate_constant_target_value_data_for_plotting = 'h2o2_target_reactions_1_plotting.csv'
+rate_constant_target_value_data = 'h2o2_target_reactions_1.csv'
+rate_constant_target_value_data_extra = 'h2o2_target_reactions_extra_data.csv'
 
 
 #
@@ -77,19 +75,7 @@ six_parameter_fit_sensitivities = {'H2O2 + OH <=> H2O + HO2':{'A':np.array([-13.
                                                               'Ea': np.array([0.147285831,  0.605814544,    -0.062253282,   0.372322712,    -1.884116555,   -0.281992263,   0.099465537 ,0.030650483,   0.176069015 ,-0.056967886]),
                                                               'c': np.array([-0.003001658,  -0.001870536,   0.003820535 ,-0.002753277,  0.014224162,    0.00032969  ,-0.000627241,  -0.001081979,   -0.002009835,   0.000255318]),
                                                               'd':np.array([0.446957978,    -1.467039994,   -1.298391635,   -0.402720385,   0.568106728 ,0.229877892,   -0.194395052,   1.033858025 ,0.527183366,   0.308743056]),
-                                                              'f':np.array([-0.010053913,   0.025128322,    0.035579811 ,0.00515753 ,-0.0083511,    -0.00512885,    0.003954,   -0.029711993    ,-0.01986861,   -0.007691647])},
-                                    'CH3 + HO2 <=> CH4 + O2': {'A':np.array([.007845,-.89278,-.94908]),
-                                                               'n':np.array([-0.00104,-.36888,.154462]),
-                                                               'Ea':np.array([.504278,-.44379,-0.03181]),
-                                                               'c':np.array([0,0,0]),
-                                                               'd':np.array([0,0,0]),
-                                                               'f':np.array([0,0,0])},
-                                    'CH3 + HO2 <=> CH3O + OH': {'A':np.array([1.319108,-.92151]),
-                                                                'n':np.array([-.04282,.150846]),
-                                                                'Ea':np.array([0.024285,-0.02956]),
-                                                                'c':np.array([0,0]),
-                                                                'd':np.array([0,0]),
-                                                                'f':np.array([0,0])}}
+                                                              'f':np.array([-0.010053913,   0.025128322,    0.035579811 ,0.00515753 ,-0.0083511,    -0.00512885,    0.003954,   -0.029711993    ,-0.01986861,   -0.007691647])}}
  
  
  
@@ -104,13 +90,7 @@ molecular_parameter_sensitivities = {'H2O2 + OH <=> H2O + HO2':{'A':np.array([-0
                                                               'Ea':np.array([0.101558432,   -1.638858106,   -0.704325409,   -0.119041648,   -0.307281167,   -0.04872945,    0.001603412 ,0.000324159,   -0.08089174,    -0.148811902,   0.027266121 ,-0.002907638,  -0.237949453])},
                                     '2 OH <=> H2O + O':      {'A': np.array([0.299144373, -2.662684629,   -6.643003014,   0.370230493 ,-3.354253502,  -0.271981922,   -0.581195748,   9.774024441 , 5.90328859,   2.272800133]),
                                                               'n': np.array([-0.028599275,  -0.071787028,   0.572722706 ,-0.109709456,  0.381272207 ,0.03153973 ,0.061282516,   -1.341475144,   -0.835422411,   -0.302994441]),
-                                                              'Ea': np.array([0.535103651,  -1.054606857,   -0.989721261,   -0.169631331,   -1.099840578,   -0.069647609,   -0.101285313,   0.74522721, 0.352517552 ,0.205464658])},
-                                    'CH3 + HO2 <=> CH4 + O2': {'A':np.array([.007845,-.89278,-.94908]),
-                                                               'n':np.array([-0.00104,-.36888,.154462]),
-                                                               'Ea':np.array([.504278,-.44379,-0.03181])},
-                                    'CH3 + HO2 <=> CH3O + OH': {'A':np.array([1.319108,-.92151]),
-                                                                'n':np.array([-.04282,.150846]),
-                                                                'Ea':np.array([0.024285,-0.02956])}} 
+                                                              'Ea': np.array([0.535103651,  -1.054606857,   -0.989721261,   -0.169631331,   -1.099840578,   -0.069647609,   -0.101285313,   0.74522721, 0.352517552 ,0.205464658])}} 
  
  
  
@@ -120,14 +100,12 @@ molecular_parameter_sensitivities = {'H2O2 + OH <=> H2O + HO2':{'A':np.array([-0
 six_parameter_fit_nominal_parameters_dict = {'H2O2 + OH <=> H2O + HO2':{'A':4.64E-06,'n':5.605491008,'Ea':-5440.266692,'c':126875776.1,'d':0.000441194,'f':-5.35E-13},
                                 '2 HO2 <=> H2O2 + O2':{'A':1.30E+04,'n':1.997152351,'Ea':-3628.04407,'c':93390973.44,'d':-0.000732521,'f':8.20E-12} ,
                                  'HO2 + OH <=> H2O + O2':{'A':1.41E+18,'n':-2.05344973,'Ea':-232.0064051,'c':15243859.12,'d':-0.001187694,'f':8.01E-12},
-                                 '2 OH <=> H2O + O':{'A':354.5770856,'n':2.938741717,'Ea':-1836.492972,'c':12010735.18,'d':-4.87E-05,'f':1.22E-12},
-                                 'CH3 + HO2 <=> CH4 + O2':{'A':3.19e3,'n':2.670857,'Ea':-4080.73,'c':0.0,'d':0.0,'f':0.0},
-                                 'CH3 + HO2 <=> CH3O + OH':{'A':8.38e11,'n':.29,'Ea':-785.45,'c':0.0,'d':0.0,'f':0.0}}
+                                 '2 OH <=> H2O + O':{'A':354.5770856,'n':2.938741717,'Ea':-1836.492972,'c':12010735.18,'d':-4.87E-05,'f':1.22E-12}}
 
 
 
 
-MSI_st_instance_one = stMSIspf.MSI_shocktube_optimization_six_parameter_fit(cti_file,
+MSI_st_instance_one = stMSIspf.MSI_optimization_six_parameter_fit(cti_file,
                                                    .01,
                                                    1,
                                                    1,
@@ -141,66 +119,66 @@ MSI_st_instance_one = stMSIspf.MSI_shocktube_optimization_six_parameter_fit(cti_
                                                    master_index = master_index,
                                                    master_equation_uncertainty_df = master_equation_uncertainty_df,
                                                    six_paramter_fit_nominal_parameters_dict = six_parameter_fit_nominal_parameters_dict)
-MSI_st_instance_one.one_run_shock_tube_optimization()
+MSI_st_instance_one.one_run_optimization()
 
 S_matrix_original = MSI_st_instance_one.S_matrix
 exp_dict_list_original = MSI_st_instance_one.experiment_dictonaries
 X_one_itteration = MSI_st_instance_one.X
 experimental_dict_uncertainty_original = MSI_st_instance_one.experiment_dict_uncertainty_original
 Y_matrix_original = MSI_st_instance_one.Y_matrix
-OH =  exp_dict_list_original[0]['simulation'].timeHistories[0]['OH']
-time =  exp_dict_list_original[0]['simulation'].timeHistories[0]['time']
+#OH =  exp_dict_list_original[0]['simulation'].timeHistories[0]['OH']
+#time =  exp_dict_list_original[0]['simulation'].timeHistories[0]['time']
 
 Sij_list = []
 Y_difference_list = []
 S_new_list= []
 S_percent_difference_list = []
-print('_________________________perturbing______________________________')
+# print('_________________________perturbing______________________________')
 
 
-#for row_in_X in range(np.shape(X_one_itteration)[0]):
-for row_in_X in range(5):
-    MSI_st_perturb_instance = perturbX.perturb_X_Shell(cti_file,
-                                                          .01,
-                                                           1,
-                                                           1,
-                                                           working_directory,
-                                                           files_to_include,
-                                                           reaction_uncertainty_csv,
-                                                           rate_constant_target_value_data,
-                                                           master_equation_reactions=master_equation_reactions,
-                                                           molecular_parameter_sensitivities=molecular_parameter_sensitivities,
-                                                           six_parameter_fit_sensitivities=six_parameter_fit_sensitivities,
-                                                           master_reaction_equation_cti_name=master_reaction_equation_cti_name,
-                                                           master_index=master_index,
-                                                           master_equation_uncertainty_df=master_equation_uncertainty_df,
-                                                           six_paramter_fit_nominal_parameters_dict=six_parameter_fit_nominal_parameters_dict,
-                                                           shape_of_X = np.shape(X_one_itteration),
-                                                           shape_of_X_counter= row_in_X,
-                                                           S_matrix_original = S_matrix_original,
-                                                           Y_matrix_original = Y_matrix_original,
-                                                           experimental_dict_uncertainty_original = experimental_dict_uncertainty_original,
-                                                           original_experimental_dicts = exp_dict_list_original)
-    MSI_st_perturb_instance.multiple_shock_tube_runs(2)
+# for row_in_X in range(np.shape(X_one_itteration)[0]):
+# # #for row_in_X in range(5):
+#     MSI_st_perturb_instance = perturbX.perturb_X_Shell(cti_file,
+#                                                           .01,
+#                                                             1,
+#                                                             1,
+#                                                             working_directory,
+#                                                             files_to_include,
+#                                                             reaction_uncertainty_csv,
+#                                                             rate_constant_target_value_data,
+#                                                             master_equation_reactions=master_equation_reactions,
+#                                                             molecular_parameter_sensitivities=molecular_parameter_sensitivities,
+#                                                             six_parameter_fit_sensitivities=six_parameter_fit_sensitivities,
+#                                                             master_reaction_equation_cti_name=master_reaction_equation_cti_name,
+#                                                             master_index=master_index,
+#                                                             master_equation_uncertainty_df=master_equation_uncertainty_df,
+#                                                             six_paramter_fit_nominal_parameters_dict=six_parameter_fit_nominal_parameters_dict,
+#                                                             shape_of_X = np.shape(X_one_itteration),
+#                                                             shape_of_X_counter= row_in_X,
+#                                                             S_matrix_original = S_matrix_original,
+#                                                             Y_matrix_original = Y_matrix_original,
+#                                                             experimental_dict_uncertainty_original = experimental_dict_uncertainty_original,
+#                                                             original_experimental_dicts = exp_dict_list_original)
+#     MSI_st_perturb_instance.multiple_runs(2)
     
-    experimental_dict_perturbed = MSI_st_perturb_instance.experiment_dictonaries
-    plt.figure()
-    plt.title(str(row_in_X))
-    plt.plot(time,OH)
-    plt.plot(experimental_dict_perturbed[0]['simulation'].timeHistories[0]['time'], experimental_dict_perturbed[0]['simulation'].timeHistories[0]['OH'])
-    y_new = MSI_st_perturb_instance.Y_matrix
-    Sij_list.append(MSI_st_perturb_instance.Sij)
-    Y_difference_list.append(MSI_st_perturb_instance.Y_difference)
-    S_new_list.append(MSI_st_perturb_instance.S_new)
-    S_percent_difference_list.append(MSI_st_perturb_instance.S_percent_difference)
+#     experimental_dict_perturbed = MSI_st_perturb_instance.experiment_dictonaries
+#     # plt.figure()
+#     #plt.title(str(row_in_X))
+#     #plt.plot(time,OH)
+#     #plt.plot(experimental_dict_perturbed[0]['simulation'].timeHistories[0]['time'], experimental_dict_perturbed[0]['simulation'].timeHistories[0]['OH'])
+#     y_new = MSI_st_perturb_instance.Y_matrix
+#     Sij_list.append(MSI_st_perturb_instance.Sij)
+#     Y_difference_list.append(MSI_st_perturb_instance.Y_difference)
+#     S_new_list.append(MSI_st_perturb_instance.S_new)
+#     S_percent_difference_list.append(MSI_st_perturb_instance.S_percent_difference)
                                                        
     
-Sij = sum(Sij_list)
-Y_difference = sum(Y_difference_list)
-S_new = sum(S_new_list)
-Percent_difference = sum(S_percent_difference_list)
-S_residuals = S_new-S_matrix_original
-S_residuals_rounded = np.around(S_residuals,decimals=3)
+# Sij = sum(Sij_list)
+# Y_difference = sum(Y_difference_list)
+# S_new = sum(S_new_list)
+# Percent_difference = sum(S_percent_difference_list)
+# S_residuals = S_new-S_matrix_original
+# S_residuals_rounded = np.around(S_residuals,decimals=3)
 
 
 

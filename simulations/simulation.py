@@ -36,6 +36,7 @@ class Simulation(object):
         '''
         Set solution object for a simulation
         '''
+        print('YO WTF')
         #set the temperature, pressure and species mole fractions for the simulation
         if temperature== -1:
             temperature = self.temperature
@@ -54,6 +55,7 @@ class Simulation(object):
                     #conditions_copy[x] = ((conditions_copy[x]+conditions_perturb[x])*(1-conditions_copy[x]))/((1-conditions_copy[x])-(conditions_copy[x]+conditions_perturb[x]))
                     
                     conditions_copy[x] = ((conditions_copy[x]+conditions_perturb[x])*(1-conditions_copy[x]))/(1 - (conditions_copy[x]+conditions_perturb[x]))
+                    print('Words: '+str(conditions_copy[x]))
             new_conditions = conditions_copy
         
         self.processor.solution.TPX=temperature,pressure*self.pasc_to_atm, new_conditions

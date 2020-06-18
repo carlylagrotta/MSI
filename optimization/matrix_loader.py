@@ -93,7 +93,7 @@ class OptMatrix(object):
         
         #need to append to sigma
         def uncertainty_calc(relative_uncertainty,absolute_uncertainty,data,experimental_data):
-
+            absolute_uncertainty=float(absolute_uncertainty)
             if 'W' in list(experimental_data.columns):
                 weighting_factor = experimental_data['W'].values
                 if 'Relative_Uncertainty' in list(experimental_data.columns):
@@ -129,6 +129,7 @@ class OptMatrix(object):
                 #check if this weighting factor is applied in the correct place 
                 #also check if want these values to be the natural log values 
                    # print(data,absolute_uncertainty)
+                    
                     absolute_uncertainty_array = np.divide(data,absolute_uncertainty)
                     total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array)))
                     un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
@@ -209,6 +210,7 @@ class OptMatrix(object):
                     sigma.append(un_weighted_uncertainty)
                     tempList = [observable+'_'+'experiment'+str(i)]*np.shape(total_uncertainty)[0]
                     Z_data_Frame.extend(tempList)
+                    #print(Z_data_Frame)
                     counter+=1
             if 'absorbance_observables' in list(exp_dic.keys()):
                 wavelengths = parsed_yaml_file_list[i]['absorbanceCsvWavelengths']
@@ -263,7 +265,7 @@ class OptMatrix(object):
             Z_data_Frame.append('A'+'_'+str(variable))
             active_parameters.append('A'+'_'+str(variable))
         
-        
+       
         
         uncertainty_ns = reaction_uncertainty['Uncertainty N (unit)'].values
         uncertainty_ns = uncertainty_ns.reshape((uncertainty_ns.shape[0],
@@ -360,6 +362,7 @@ class OptMatrix(object):
                     
                     #experiment_physical_uncertainty.append(exp_dic['uncertainty']['temperature_relative_uncertainty'])
                     Z_data_Frame=Z_data_Frame+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+                    
                     active_parameters=active_parameters+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
                     #Pressure Uncertainty
                     experiment_physical_uncertainty.append(exp_dic['uncertainty']['pressure_relative_uncertainty'])
@@ -369,20 +372,23 @@ class OptMatrix(object):
                     species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
                     species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
                     dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
+                    
                     for specie in species_to_loop:
                         if specie in dilluant:
                             continue
                         experiment_physical_uncertainty.append(species_uncertainties[specie])
                         Z_data_Frame.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
                         active_parameters.append('X'+'_'+str(specie)+'_'+'experiment'+'_'+str(i))
+                    
                     experiment_physical_uncertainty.append(exp_dic['uncertainty']['restime_relative_uncertainty'])
-                    Z_data_Frame=Z_data_Frame.append('R_experiment_'+str(i))
+                    Z_data_Frame.append('R_experiment_'+str(i))
+                   
                     active_parameters.append('R_experiment_'+str(i))
                     experiment_physical_uncertainty = np.array(experiment_physical_uncertainty)
-                    experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],
-                                                      1))
+                    experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],1))
                     Z = np.vstack((Z,experiment_physical_uncertainty))
                     sigma = np.vstack((sigma,experiment_physical_uncertainty))
+                    #print(Z_data_Frame)
                elif re.match('[Ff]lame[- ][Ss]peed',exp_dict_list[i]['simulation_type']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',exp_dict_list[i][['experiment_type']]):
                 #for i,exp_dic in enumerate(exp_dict_list):
                     experiment_physical_uncertainty = []
@@ -546,6 +552,8 @@ class OptMatrix(object):
         
         def natural_log_difference(experiment,model):
             natural_log_diff = np.log(np.array(experiment)) - np.log(np.array(model))
+            print('This is the exp value:',experiment)
+            print('This is te model value:',model)
             return natural_log_diff
         
         Y = []
@@ -615,7 +623,7 @@ class OptMatrix(object):
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
                         if re.match('[Jj][Ss][Rr]',exp_dict_list[i]['simulation_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable].values,
-                                                                  exp_dic['simulation'].timeHistories[0][observable])
+                                                                  exp_dic['simulation'].timeHistories[0][observable].values)
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
                 
                     tempList = [observable+'_'+'experiment'+str(i)]*np.shape(natural_log_diff)[0]
@@ -638,6 +646,7 @@ class OptMatrix(object):
                     Y.append(natural_log_diff)
         
         Y = np.vstack((Y))
+       
         
        
         #YdataFrame = pd.DataFrame({'value': YdataFrame,'ln_difference': Y})
@@ -968,11 +977,12 @@ class OptMatrix(object):
         for x in range(num_ind_pert_coef):
             Y_data_Frame.append('Sigma'+'_'+str(x))
 
-        #print(Y_data_Frame)
+        
         Y_data_Frame = pd.DataFrame({'value': Y_data_Frame,'ln_difference': Y.reshape((Y.shape[0],))})  
         self.Y_matrix = Y
-        #print(Y.shape,'Y')
+        #print(Y.shape,'Y matrix without k targets')
         #print(Y_data_Frame)
+        
         return Y, Y_data_Frame       
 
     def load_S(self, exp_dict_list:list,parsed_yaml_list:list,
@@ -1048,6 +1058,7 @@ class OptMatrix(object):
             k_sens_for_whole_simulation.append(ttl_kinetic_observables_for_exp)
             #print(np.shape(k_sens_for_whole_simulation))
             ####vstack  ttl_kinetic_observables_for_exp   and append somwehre else
+            
             if exp['simulation'].physicalSens ==1:
                 ttl_phsycal_obs_for_exp = []
                 for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables'] + exp['ignition_delay_observables']):
@@ -1406,6 +1417,7 @@ class OptMatrix(object):
         self.S_matrix = S_matrix
         S_matrix_wo_k_targets = copy.deepcopy(self.S_matrix)
         self.S_matrix_wo_k_targets = S_matrix_wo_k_targets
+        #print(S_matrix_wo_k_targets.shape,'S matrix without k targets')
         S_matrix_df = pd.DataFrame(S_matrix)
         return S_matrix
     def grouping_physical_model_parameters(self,exp:list):
@@ -1712,6 +1724,7 @@ class OptMatrix(object):
 
         one_over_z = np.true_divide(1,z_matrix)
         y_matrix = Y_matrix * one_over_z
+        
         s_matrix = S_matrix * (one_over_z.flatten()[:,np.newaxis])
         self.y_matrix = y_matrix
         
@@ -1870,6 +1883,7 @@ class Adding_Target_Values(meq.Master_Equation):
         
         Y_df_temp = pd.DataFrame({'value': Y_df_list,'ln_difference': Y_values.reshape((Y_values.shape[0],))}) 
         Y_data_Frame = Y_data_Frame.append(Y_df_temp, ignore_index=True)
+        print(k_targets_for_y.shape,'k targets for y')
         
 
         
@@ -2016,6 +2030,7 @@ class Adding_Target_Values(meq.Master_Equation):
 
 
             S_target_values = np.vstack((S_target_values))
+            print(S_target_values.shape,'S Target values')
             return S_target_values        
 
     

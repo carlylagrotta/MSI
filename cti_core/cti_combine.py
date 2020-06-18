@@ -17,7 +17,7 @@ import MSI.utilities.soln2cti_py3 as ctiw
 
 def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working_directory='',file_name=''):
     #print(MP)
-    
+
     print(bool(x))
     if not original_cti:
         raise Exception('Please provide a name for the original mechanism file and try again.')

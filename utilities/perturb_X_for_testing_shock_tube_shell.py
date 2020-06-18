@@ -142,7 +142,7 @@ class perturb_X_Shell(object):
         
         return
     
-    def running_shock_tube_simulations(self,loop_counter=0):
+    def running_simulations(self,loop_counter=0):
         optimization_instance = opt.Optimization_Utility()
         if loop_counter == 0:
             experiment_dictonaries = optimization_instance.looping_over_parsed_yaml_files(self.list_of_parsed_yamls,
@@ -495,7 +495,7 @@ class perturb_X_Shell(object):
             #self.adding_k_target_values()
         
         #self.calculate_sensitivity_residuals()
-    def one_run_shock_tube_optimization(self,loop_counter=0):
+    def one_run_optimization(self,loop_counter=0):
         self.append_working_directory()
         #every loop run this, probably not?
         self.establish_processor(loop_counter=loop_counter)
@@ -507,7 +507,7 @@ class perturb_X_Shell(object):
             self.original_experimental_conditions_local = original_experimental_conditions_local
         
         
-        self.running_shock_tube_simulations(loop_counter=loop_counter)
+        self.running_simulations(loop_counter=loop_counter)
         
         if self.master_equation_flag == True:
             self.master_equation_s_matrix_building(loop_counter=loop_counter)
@@ -572,7 +572,7 @@ class perturb_X_Shell(object):
                                                                 S_matrix_original = self.S_matrix_original,
                                                                 Y_matrix_original = self.Y_matrix_original)
         testing_instance_redifiend.lengths_of_experimental_data()
-        Sij,         Y_difference,S_new, S_percent_difference = testing_instance_redifiend.calculate_Sij()
+        Sij, Y_difference,S_new, S_percent_difference = testing_instance_redifiend.calculate_Sij()
         self.Sij = Sij
         self.Y_difference = Y_difference
         self.S_new = S_new
@@ -580,10 +580,10 @@ class perturb_X_Shell(object):
         
         
         
-    def multiple_shock_tube_runs(self,loops):
+    def multiple_runs(self,loops):
         X_list = []
         for loop in range(loops):            
-            self.one_run_shock_tube_optimization(loop_counter=loop)
+            self.one_run_optimization(loop_counter=loop)
             X_list.append(self.X)
         return X_list
             

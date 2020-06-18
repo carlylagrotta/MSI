@@ -335,6 +335,8 @@ class Optimization_Utility(object):
         psoln=jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)
         ssoln=jet_stirred_reactor.species_adjustment(dk)
         rsoln=jet_stirred_reactor.sensitivity_adjustment(res_del = dk)
+        print(experiment_dictionary['observables'])
+        
         tsen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],tsoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
         psen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],psoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
         ssens=[]
@@ -693,6 +695,7 @@ class Optimization_Utility(object):
                 
                 
                     if 'absorbanceObservables' not in yamlDict.keys():
+                        
                         experiment = self.running_full_jsr(processor=processor,
                                            experiment_dictionary=yamlDict,
                                            kineticSens = kineticSens,

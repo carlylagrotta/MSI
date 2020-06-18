@@ -8,6 +8,7 @@ Created on Mon Sep 17 11:56:22 2018
 import numpy as np
 import copy
 import pandas as pd
+import re
 
 class Master_Equation(object):
     def __init__(self):
@@ -31,7 +32,7 @@ class Master_Equation(object):
                 #should we have default T_min and T_max that can be passed in ?
                 t_coef = self.chebyshev_specific_poly(i,self.calc_reduced_T(value))
                 temp_coef.append(t_coef)
-                p_coef = self.chebyshev_specific_poly(j,self.calc_reduced_P(pressure_and_temp_array['pressure'][p]))
+                p_coef = self.chebyshev_specific_poly(j,self.calc_reduced_P(np.array(pressure_and_temp_array['pressure'])[p]))
                 pres_coef.append(p_coef)
                 
                     
@@ -111,14 +112,17 @@ class Master_Equation(object):
         for i, exp in enumerate(exp_dict_list):
             simulation = []
             single_experiment = []
-            if parsed_yaml_file_list[i]['moleFractionObservables'][0] != None or parsed_yaml_file_list[i]['concentrationObservables'][0] != None:
+            if parsed_yaml_file_list[i]['moleFractionObservables'][0] != None or parsed_yaml_file_list[i]['concentrationObservables'][0] != None or parsed_yaml_file_list[i]['ignitionDelayObservables'] !=None:
                 As = exp['ksens']['A']
                 for xx,observable in enumerate(As):
                     temp = []
                     observable_list = []
                     for reaction in master_equation_reactions:
                         column = slicing_out_reactions(reaction,observable)
-                        single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['simulation'].pressureAndTemperatureToExperiment[xx]))
+                        if re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']):
+                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['simulation'].pressureAndTemperatureToExperiment[xx]))
+                        elif re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']):
+                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0]))
                         temp.append(single_reaction_array)
                         observable_list.append(single_reaction_array)
                         
@@ -226,7 +230,7 @@ class Master_Equation(object):
        
         
         S_matrix_mapped_MP = np.hstack((temp_list_2))
-        
+        print(S_matrix_mapped_MP.shape)
         return S_matrix_mapped_MP, new_sens_dict,broken_up_by_reaction,tottal_array,tester
     
     

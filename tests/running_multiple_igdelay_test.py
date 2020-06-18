@@ -15,7 +15,7 @@ import MSI.simulations.instruments.ignition_delay as ig
 #test_p = pr.Processor('C:\\Users\\Skoron\\Google Drive\\Burke Group\\Codes\\Mechanisms\\FFCM-1\\FFCM1.cti')
 test_p = pr.Processor('C:\\Users\\Skoron\\Desktop\\MSI\\data\\chem.cti')
 
-yaml_file_list = [('C:\\Users\\Skoron\\Desktop\\MSI\\data\\ignition_delay_template_h2o2_1temp.yml',)]
+yaml_file_list = [('C:\\Users\\Skoron\\Desktop\\MSI\\data\\ignition_delay_template_h2o2_3temp_Ttarget.yaml',)]
 yaml_instance = yp.Parser()
 list_of_yaml_objects = yaml_instance.load_yaml_list(yaml_list=yaml_file_list)
 

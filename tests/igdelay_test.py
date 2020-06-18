@@ -12,20 +12,22 @@ import MSI.simulations.instruments.ignition_delay as ig
 #test_p = pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke #Group\\Codes\\Mechanisms\\heptane_lowT\\Mech.cti')
 
 
-test_p=pr.Processor('C:\\Users\\Skoron\\Google Drive\\Burke Group\\Codes\\Mechanisms\\UdatedH2Model110725\\chem.cti')
-s = ig.ignition_delay(pressure=1.83,
-                         temperature=1057.0,
+test_p=pr.Processor('C:\\Users\\Skoron\\Desktop\\MSI\\data\\igdelay_test_H2_O2\\chem_mixed_rxns.cti')
+s = ig.ignition_delay(pressure=1.909,
+                         temperature=875.0,
                          observables=['OH','H2O'],
                          kineticSens=1,
 						 physicalSens=0,
-                         conditions={'H2O2':0.00086,'H2O':0.000663,'O2':0.000332,'Ar':0.998145},
+                         conditions={'H2':0.09506,'O2':0.19011,'N2':0.7405413023911442},
                          thermalBoundary='Adiabatic',
-                         mechanicalBoundary='constant volume',
+                         mechanicalBoundary='constant pressure',
                          processor=test_p,
-                         finalTime=0.1,
-                         target='H',
+                         finalTime=1.0,
+                         target='temperature',
                          target_type='max derivative',
-                         save_physSensHistories=0,save_timeHistories=1,log_name='C:\\Users\\Skoron\\Desktop\\log8.txt',n_processors=2)						 
+                         save_physSensHistories=0,save_timeHistories=1,n_processors=2)		
+
+				 
 solution,sens=s.run_single()
 print(solution,sens)
 #methane_profile=[]

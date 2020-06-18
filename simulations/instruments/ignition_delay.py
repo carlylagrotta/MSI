@@ -92,7 +92,8 @@ class ignition_delay(sim.Simulation):
                          moleFractionObservables = self.moleFractionObservables,
                          concentrationObservables = self.concentrationObservables,
                          fullParsedYamlFile = self.fullParsedYamlFile,
-                         time_shift_value = self.timeshift)
+                         time_shift_value = self.timeshift,
+                         rtol=1e-14,atol=1e-15,rtol_sens=1e-9,atol_sens=1e-10)
         
         shock_tube.run()
         return shock_tube
@@ -100,6 +101,7 @@ class ignition_delay(sim.Simulation):
     def run_shocktube(self,args=[],temp_proc=None):
         
         if not args:
+            print(self.temperature,self.pressure,self.conditions,self.thermalBoundary,self.finalTime)
             shock_tube = st.shockTube(pressure =self.pressure,
                          temperature = self.temperature,
                          observables = self.observables,
@@ -161,12 +163,13 @@ class ignition_delay(sim.Simulation):
                 delay=self.ig_dXdt(self.timehistory,self.target)
                 
         sens=[]        
-        self.direct_ksens('a')
+        #self.direct_ksens('a',dk=self.dk)
         if self.kineticSens:   
                 ##############################################################
                 #Function to calculate sensitivity
                 #Replace to use different method
-            
+                
+                #sens=self.direct_ksens('a',dk=self.dk)
                 sens=self.BFM(delay)
                 #sens=self.BFM_pool(delay,self.n_processors)
                 ##############################################################
@@ -204,6 +207,7 @@ class ignition_delay(sim.Simulation):
     def ig_dTdt(self,data):
         
         delay=[]
+        #print(type(data))
         tt=data['time'].values
         TT=data['temperature'].values
         #PP=data['pressure'].values
@@ -211,6 +215,7 @@ class ignition_delay(sim.Simulation):
         dTdt[0:-1]=np.diff(TT)/np.diff(tt)
         dTdt[-1]=(TT[-1] - TT[-2])/(tt[-1] - tt[-2])
         delay=tt[np.argmax(dTdt)]
+        print(delay)
         return delay
         
     def ig_dPdt(self,data):
@@ -241,11 +246,33 @@ class ignition_delay(sim.Simulation):
         return sensitivity
     
     
-    def direct_ksens(self,nominal):
+    def direct_ksens(self,nominal,dk=0.01,observable=['temperature']):
         
-        temp_st=self.run_shocktube_ksens()
-        print(temp_st.kineticSensitivities)
-        print(temp_st.kineticSensitivities.shape)
+        temp_st=self.run_shocktube_ksens(observables=observable)
+       
+        sens=temp_st.kineticSensitivities
+        
+        nom_soln=np.array(temp_st.timeHistory['temperature'])
+        
+        nom_delay=self.ig_dTdt(temp_st.timeHistory)
+        
+        ksens=np.zeros(temp_st.processor.solution.n_reactions)
+        for i in range(temp_st.processor.solution.n_reactions):
+            tempsen=sens[:,i,0]
+            
+            Tprime=nom_soln+np.multiply(tempsen,0.5)
+            tempdata=pd.DataFrame(columns=['time','temperature'])
+            tempdata['time']=temp_st.timeHistory['time']
+            tempdata['temperature']=Tprime
+            
+            delayprime = self.ig_dTdt(tempdata)
+            ksens[i]=self.sensitivityCalculation(nom_delay,delayprime,0.5)
+            #print(tempsen)
+            
+        #print(ksens)
+        return ksens
+        #print(temp_st.kineticSensitivities)
+        #print(temp_st.kineticSensitivities.shape)
         
     
         
@@ -489,7 +516,7 @@ class ignition_delay_wrapper(sim.Simulation):
             #self.pressure=self.pressure+pres_del*self.pressure
             xj=self.conditions[spec_triplet[2]][spec_triplet[0]]
             delxj=spec_triplet[1]*self.conditions[spec_triplet[2]][spec_triplet[0]]
-            #print(xj,delxj)
+            print(xj,delxj)
             self.conditions[spec_triplet[2]][spec_triplet[0]]=np.divide(np.multiply(xj+delxj,1-xj),1-xj-delxj)
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                   self.pressure+self.pressure*pres_del,
@@ -551,7 +578,7 @@ class ignition_delay_wrapper(sim.Simulation):
             for x in self.conditions[i].keys():
                 if x not in inert_species:
                     data.append(self.sensitivity_adjustment(spec_triplet=(x,spec_del,i)))
-        print(len(data))
+        #print(len(data))
         return data
     
     def importExperimentalData(self,csvFileList):
