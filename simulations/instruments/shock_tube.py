@@ -287,6 +287,10 @@ class shockTube(sim.Simulation):
         
     #interpolates agains the original time history
     def interpolate_physical_sensitivities(self, index:int=-1, time_history=None):
+        '''
+        This function interpolates the time history of a physical sensitivity run, 
+        against the original time history.
+        '''        
         interpolated_time = self.interpolate_time(index) if time_history is None else time_history
         #print(interpolated_time)
         #calculate which dk
@@ -301,6 +305,10 @@ class shockTube(sim.Simulation):
     
     #returns a 3D array of interpolated time histories corrosponding to physical sensitivities
     def interpolate_experimental_kinetic(self, pre_interpolated = []):
+        '''
+        This function interpolates the time history of a kinetic sensitivty run, 
+        against the experimental time history.
+        '''            
         if self.experimentalData == None:
             print("Error: experimental data must be loaded")
             return -1
@@ -337,6 +345,10 @@ class shockTube(sim.Simulation):
         return flipped
    
     def map_and_interp_ksens(self,time_history=None):
+        '''
+        This function maps and interpolates kinetic sensitivites to A,n,Ea paramters
+        and interpolates them to experimental time histories.
+        '''         
         A = self.kineticSensitivities
         N = np.zeros(A.shape)
         Ea = np.zeros(A.shape)
@@ -359,6 +371,18 @@ class shockTube(sim.Simulation):
     #assumes pre_interpolated is a list of dataframes where each dataframe is a time history
     #single is a single dataframe representing one time history/run of the simulation
     def interpolate_experimental(self,pre_interpolated = [], single = None):
+        
+        '''
+        This function interpolates the observables a one dataframe from a 
+        simulation output to the time corresponding to their experimental
+        data.
+        
+        assumes pre_interpolated has been interpolated against the original time history
+        assumes pre_interpolated is a list of dataframes where each dataframe is a time history
+        single is a single dataframe representing one time history/run of the simulation
+        
+        '''           
+        
         if self.timeHistories == None:
             print("Error: can't interpolate without time histories")
             return -1
@@ -459,6 +483,12 @@ class shockTube(sim.Simulation):
 
     def interpolation(self,originalValues,newValues, thingBeingInterpolated):   
         #interpolating time histories to original time history 
+        '''
+        This function interpolates the variables in one dataframe from a 
+        simulation output to the time of another dataframe from a simulation
+        output.
+        '''             
+        
         if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
             tempDfForInterpolation = newValues[thingBeingInterpolated]
             #tempListForInterpolation = [tempDfForInterpolation.ix[:,x].values for x in range(tempDfForInterpolation.shape[1])]
@@ -474,6 +504,10 @@ class shockTube(sim.Simulation):
 
 
     def sensitivityCalculation(self,originalValues,newValues,thingToFindSensitivtyOf,dk=.01):
+        '''
+        This function calculates the natural log sensitivty of a variable x, with respect to
+        the natural log of what the variable was perturbed by,y.
+        '''          
         if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
             newValues.columns = thingToFindSensitivtyOf
             newValues = newValues.applymap(np.log)
@@ -488,6 +522,12 @@ class shockTube(sim.Simulation):
 
     
     def importExperimentalData(self,csvFileList):
+        '''
+        This function imports the experimental data from CSV files, the paths 
+        for which are stored in the corresponding yaml files.
+        '''         
+        
+        
         print('Importing shock tube data the following csv files...') 
         print(csvFileList)
         experimentalData = [pd.read_csv(csv) for csv in csvFileList]
@@ -502,6 +542,12 @@ class shockTube(sim.Simulation):
         self.timeHistoryInterpToExperiment = timeHistory
         
     def interpolatePressureandTempToExperiment(self,simulation,experimental_data):
+        '''
+        This function interpolates temperature and pressure to the experimental 
+        time histories, in order to use them in various calcuations throughout 
+        the analysis.
+        ''' 
+
         p_and_t = ['pressure','temperature']
         list_of_df = []
         for df in experimental_data:
@@ -519,6 +565,10 @@ class shockTube(sim.Simulation):
         return list_of_df
     
     def calculate_time_shift_sensitivity(self,simulation,experimental_data,dk):
+        '''
+        This function calculates the time shift sensitivty and then interpolates
+        it to the experimetnal time histories.
+        ''' 
         lst_obs = simulation.moleFractionObservables + simulation.concentrationObservables
         lst_obs = [i for i in lst_obs if i] 
         mean_times_of_experiments = []
@@ -549,6 +599,7 @@ class shockTube(sim.Simulation):
            calculated_sensitivity.append(s1)
             
         calculated_sensitivity_df = pd.concat(calculated_sensitivity,axis=1)
+
 
         
         interpolated_sensitivity = []

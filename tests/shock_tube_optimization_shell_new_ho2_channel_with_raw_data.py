@@ -179,7 +179,7 @@ files_to_include = [['Hong_0.yaml'],
 #                     ['Hong_HO2_fake_data_13.yaml','Hong_fake_data_fitted_abs.yaml'],
 #                     ['Hong_HO2_fake_data_14.yaml','Hong_fake_data_fitted_abs.yaml'],
 #                     ['Hong_HO2_fake_data_15.yaml','Hong_fake_data_fitted_abs.yaml']]                                 
-numer_of_iterations = 2
+numer_of_iterations = 10
 cti_file = 'FFCM1_custom_extra_reaction.cti'
 working_directory = 'MSI/data/klip_optimization_with_raw_data'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_extra_reaction.csv'

@@ -12,38 +12,36 @@ test_p2 = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_m
 #test_p = pr.Processor('MSI/data/chebyshev_data/FFCM1_custom_cheb.cti')
 #test_p = pr.Processor('MSI/data/chebyshev_data/FFCM1_custom_cheb_test.cti')
 
-test_tube = st.shockTube(pressure=1.909,
-                          temperature=1398,
-                          observables=['H2O'],
-                          kineticSens=0,
-                          physicalSens=0,
-                          conditions={'O2':0.00062 ,
-                                      'H2O':0.001234,
-                                      'H2O2':0.00254 ,
-                                      'Ar': 0.9974968858350951},
-                          initialTime=0,
-                          finalTime=.0002,
-                          thermalBoundary='Adiabatic',
-                          mechanicalBoundary='constant volume',
-                          processor=test_p,
-                          save_timeHistories=1,
-                          save_physSensHistories=1)
+# test_tube = st.shockTube(pressure=1.909,
+#                           temperature=1398,
+#                           observables=['H2O'],
+#                           kineticSens=0,
+#                           physicalSens=0,
+#                           conditions={'O2':0.00062 ,
+#                                       'H2O':0.001234,
+#                                       'H2O2':0.00254 ,
+#                                       'Ar': 0.9974968858350951},
+#                           initialTime=0,
+#                           finalTime=.0002,
+#                           thermalBoundary='Adiabatic',
+#                           mechanicalBoundary='constant volume',
+#                           processor=test_p,
+#                           save_timeHistories=1,
+#                           save_physSensHistories=1)
 
-test_tube.run()
+#test_tube.run()
 #test_tube.printVars()
-time_History = test_tube.timeHistory
+#time_History = test_tube.timeHistory
 
 
 
-test_tube2 = st.shockTube(pressure=1.909,
-                          temperature=1398,
-                          observables=['H2O(10)'],
+test_tube2 = st.shockTube(pressure=1,
+                          temperature=777,
+                          observables=['HO2(12)','H2O2(13)'],
                           kineticSens=0,
                           physicalSens=0,
-                          conditions={'O2(6)':0.00062 ,
-                                      'H2O(10)':0.001234,
-                                      'H2O2(13)':0.00254 ,
-                                      'Ar': 0.9974968858350951},
+                          conditions={'Cl(2)': 0.00741074 ,'CH4O(1)':0.000211735,
+                                     'HO2(12)':.0000185,'O2(6)':0.1961539751,'N2(27)':0.7846159003},
                           initialTime=0,
                           finalTime=.0002,
                           thermalBoundary='Adiabatic',
@@ -57,5 +55,11 @@ test_tube2.run()
 time_History2 = test_tube2.timeHistory
 
 
-plt.plot(time_History['time'],time_History['H2O'])
-plt.plot(time_History2['time'],time_History2['H2O(10)'])
+#plt.plot(time_History['time'],time_History['H2O'])
+plt.plot(time_History2['time'],time_History2['HO2(12)'])
+plt.figure()
+plt.plot(time_History2['time'],time_History2['H2O2(13)'])
+
+
+
+

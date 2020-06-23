@@ -9,14 +9,19 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/chem_calories_extra_reaction.cti')
+#test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/chem_calories_extra_reaction.cti')
+#test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/chem_calories_extra_reaction_editing.cti')
+test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/cl2_mechanism.cti')
+
+#test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/chem_calories_extra_reaction_editing_AnEa.cti')
+
 test_tube = st.shockTube(pressure=1,
                          temperature=777,
-                         observables=['HO2(12)','H2O2(13)'],
+                         observables=['HO2(6)','H2O2(15)'],
                          kineticSens=1,
                          physicalSens=0,
-                         conditions={'Cl(2)': 0.0037048 ,'CH4O(1)':0.000211705,
-                                     'HO2(12)':.00001852,'N2(27)':0.9960649292909133},
+                         conditions={'Cl2(5)': 0.0037048 ,'CH4O(1)':0.000211705,
+                                     'HO2(6)':.00001852,'O2(7)':0.1961539751,'N2(8)':0.7846159003},
                          initialTime=0,
                          finalTime=0.01,
                          thermalBoundary='Adiabatic',

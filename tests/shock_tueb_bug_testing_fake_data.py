@@ -11,17 +11,17 @@ import cantera as ct
 import pandas as pd 
 import matplotlib.pyplot as plt
 
-test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/chem_calories_extra_reaction.cti')
+test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/cl2_mechanism.cti')
 
 
 
 test_tube = st.shockTube(pressure=1,
                          temperature=777,
-                         observables=['HO2','H2O2'],
+                         observables=['HO2(6)','H2O2(15)'],
                          kineticSens=0,
                          physicalSens=0,
-                         conditions={'Cl(2)': 0.00741074 ,'CH4O(1)':0.000211735,
-                                     'HO2(12)':.0000185,'N2(27)':0.9923589979999999},
+                         conditions={'Cl2(5)': 0.0037048 ,'CH4O(1)':0.000211705,
+                                     'HO2(6)':.00001852,'O2(7)':0.1961539751,'N2(8)':0.7846159003},
                          initialTime=0,
                          finalTime=0.001,
                          thermalBoundary='Adiabatic',
@@ -41,10 +41,9 @@ test_tube = st.shockTube(pressure=1,
 # H2O_time = H2O['Time']
 # H2O_ppm = H2O['H2O_ppm']
 
-
-# abs_csv = pd.read_csv('MSI/data/test_data/hong_abs_4.csv')
-# abs_time = abs_csv['time']
-# abs_values = abs_csv['Absorbance_227']
+abs_csv = pd.read_csv('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/lightfoot_abs_6.csv')
+abs_time = abs_csv['time']
+abs_values = abs_csv['Absorbance_210']
 
 test_tube.run()
 #test_tube2.run()
@@ -65,7 +64,7 @@ abs_instance = csp.Absorb()
 
 
 #exp_loaded = parser.load_to_obj('MSI/data/test_data/Hong_4.yaml')
-abs_loaded = parser.load_to_obj('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/Lightfoot_0_abs.yaml')
+abs_loaded = parser.load_to_obj('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/Lightfoot_6_abs.yaml')
 abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,140,kinetic_sens=0)
 
 #abs_loaded2 = parser2.load_to_obj('MSI/data/hong_H2O2_fake_data/Hong_HO2_fake_data_3_abs.yaml')
@@ -75,16 +74,16 @@ abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,140,kinetic_
 #abs_data3 = abs_instance.superimpose_shock_tube(test_tube3,abs_loaded3,15.2,kinetic_sens=0)
 
 
-# plt.xlabel('Time (ms)')
-# plt.ylabel('Absorbance 227nm')
-# plt.plot(test_tube.timeHistories[0]['time']*1e3,abs_data[227],label='constant value rate constants')
-# #plt.plot(test_tube2.timeHistories[0]['time']*1e3,abs_data2[227],label='k1,k2=constant value  k3,k4=expression from paper')
-# #plt.plot(test_tube3.timeHistories[0]['time']*1e3,abs_data3[227],label='k1,k2=derived A value  k3,k4=expression from paper')
+plt.xlabel('Time (ms)')
+plt.ylabel('Absorbance 227nm')
+plt.plot(test_tube.timeHistories[0]['time']*1e3,abs_data[210],label='constant value rate constants')
+#plt.plot(test_tube2.timeHistories[0]['time']*1e3,abs_data2[227],label='k1,k2=constant value  k3,k4=expression from paper')
+#plt.plot(test_tube3.timeHistories[0]['time']*1e3,abs_data3[227],label='k1,k2=derived A value  k3,k4=expression from paper')
 
-# time = test_tube.timeHistories[0]['time'].values
-# abs_data = abs_data[227]
-# plt.plot(abs_time*1e3,abs_values,color='r',label = 'Experimental Data')
-# plt.legend(loc='lower left')
+#time = test_tube.timeHistories[0]['time'].values
+#abs_data = abs_data[227]
+plt.plot(abs_time*1e3,abs_values,color='r',label = 'Experimental Data')
+#plt.legend(loc='lower left')
 
 # OH_data = time_history['OH'].values*1e6
 # H2O_data = time_history['H2O'].values*1e6

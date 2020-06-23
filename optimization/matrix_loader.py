@@ -1278,8 +1278,9 @@ class OptMatrix(object):
         #X = X.reshape(X.shape[0],1)
         #zeros = np.zeros((X_new.shape))
         #X_new = zeros
-       # X_new[873,0] = .01
-       # print("X_NEW")
+        #X_new[895,0] = 1e-8
+        #print("X_NEW")
+        #print(X_new)
         
         ################################################################        
         

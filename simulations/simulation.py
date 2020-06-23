@@ -49,8 +49,7 @@ class Simulation(object):
             conditions_copy = copy.deepcopy(self.conditions)
             for x in conditions_perturb.keys():
                 if x != '':
-                    
-                    #print(conditions_perturb[x],'these are the perturbed conditions')
+
                     #conditions_copy[x] = ((conditions_copy[x]+conditions_perturb[x])*(1-conditions_copy[x]))/((1-conditions_copy[x])-(conditions_copy[x]+conditions_perturb[x]))
                     
                     conditions_copy[x] = ((conditions_copy[x]+conditions_perturb[x])*(1-conditions_copy[x]))/(1 - (conditions_copy[x]+conditions_perturb[x]))
