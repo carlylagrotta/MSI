@@ -4547,21 +4547,36 @@ class Plotting(object):
                 #n, bins2, patches = plt.hist(new_y_test,bins=bins ,align='mid',density=True,label='Hong Experiments')
                     #ax1.hist(new_y_test,bins=bins ,align='mid',density=True,label='Hong Experiments')
                     n,bins_test_1,patches = ax1.hist(new_y_test,bins=bins ,align='mid',density=True,label='#1')
-                    ax1.set_xlim(left=-.3, right=.3, emit=True, auto=False)
-                    ax1.set_ylim(top=15,bottom=0)
+                    #comment
+                    ax1.set_xlim(left=-1, right=1, emit=True, auto=False)
+                    ax1.set_ylim(top=7,bottom=0)
 
                     ax1.set_xlabel('Y')
                     ax1.set_xlabel('Relative Difference')
                 #plt.title(str(observables_unique[i])+'_Including Experiments_'+ str(experiments_want_to_plot_data_from))
                     ax1.set_title(str(observables_unique[i]))
                     ax1.set_ylabel('pdf')
+                    
+                    (mu, sigma) = norm.fit(new_y_test)
+                    yy = norm.pdf(bins_test_1,mu,sigma)
+                    xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+                    #l = ax1.plot(bins_test_1, yy, color='blue', linestyle='--',linewidth=2)
+                    ax1.plot(xx, stats.norm.pdf(xx, mu, sigma),color='blue')
+                    ax1.text(.04,3,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='blue', fontsize=11)
 
                 #plt.ylabel('normalized')
                     if bool(experiments_want_to_plot_data_from_2):
                    # plt.hist(Y_values_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
                         #ax1.hist(new_Y_test_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
-                        ax1.hist(new_Y_test_2,bins=bins ,align='mid',density=True,alpha=0.5,label='#2')
-
+                        n,bins_test_1,patches = ax1.hist(new_Y_test_2,bins=bins ,align='mid',density=True,alpha=0.5,label='#2')
+                        
+                            
+                        (mu, sigma) = norm.fit(new_Y_test_2)
+                        yy = norm.pdf(bins_test_1,mu,sigma)
+                        xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+                        #l = ax1.plot(bins_test_1, yy, color='orange',linestyle='--', linewidth=2)
+                        ax1.plot(xx, stats.norm.pdf(xx, mu, sigma),color='orange')
+                        ax1.text(.04,2,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='orange', fontsize=11)
                     if bool(csv):
                         df = pd.read_csv(csv)
                         #ax1.hist(df[str(observables_unique[i])+'_Y'].dropna()*-1,bins=bins ,align='mid',density=True,alpha=0.5,label='Hong vs. Hong')
@@ -4571,8 +4586,9 @@ class Plotting(object):
                 if i ==1:
                 #n, bins2, patches = plt.hist(new_y_test,bins=bins ,align='mid',density=True,label='Hong Experiments')
                     n,bins_test_2,patches = ax2.hist(new_y_test,bins=bins ,align='mid',density=True,label='Hong Experiments')
-                    ax2.set_xlim(left=-.08, right=.08, emit=True, auto=False)
-                    ax2.set_ylim(top=28,bottom=0)
+                    #comment
+                    #ax2.set_xlim(left=-.08, right=.08, emit=True, auto=False)
+                    ax2.set_ylim(top=17,bottom=0)
                     ax2.set_xlabel('Y')
                     ax2.set_xlabel('Relative Difference')
                 #plt.title(str(observables_unique[i])+'_Including Experiments_'+ str(experiments_want_to_plot_data_from))
@@ -4580,11 +4596,25 @@ class Plotting(object):
                     ax2.set_title(r'H$_2$O')
                     ax2.set_ylabel('pdf')
                     
+                    (mu, sigma) = norm.fit(new_y_test)
+                    yy = norm.pdf(bins_test_2,mu,sigma)
+                    xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+                    #l = ax2.plot(bins_test_2, yy, color='blue', linestyle='--', linewidth=2)
+                    ax2.plot(xx, stats.norm.pdf(xx, mu, sigma),color='blue')
+                    ax2.text(.015,15,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='blue', fontsize=11)
+                    
+                    
                 #plt.ylabel('normalized')
                     if bool(experiments_want_to_plot_data_from_2):
                    # plt.hist(Y_values_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
-                        ax2.hist(new_Y_test_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
+                        n,bins_test_2,patches = ax2.hist(new_Y_test_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
                         
+                        (mu, sigma) = norm.fit(new_Y_test_2)
+                        yy = norm.pdf(bins_test_2,mu,sigma)
+                        xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+                        #l = ax2.plot(bins_test_2, yy, color='orange',linestyle='--', linewidth=2)
+                        ax2.plot(xx, stats.norm.pdf(xx, mu, sigma),color='orange')
+                        ax2.text(.015,12.8,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='orange', fontsize=11)
                     if bool(csv):
                         df = pd.read_csv(csv)
                         #ax2.hist(df[str(observables_unique[i])+'_Y'].dropna()*-1,bins=bins ,align='mid',density=True,alpha=0.5,label='Hong vs. Hong')
@@ -4593,7 +4623,8 @@ class Plotting(object):
                 if i ==3:
                 #n, bins2, patches = plt.hist(new_y_test,bins=bins ,align='mid',density=True,label='Hong Experiments')
                     n,bins_test_3,patches = ax3.hist(new_y_test,bins=bins ,align='mid',density=True,label='Hong Experiments')
-                    ax3.set_xlim(left=-.15, right=.15, emit=True, auto=False)
+                    #comment
+                    #ax3.set_xlim(left=-.15, right=.15, emit=True, auto=False)
                     ax3.set_ylim(top=12,bottom=0)
 
                     ax3.set_xlabel('Y')
@@ -4603,13 +4634,27 @@ class Plotting(object):
                     ax3.set_title(str(observables_unique[i]))
                     ax3.set_title('Absorbance '+ str(observables_unique[i])+ ' nm')
 
+                    (mu, sigma) = norm.fit(new_y_test)
+                    yy = norm.pdf(bins_test_3,mu,sigma)
+                    xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+                    #l = ax3.plot(bins_test_3, yy, color='blue',linestyle='--',linewidth=2)
+                    ax3.plot(xx, stats.norm.pdf(xx, mu, sigma),color='blue')
+                    ax3.text(.037,10.5,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='blue', fontsize=11)
+
+
                 #plt.ylabel('normalized')
                     if bool(experiments_want_to_plot_data_from_2):
-                        print('inside here')
-                        print(experiments_want_to_plot_data_from_2)
+                        #print('inside here')
+                        #print(experiments_want_to_plot_data_from_2)
                    # plt.hist(Y_values_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
-                        ax3.hist(new_Y_test_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
+                        n,bins_test_3,patches = ax3.hist(new_Y_test_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
                         
+                        (mu, sigma) = norm.fit(new_Y_test_2)
+                        yy = norm.pdf(bins_test_3,mu,sigma)
+                        xx = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+                        #l = ax3.plot(bins_test_3, yy, color='orange',linestyle='--', linewidth=2)
+                        ax3.plot(xx, stats.norm.pdf(xx, mu, sigma),color='orange')
+                        ax3.text(.037,8.5,r'$\mu=%.3f,\ \sigma=%.3f$' %(mu, sigma),color='orange', fontsize=11)
                     if bool(csv):
                         df = pd.read_csv(csv)
                         #ax3.hist(df[str(observables_unique[i])+'_Y'].dropna()*-1,bins=bins ,align='mid',density=True,alpha=0.5,label='Hong vs. Hong')                        
@@ -4839,6 +4884,7 @@ class Plotting(object):
                                 new_time_test_2 = new_time_test_2.values
                                 new_time_test_2 = new_time_test_2.reshape((new_time_test_2.shape[0],1))
                                 new_time_test_2  = np.delete(new_time_test_2,indecies_2)
+                                #commented
                                 ax1.scatter(new_y_test_2,new_time_test_2,color='orange',zorder=3,alpha=.25)
     
                             ax1.set_title(observables_unique[x])
@@ -4881,6 +4927,7 @@ class Plotting(object):
                                 new_time_test_2 = new_time_test_2.values
                                 new_time_test_2 = new_time_test_2.reshape((new_time_test_2.shape[0],1))
                                 new_time_test_2  = np.delete(new_time_test_2,indecies_2)
+                                #commented
                                 ax2.scatter(new_y_test_2,new_time_test_2,color='orange',zorder=3,alpha=.25)
     
                             #ax2.set_title(observables_unique[x])
@@ -4921,6 +4968,7 @@ class Plotting(object):
                                 new_time_test_2 = new_time_test_2.values
                                 new_time_test_2 = new_time_test_2.reshape((new_time_test_2.shape[0],1))
                                 new_time_test_2  = np.delete(new_time_test_2,indecies_2)
+                                #commented
                                 ax3.scatter(new_y_test_2,new_time_test_2,color='orange',zorder=3,alpha=.25)
     
                             #ax3.set_title(observables_unique[x])
@@ -4963,6 +5011,7 @@ class Plotting(object):
                             new_temperature_test_2 = copy.deepcopy(empty_nested_observable_list_temperature_2[x][y])
                             new_temperature_test_2 = new_temperature_test_2.reshape((new_temperature_test_2.shape[0],1))
                             new_temperature_test_2  = np.delete(new_temperature_test_2,indecies_2)                              
+                            #commented
                             ax4.scatter(new_y_test_2,new_temperature_test_2,color='orange',zorder=3,alpha=.25,label='_nolegend_')
                         
                     ax4.scatter([],[],c='#1f77b4',label='#1')
@@ -5002,7 +5051,8 @@ class Plotting(object):
                             new_y_test_2 = np.delete(new_y_test_2,indecies_2)
                             new_temperature_test_2 = copy.deepcopy(empty_nested_observable_list_temperature_2[x][y])
                             new_temperature_test_2 = new_temperature_test_2.reshape((new_temperature_test_2.shape[0],1))
-                            new_temperature_test_2  = np.delete(new_temperature_test_2,indecies_2)                              
+                            new_temperature_test_2  = np.delete(new_temperature_test_2,indecies_2)         
+                            #commented
                             ax5.scatter(new_y_test_2,new_temperature_test_2,color='orange',zorder=3,alpha=.15)
 
                 if x==3:
@@ -5034,7 +5084,8 @@ class Plotting(object):
                             new_y_test_2 = np.delete(new_y_test_2,indecies_2)
                             new_temperature_test_2 = copy.deepcopy(empty_nested_observable_list_temperature_2[x][y])
                             new_temperature_test_2 = new_temperature_test_2.reshape((new_temperature_test_2.shape[0],1))
-                            new_temperature_test_2  = np.delete(new_temperature_test_2,indecies_2)                              
+                            new_temperature_test_2  = np.delete(new_temperature_test_2,indecies_2)      
+                            #commented
                             ax6.scatter(new_y_test_2,new_temperature_test_2,color='orange',zorder=3,alpha=.25)
   
                 #fig2.savefig(directory_to_save_images+'/'+'Three_pannel_plot'+'_Including Experiments_'+str(experiments_want_to_plot_data_from)+'_Yy_vs_initial_temperature.pdf',dpi=1000,bbox_inches='tight')

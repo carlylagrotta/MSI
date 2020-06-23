@@ -324,7 +324,121 @@ class Parser(object):
                    'timeShift':time_shift,
                    'experimentType':experiment_type
                    }
+    def parse_ignition_dealy_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+    
+        simulation_type = loaded_exp['apparatus']['kind']
+        pressure_list = loaded_exp['common-properties']['pressure']['value-list']
+        temperature_list = loaded_exp['common-properties']['temperature']['value-list']
+        temp_relative_uncertainty = loaded_exp['common-properties']['temperature']['relative-uncertainty']
+        temp_relative_uncertainty = float(temp_relative_uncertainty)
+        pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
+        pressure_relative_uncertainty = float(pressure_relative_uncertainty)
+        initial_time = loaded_exp['common-properties']['time']['initial-time']['value']
+            #eventually going to get this from a csv file 
+        final_time = loaded_exp['common-properties']['time']['final-time']['value']
+        
+        time_shift = float(loaded_exp['common-properties']['time-shift']['value'])
+        time_shift_uncertainty = loaded_exp['common-properties']['time-shift']['absolute-uncertainty']['value']
+        species_group_numbers = [(species['species-group']) for species in loaded_exp['common-properties']['composition']]
+    
+        thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
+        mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
+        experiment_type = loaded_exp['experiment-type']
+        
             
+        ignition_delay_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['ignition-delay']]            
+        observables = [x for x in (ignition_delay_observables) if x is not None]
+            
+    
+        
+       
+        ignition_delay_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['ignition-delay']]
+        ignition_dealy_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['ignition-delay']]
+        ignition_dealy_relative_uncertainity = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['ignition-delay']]
+    
+        path_length = loaded_exp['apparatus']['inner-diameter']['value']
+        csv_files = [x for x in (ignition_delay_csv_files) if x is not None]
+            
+        ignition_type = loaded_exp['common-properties']['ignition-type']['type']
+        ignition_target = loaded_exp['common-properties']['ignition-type']['target']
+        
+        species_groups = [(species['mixture']) for species in loaded_exp['common-properties']['composition']]
+        attribute_group = [(attribute['attributes']) for attribute in loaded_exp['common-properties']['composition']]
+        species_in_group_list = [[] for groups in species_groups]
+        type_in_group_list = [[] for groups in species_groups]
+        relative_uncertainty_in_group_list = [[] for groups in species_groups]
+        species = []
+        mole_fractions = []
+    
+    
+        for i,group in enumerate(species_groups):
+            for j, dictonary in enumerate(group):
+                species_in_group_list[i].append(dictonary['name'])
+                species.append(dictonary['name'])
+                mole_fractions.append(dictonary['mole-fraction']['value-list'])
+        
+        conditions = dict(zip(species,mole_fractions))
+        species_by_group = dict(zip(species_group_numbers,species_in_group_list))
+    
+        for i,group in enumerate(attribute_group):
+            type_in_group_list[i].append(group['type'])
+            relative_uncertainty_in_group_list[i].append(group['relative-uncertainty'])
+    
+            
+        flat_type_list  = [item for sublist in type_in_group_list for item in sublist]
+        type_dict = dict(zip(flat_type_list,species_in_group_list))
+        relative_uncertainty_by_species = {}
+        for i, grp in enumerate(species_in_group_list):
+            for j,s in enumerate(grp):    
+                relative_uncertainty_by_species[s] = relative_uncertainty_in_group_list[i][0]
+        
+    
+        group_lst = []
+        for i in species_group_numbers:
+            group_lst.append('group_'+str(i))
+            
+        overall_dict = {}
+        
+        for i, group in enumerate(group_lst):
+            overall_dict[group]= {'species': species_in_group_list[i]}
+            overall_dict[group].update({'type': type_in_group_list[i][0]})
+            overall_dict[group].update({'relative_uncertainty':relative_uncertainty_in_group_list[i][0]})
+    
+        if loaded_absorption == {}:
+            return{
+                   'pressure':pressure_list,
+                   'pressureRelativeUncertainty': pressure_relative_uncertainty,
+                   'temperature':temperature_list,
+                    'tempRelativeUncertainty':temp_relative_uncertainty,
+                   'conditions':conditions,
+                   'thermalBoundary':thermal_boundary,
+                   'mechanicalBoundary':mechanical_boundary,
+                   'ignitionDelayObservables': ignition_delay_observables,               
+                   'observables':observables,
+                   'initialTime':initial_time,
+                   'finalTime':final_time,
+                   'speciesNames':species,
+                   'pathLength':path_length,
+                   'MoleFractions':mole_fractions,
+                   'ignitionDelayCsvFiles':ignition_delay_csv_files,
+                   'timeShiftUncertainty':time_shift_uncertainty,
+                   'ignitionDelayRelativeUncertainity':ignition_dealy_relative_uncertainity,
+                   'ignitionDelayAbsoluteUncertainty':ignition_dealy_absolute_uncertainty,
+                   'csvFiles': csv_files,
+                   'simulationType':  simulation_type,
+                   'timeShift':time_shift,
+                   'experimentType':experiment_type,
+                    'speciesGroupNumbers':species_group_numbers,
+                    'speciesInGroupList':species_in_group_list,
+                    'conditions':conditions,
+                    'relativeUncertaintyBySpecies':relative_uncertainty_by_species,
+                    'speciesByGroup':species_by_group,
+                    'overallDict': overall_dict,
+                    'typeToSpeciesDict':type_dict
+    
+                   }       
+        else:
+            print('We do not have absorbance installed for ignition delay')
     def load_yaml_list(self, yaml_list:list = []):
         #print(yaml_list)
         list_of_yaml_objects = []
@@ -346,6 +460,7 @@ class Parser(object):
            # print(simtype)
             simtype=str(simtype)
             experiment_type=str(experiment_type)
+
             #simtype = 'shock tube'
             #if simtype=='shock tube' or simtype=='Shock Tube' or simtype=='Shock tube':
             if re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
@@ -371,6 +486,12 @@ class Parser(object):
                 else:
                     experiment_dictonaries.append(self.parse_flame_speed_obj(loaded_exp = tup[0]))
                 
+            elif re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ii]gnition[ -][Dd]elay'):
+                if len(tup)>1:
+                    experiment_dictonaries.append(self.parse_ignition_dealy_obj(loaded_exp = tup[0],
+                                                                            loaded_absorption = tup[1]))
+                else:
+                    experiment_dictonaries.append(self.parse_ignition_dealy_obj(loaded_exp = tup[0]))                
             else:
                 print('Failed to parse Yaml files- unrecognized simulation type for tuple index: '+str(counter))
             counter=counter+1
@@ -471,12 +592,10 @@ class Parser(object):
                 if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
                     updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
                     updatedTemp = round(updatedTemp,9)
+                    #updatedTimeShift =  (np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * experiment_dict_list[yaml_file]['average_time']) - experiment_dict_list[yaml_file]['average_time']
                     
-                    #updatedTimeShift =  np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * time_shift 
                     updatedTimeShift = physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)] + time_shift
 
-                    print('THIS IS UPDATED TIME SHIFT')
-                    print(updatedTimeShift)
                     updatedTimeShift = round(updatedTimeShift,9)
                     
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):

@@ -1,28 +1,46 @@
 import sys, os
 sys.path.append('../../') #get rid of this at some point with central test script or when package is built
 os.chdir('../../')
+
 import MSI.simulations.instruments.shock_tube as st
 import MSI.cti_core.cti_processor as pr
 import MSI.optimization.matrix_loader as ml
 import MSI.optimization.opt_runner as opt
 import MSI.simulations.absorbance.curve_superimpose as csp
 import MSI.simulations.yaml_parser as yp
-import MSI.optimization.shock_tube_optimization_shell as stMSI
 import MSI.optimization.shock_tube_optimization_shell_six_param_fit as stMSIspf
-
 import cantera as ct
-import MSI.utilities.plotting_script as plotter
-import MSI.utilities.perturb_X_for_testing_shock_tube_shell as perturbX
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
- #burke_target_value_test.csv                
+import MSI.utilities.plotting_script as plotter
+import MSI.utilities.post_processor as post_processor
+import matplotlib.pyplot as plt
+
+
+
+files_to_include = [['Hong_0.yaml'],
+                    ['Hong_2.yaml'],
+                    ['Hong_3.yaml'],
+                    ['Hong_4.yaml','Hong_4_abs.yaml'],
+                    ['Hong_1.yaml'],
+                    ['Troe_4.yaml','Troe_4_abs.yaml'],
+                    ['Troe_5.yaml','Troe_5_abs.yaml'],
+                    ['Troe_6.yaml','Troe_6_abs.yaml'],
+                    ['Troe_7.yaml','Troe_7_abs.yaml'],
+                    ['Troe_8.yaml','Troe_8_abs.yaml'],            
+                    ['Hong_5.yaml','Hong_5_abs.yaml'],
+                    ['Sir_1.yaml']]
+
+
+
+#files_to_include = [['Hong_0_time_shift_test.yaml']]
+numer_of_iterations = 20
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
 
-files_to_include = [['Hong_0.yaml']]
-working_directory = 'MSI/data/test_data'
+
+working_directory = 'MSI/data/time_shift_testing'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty.csv'
 master_reaction_equation_cti_name = 'master_reactions_FFCM1.cti'
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
@@ -40,6 +58,9 @@ master_equation_reactions = ['H2O2 + OH <=> H2O + HO2',
 master_index = [2,3,4,5,6,7]
 
 master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df.csv')
+#master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df_rebuttle_uncertainty.csv')
+
+#this could be 'On'
 
 rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plotting.csv'
 rate_constant_target_value_data = 'FFCM1_target_reactions_1.csv'
@@ -127,6 +148,7 @@ six_parameter_fit_nominal_parameters_dict = {'H2O2 + OH <=> H2O + HO2':{'A':4.64
 
 
 
+
 MSI_st_instance_one = stMSIspf.MSI_shocktube_optimization_six_parameter_fit(cti_file,
                                                    .01,
                                                    1,
@@ -145,67 +167,174 @@ MSI_st_instance_one.one_run_shock_tube_optimization()
 
 S_matrix_original = MSI_st_instance_one.S_matrix
 exp_dict_list_original = MSI_st_instance_one.experiment_dictonaries
+original_covariance = MSI_st_instance_one.covarience
 X_one_itteration = MSI_st_instance_one.X
-experimental_dict_uncertainty_original = MSI_st_instance_one.experiment_dict_uncertainty_original
-Y_matrix_original = MSI_st_instance_one.Y_matrix
-OH =  exp_dict_list_original[0]['simulation'].timeHistories[0]['OH']
-time =  exp_dict_list_original[0]['simulation'].timeHistories[0]['time']
-
-Sij_list = []
-Y_difference_list = []
-S_new_list= []
-S_percent_difference_list = []
-print('_________________________perturbing______________________________')
-
-
-#for row_in_X in range(np.shape(X_one_itteration)[0]):
-for row_in_X in range(5):
-    MSI_st_perturb_instance = perturbX.perturb_X_Shell(cti_file,
-                                                          .01,
-                                                           1,
-                                                           1,
-                                                           working_directory,
-                                                           files_to_include,
-                                                           reaction_uncertainty_csv,
-                                                           rate_constant_target_value_data,
-                                                           master_equation_reactions=master_equation_reactions,
-                                                           molecular_parameter_sensitivities=molecular_parameter_sensitivities,
-                                                           six_parameter_fit_sensitivities=six_parameter_fit_sensitivities,
-                                                           master_reaction_equation_cti_name=master_reaction_equation_cti_name,
-                                                           master_index=master_index,
-                                                           master_equation_uncertainty_df=master_equation_uncertainty_df,
-                                                           six_paramter_fit_nominal_parameters_dict=six_parameter_fit_nominal_parameters_dict,
-                                                           shape_of_X = np.shape(X_one_itteration),
-                                                           shape_of_X_counter= row_in_X,
-                                                           S_matrix_original = S_matrix_original,
-                                                           Y_matrix_original = Y_matrix_original,
-                                                           experimental_dict_uncertainty_original = experimental_dict_uncertainty_original,
-                                                           original_experimental_dicts = exp_dict_list_original)
-    MSI_st_perturb_instance.multiple_shock_tube_runs(2)
-    
-    experimental_dict_perturbed = MSI_st_perturb_instance.experiment_dictonaries
-    plt.figure()
-    plt.title(str(row_in_X))
-    plt.plot(time,OH)
-    plt.plot(experimental_dict_perturbed[0]['simulation'].timeHistories[0]['time'], experimental_dict_perturbed[0]['simulation'].timeHistories[0]['OH'])
-    y_new = MSI_st_perturb_instance.Y_matrix
-    Sij_list.append(MSI_st_perturb_instance.Sij)
-    Y_difference_list.append(MSI_st_perturb_instance.Y_difference)
-    S_new_list.append(MSI_st_perturb_instance.S_new)
-    S_percent_difference_list.append(MSI_st_perturb_instance.S_percent_difference)
-                                                       
-    
-Sij = sum(Sij_list)
-Y_difference = sum(Y_difference_list)
-S_new = sum(S_new_list)
-Percent_difference = sum(S_percent_difference_list)
-S_residuals = S_new-S_matrix_original
-S_residuals_rounded = np.around(S_residuals,decimals=3)
+MSI_st_instance_one.deltaXAsNsEas
+Ydf_original = MSI_st_instance_one.Y_data_frame
+Zdf_original = MSI_st_instance_one.z_data_frame
 
 
 
-#run the new testing class
-#make a new instnace of the testing class and run the residuals calculator 
-#store all the resudals and then add the matrix together 
+#need to fix this and return _s_matrix and y_matrix
+
+
+
+MSI_st_instance_two = stMSIspf.MSI_shocktube_optimization_six_parameter_fit(cti_file,
+                                                   .01,
+                                                   1,
+                                                   1,
+                                                   working_directory,
+                                                   files_to_include,                 
+                                                   reaction_uncertainty_csv,rate_constant_target_value_data,
+                                                   master_equation_reactions = master_equation_reactions,
+                                                   molecular_parameter_sensitivities = molecular_parameter_sensitivities,
+                                                   six_parameter_fit_sensitivities = six_parameter_fit_sensitivities,
+                                                   master_reaction_equation_cti_name = master_reaction_equation_cti_name,
+                                                   master_index = master_index,
+                                                   master_equation_uncertainty_df = master_equation_uncertainty_df,
+                                                   six_paramter_fit_nominal_parameters_dict = six_parameter_fit_nominal_parameters_dict)
+                                                   
+                                                 
+#
+#
+#
+#
+#
+#ALL OF THIS STUFF CAN PROBABLY GO INTO SOME SORT OF CLASS
+delta_X_list = MSI_st_instance_two.multiple_shock_tube_runs(numer_of_iterations)
+
+
+deltaXAsNsEas = MSI_st_instance_two.deltaXAsNsEas
+physical_obervable_updates_list = MSI_st_instance_two.physical_obervable_updates_list
+absorbance_observables_updates_list = MSI_st_instance_two.absorbance_coef_update_dict
+Ydf = MSI_st_instance_two.Y_data_frame
+Zdf = MSI_st_instance_two.z_data_frame
+experimental_dicts = MSI_st_instance_two.experiment_dictonaries
+z_matrix = MSI_st_instance_two.z_matrix
+s_matrix = MSI_st_instance_two.s_matrix
+y = MSI_st_instance_two.y_matrix
+Y_matrix = MSI_st_instance_two.Y_matrix
+S_matrix = MSI_st_instance_two.S_matrix
+
+X = MSI_st_instance_two.X
+Xdf = MSI_st_instance_two.X_data_frame
+covarience = MSI_st_instance_two.covarience
+exp_dict_list_optimized = MSI_st_instance_two.experiment_dictonaries
+parsed_yaml_list = MSI_st_instance_two.list_of_parsed_yamls
+sigma = MSI_st_instance_two.sigma
+X = MSI_st_instance_two.X
+delta_X = MSI_st_instance_two.delta_X
+molecular_parameter_updates = MSI_st_instance_two.delta_x_molecular_params_by_reaction_dict
+nominal_dict_six_p_fit  = MSI_st_instance_two.six_paramter_fit_nominal_parameters_dict
+original_diag = np.diag(original_covariance)
+
+
+
+
+#target_value_rate_constant_csv = 'MSI/data/test_data/FFCM1_custom_target_value_test.csv'
+original_cti_file = MSI_st_instance_two.data_directory +'/'+ MSI_st_instance_two.cti_file_name
+
+experiment_dict_uncertainty = MSI_st_instance_two.experiment_dict_uncertainty_original
+target_value_csv = MSI_st_instance_two.data_directory +'/'+ MSI_st_instance_two.k_target_values_csv
+six_parameter_fit_dict_optimized = MSI_st_instance_two.updated_six_parameter_fits_dict
+if run_with_k_target_values == 'On' or run_with_k_target_values == 'on':
+    k_target_value_S_matrix = MSI_st_instance_two.k_target_values_for_s
+else:
+    k_target_value_S_matrix = None
+
+
+##########################################################################################################################
+#PLOTTING##
+##########################################################################################################################
+#csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_FFCM1.csv'
+#csv_file_sigma =  MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_glarborg.csv'
+csv_file_sigma = ''
+plotting_instance = plotter.Plotting(S_matrix,
+                                      s_matrix,
+                                      Y_matrix,
+                                      y,
+                                      z_matrix,
+                                      X,
+                                      sigma,
+                                      covarience,
+                                      original_covariance,
+                                      S_matrix_original,
+                                      exp_dict_list_optimized,
+                                      exp_dict_list_original,
+                                      parsed_yaml_list,
+                                      Ydf,
+                                      target_value_rate_constant_csv= MSI_st_instance_two.data_directory +'/'+ rate_constant_target_value_data_for_plotting ,
+                                      target_value_rate_constant_csv_extra_values = MSI_st_instance_two.data_directory +'/'+rate_constant_target_value_data_extra,
+                                      k_target_value_S_matrix =k_target_value_S_matrix,
+                                      k_target_values=run_with_k_target_values,
+                                      working_directory = working_directory,
+                                      sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma)
+#csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_updated.csv'
+observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
+sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
+sigmas_original,test2 = plotting_instance.calculating_sigmas(S_matrix_original,original_covariance)
+plotting_instance.plotting_observables(sigmas_original = sigmas_original,sigmas_optimized= sigmas_optimized)
+diag = plotting_instance.getting_matrix_diag(covarience)
+
+
+#plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
+
+
+
+                                
+
+
+sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
+obs = plotting_instance.plotting_uncertainty_weighted_sens()
+
+plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MSI_st_instance_two.new_cti_file,
+                                original_cti_file=original_cti_file,
+                                initial_temperature=250,
+                                final_temperature=2500,
+                                master_equation_reactions = master_equation_reactions,
+                                six_parameter_fit_dict_optimized = six_parameter_fit_dict_optimized,
+                                six_parameter_fit_dict_nominal = six_parameter_fit_nominal_parameters_dict,
+                                six_parameter_fit_sensitivity_dict =six_parameter_fit_sensitivities )
+
+
+
+
+# plotting_instance.plotting_physical_model_parameter_distributions(MSI_st_instance_two.posterior_diag_df['parameter'].tolist(),
+#                                                                   MSI_st_instance_two,
+#                                                                   MSI_st_instance_two.X,
+#                                                                   MSI_st_instance_two.original_experimental_conditions_local)
+
+# RSS_list = plotting_instance.residual_sum_of_squares()
+# SYY_list = plotting_instance.sum_of_squares_of_Y()
+# R_squared = plotting_instance.calculating_R_squared(RSS_list,SYY_list)
+
+
+# overall_list_unweighted_uncertainty,overall_list_maximum_deviation,overall_list_weighted_uncertainty,overall_percent_difference = plotting_instance.weighted_sum_of_squares()
+# SYY_list_weighted = plotting_instance.weighted_sum_of_squares_of_Y()
+# R_squared_weighted = plotting_instance.calculating_R_squared(overall_list_weighted_uncertainty,SYY_list_weighted)
+
+# plotting_instance.plotting_individual_histograms()
+# plotting_instance.plotting_normal_distributions(MSI_st_instance_two.posterior_diag_df['parameter'].tolist()[889:],
+#                                                 optimized_cti_file=MSI_st_instance_two.new_cti_file,
+#                                                 pdf_distribution_file='',
+#                                                 shock_tube_instance=MSI_st_instance_two)
+
+# #plotting_instance.plotting_X_itterations(list_of_X_values_to_plot = [0,1,2,3,4,5,50],list_of_X_array=X_list,number_of_iterations=numer_of_iterations)
+# post_processor_instance = post_processor.post_processing(optimized_cti_file = MSI_st_instance_two.new_cti_file,
+#                                                     original_cti_file = original_cti_file,
+#                                                     kinetic_paramter_dictonary = MSI_st_instance_two.kinetic_paramter_dict,
+#                                                     master_equation_reactions=master_equation_reactions,
+#                                                     six_parameter_fit_nominal_parameters_dict = six_parameter_fit_nominal_parameters_dict,
+#                                                     six_parameter_fit_optimized_paramter_dict = six_parameter_fit_dict_optimized,
+#                                                     exp_dict_list_optimized = exp_dict_list_optimized,
+#                                                     exp_dict_list_original = exp_dict_list_original,
+#                                                     parsed_yaml_list = parsed_yaml_list)
+
+
+
+
+# kinetic_paramters_dict = post_processor_instance.create_active_kinetic_paramter_dictonary()
+# physical_params_dict = post_processor_instance.create_active_physical_paramter_dictonary()
+
 
 
