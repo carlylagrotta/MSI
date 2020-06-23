@@ -6,7 +6,10 @@ import MSI.simulations.absorbance.curve_superimpose as csp
 import MSI.simulations.yaml_parser as yp
 import MSI.simulations.instruments.shock_tube as st
 import MSI.simulations.instruments.jsr_steadystate as jsr
-
+import MSI.simulations.instruments.flames as fl
+import MSI.simulations.instruments.ignition_delay as ig
+import pandas as pd
+import numpy as np
 
 #acts as front end to the rest of the system
 
@@ -59,7 +62,9 @@ class Optimization_Utility(object):
         #needs to be in the order of mole fraction csv files + concentration csv files 
         exp_dict['experimental_data']  = experimental_data
         # start here 
-        if re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['simulationType']):
+        #print(exp_dict['simulation_type'])
+        
+        if re.match('[Ss]pecies[- ][Pp]rofile',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['simulationType']):
             exp_dict['concentration_observables'] = simulation.concentrationObservables
             exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
             exp_dict['time_shift'] = interpolated_time_shift_sens
@@ -67,18 +72,20 @@ class Optimization_Utility(object):
             exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
             exp_dict['flame_speed_observables']= [None]
             exp_dict['ignition_delay_observables'] = [None]
+            #print('FUCK SPYDER')
 
         #decide how we want to build uncertainty dict and if we want to pass in the parsed yaml file?
-        if re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']):
+        elif re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ss]hock[- ][Tt]ube',simulation.fullParsedYamlFile['simulationType']):
             exp_dict['time_shift'] = interpolated_time_shift_sens
             exp_dict['uncertainty']= self.build_uncertainty_ignition_delay_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['flame_speed_observables']= [None]
             exp_dict['concentration_observables'] = [None]
-            exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
+            exp_dict['mole_fraction_observables'] = [None]
             exp_dict['ignition_delay_observables'] = simulation.ignitionDelayObservables
-            
-            
-        if re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',yaml_dict['simulationType']):
+            exp_dict['conditions_dict_list'] = simulation.fullParsedYamlFile['conditions_dict_list']
+            exp_dict['conditions_to_run']=simulation.fullParsedYamlFile['conditions_to_run']
+
+        elif re.match('[Jj][Ss][Rr]',yaml_dict['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',yaml_dict['simulationType']):
             exp_dict['concentration_observables'] = simulation.concentrationObservables
             exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
             exp_dict['restime_sens']=interpolated_tp_sens[2]
@@ -89,7 +96,7 @@ class Optimization_Utility(object):
             exp_dict['flame_speed_observables']= [None]
             exp_dict['ignition_delay_observables'] = [None]
 
-        if re.match('[Ff]lame[ -][Ss]peed',yaml_dict['simulationType']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',yaml_dict['experimentType']):
+        elif re.match('[Ff]lame[ -][Ss]peed',yaml_dict['simulationType']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',yaml_dict['experimentType']):
             
             exp_dict['flame_speed_observables']= simulation.flameSpeedObservables
             exp_dict['concentration_observables'] = [None]
@@ -127,6 +134,18 @@ class Optimization_Utility(object):
         uncertainty_dict['flame_speed_relative_uncertainty'] = experiment_dictionary['flameSpeedRelativeUncertainity']
         uncertainty_dict['flame_speed_absolute_uncertainty'] = experiment_dictionary['flameSpeedAbsoluteUncertainty']        
 
+        return uncertainty_dict
+    
+    def build_uncertainty_ignition_delay_dict(self,experiment_dictionary:dict={}):
+        uncertainty_dict={}
+        
+        uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['tempRelativeUncertainty']
+        uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
+        uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['relativeUncertaintyBySpecies'],
+                        'type_dict':experiment_dictionary['typeToSpeciesDict']}
+        uncertainty_dict['ignition_delay_relative_uncertainty'] = experiment_dictionary['ignitionDelayRelativeUncertainty']
+        uncertainty_dict['ignition_delay_absolute_uncertainty'] = experiment_dictionary['ignitionDelayAbsoluteUncertainty']
+        uncertainty_dict['time_shift_absolute_uncertainty'] = experiment_dictionary['timeShiftUncertainty']
 
         
         return uncertainty_dict
@@ -178,9 +197,114 @@ class Optimization_Utility(object):
                                  physicalSens =1,
                                  dk =0.01,
                                  exp_number = 1):
+        
+        # flame_speed=fl.flamespeed_multi_condition(pressures:float,
+        #                                           temperatures:float,
+        #                                           observables:list,
+        #                                           kineticSens:int,
+        #                                           physicalSens:int,
+        #                                           conditions:dict,
+        #                                           thermalBoundary='Adiabatic',
+        #                                           processor:ctp.Processor=None,
+        #                                           save_physSensHistories=0,
+        #                                           moleFractionObservables:list=[],
+        #                                           absorbanceObservables:list=[],
+        #                                           concentrationObservables:list=[],
+        #                                           fullParsedYamlFile:dict={},
+        #                                           flame_width:float=1.0,
+        #                                           save_timeHistories:int=0,
+        #                                           T_profile=pd.DataFrame(columns=['z','T']),
+        #                                           soret=True,
+        #                                           tol_ss=[1.0e-5, 1.0e-13],
+        #                                           tol_ts=[1.0e-4, 1.0e-10],
+        #                                           loglevel=1,
+        #                                           flametype='Flame Speed',
+        #                                           cti_path="")
         experiment = 'not yet installed'
         return experiment
-    
+    def running_ignition_delay(self,processor=None,
+                               experiment_dictionary:dict={},
+                               kineticSens=1,
+                               physicalSens=1,
+                               dk=0.01,
+                               exp_number=1):
+        
+        ig_delay=ig.ignition_delay_wrapper(pressures=experiment_dictionary['pressures'],
+                                           temperatures=experiment_dictionary['temperatures'],
+                                           observables=experiment_dictionary['observables'],
+                                           kineticSens=kineticSens,
+                                           physicalSens=physicalSens,
+                                           conditions=experiment_dictionary['conditions_to_run'],
+                                           thermalBoundary=experiment_dictionary['thermalBoundary'],
+                                           mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
+                                           processor=processor,
+                                           cti_path="", 
+                                           save_physSensHistories=1,
+                                           fullParsedYamlFile=experiment_dictionary, 
+                                           save_timeHistories=1,
+                                           log_file=True,
+                                           log_name='log.txt',
+                                           timeshift=experiment_dictionary['time_shift'],
+                                           initialTime=experiment_dictionary['initialTime'],
+                                           finalTime=experiment_dictionary['finalTime'],
+                                           target=experiment_dictionary['target'],
+                                           target_type=experiment_dictionary['target_type'],
+                                           n_processors=2)
+        
+        
+        soln,ksen=ig_delay.run()
+        
+        int_ksens_exp_mapped= ig_delay.map_and_interp_ksens()
+        tsoln=ig_delay.sensitivity_adjustment(temp_del = dk)
+        psoln=ig_delay.sensitivity_adjustment(pres_del = dk)
+        diluent=[]
+        if 'Diluent' in experiment_dictionary['typeToSpeciesDict'].keys() or 'diluent' in experiment_dictionary['typeToSpeciesDict'].keys():
+                        diluent.append(experiment_dictionary['typeToSpeciesDict']['diluent'])
+        diluent=[item for sublist in diluent for item in sublist]
+        ssoln=ig_delay.species_adjustment(dk,diluents=diluent)
+        deltatsoln,deltatausens=ig_delay.calculate_time_shift_sens(soln['delay'].values,dtau=1e-8)
+        tsen=ig_delay.sensitivityCalculation(soln['delay'],tsoln['delay'])
+        psen=ig_delay.sensitivityCalculation(soln['delay'],psoln['delay'])
+        ssens=[]
+        
+        # for j in range(len(experiment_dictionary['conditions_to_run'])):
+        for i in range(len(ssoln)):                  
+                ssens.append(ig_delay.sensitivityCalculation(soln['delay'],ssoln[i]['delay']))
+        species_length=len(set(experiment_dictionary['speciesNames']).difference(diluent))
+        list_of_ssens=[]
+        chunksize=int(len(ssens)/species_length)
+        #print(species_length,chunksize)
+        for i in range(species_length):
+            tempdata=[]
+            tempdata=pd.DataFrame(columns=['delay'])
+            #print(tempdata)
+            tempdata['delay']=np.zeros(len(experiment_dictionary['conditions_to_run'])*len(experiment_dictionary['temperatures'])*len(experiment_dictionary['pressures']))
+            for k in range(chunksize):
+                #print(ssens[i+int(k*(chunksize))]['delay'])
+                #print('Second array')
+                #print(np.array(tempdata['delay']))
+                tempdata['delay']=np.array(ssens[i+int(k*(chunksize))]['delay'])+np.array(tempdata['delay'])
+                
+            #print(tempdata)
+            list_of_ssens.append(tempdata)
+        ssens=list_of_ssens
+               
+                
+        csv_paths = [x for x in  experiment_dictionary['ignitionDelayCsvFiles'] if x is not None]
+        exp_data = ig_delay.importExperimentalData(csv_paths)
+        experiment = self.build_single_exp_dict(exp_number,
+                                           ig_delay,
+                                           int_ksens_exp_mapped,
+                                           [tsen,psen],
+                                           ssens,
+                                           experimental_data = exp_data,
+                                           yaml_dict=experiment_dictionary,
+                                           interpolated_time_shift_sens=deltatausens)
+        return experiment
+        
+        
+        
+        
     def running_full_jsr(self,processor=None,
                              experiment_dictionary:dict={},
                              kineticSens = 1,
@@ -205,11 +329,14 @@ class Optimization_Utility(object):
                     fullParsedYamlFile = experiment_dictionary)
         
         soln,ksen=jet_stirred_reactor.run()
+    
         int_ksens_exp_mapped= jet_stirred_reactor.map_and_interp_ksens()
         tsoln=jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)
         psoln=jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)
         ssoln=jet_stirred_reactor.species_adjustment(dk)
         rsoln=jet_stirred_reactor.sensitivity_adjustment(res_del = dk)
+        print(experiment_dictionary['observables'])
+        
         tsen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],tsoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
         psen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],psoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
         ssens=[]
@@ -493,9 +620,9 @@ class Optimization_Utility(object):
             experiment_type = yamlDict['experimentType']
             
             if re.match('[Ss]hock [Tt]ube',simulation_type) and re.match('[Ss]pecies[- ][Pp]rofile',experiment_type):
-                #simulation_type = 'shock tube'
+                
 
-                if simulation_type == 'shock tube':
+                
                     if 'absorbanceObservables' not in yamlDict.keys():
                         experiment = self.running_full_shock_tube(processor=processor,
                                            experiment_dictonary=yamlDict,
@@ -528,10 +655,47 @@ class Optimization_Utility(object):
                                            exp_number=i)
                         experiment_list.append(experiment)
                         
+                        
+            elif re.match('[Ss]hock [Tt]ube',simulation_type) and re.match('[Ii]gnition[- ][Dd]elay',experiment_type):
+                 if 'absorbanceObservables' not in yamlDict.keys():
+                        experiment = self.running_ignition_delay(processor=processor,
+                                           experiment_dictionary=yamlDict,
+                                           kineticSens = kineticSens,
+                                           physicalSens = physicalSens,
+                                           dk = dk,
+                                           exp_number=i)
+                        experiment_list.append(experiment)
+                
+                 elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
+#                        path = list_of_yaml_paths[i][1]
+#                        print(path)
+#                        experiment = self.running_shock_tube_absorption_only(processor=processor,
+#                                                                             experiment_dictonary = yamlDict,
+#                                                                             absorbance_yaml_file_path = path,
+#                                                                             kineticSens = kineticSens,
+#                                                                             physicalSens = physicalSens,
+#                                                                             dk = dk,
+#                                                                             exp_number=i)
+#                        experiment_list.append(experiment)
+                        print('Absorbance currently not enabled for ignition delay')
+                 else:
+#                        path = list_of_yaml_paths[i][1]
+#                        experiment = self.running_full_shock_tube_absorption(processor=processor,
+#                                           experiment_dictonary=yamlDict,
+#                                           absorbance_yaml_file_path = path,
+#                                           kineticSens = kineticSens,
+#                                           physicalSens = physicalSens,
+#                                           dk = dk,
+#                                           exp_number=i)
+#                        experiment_list.append(experiment)
+                        print('Absorbance currently not enabled for ignition delay')
+                        
+                
             elif re.match('[Jj][Ss][Rr]',simulation_type) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',simulation_type):
-                simulation_type='jsr'
-                if simulation_type=='jsr':
+                
+                
                     if 'absorbanceObservables' not in yamlDict.keys():
+                        
                         experiment = self.running_full_jsr(processor=processor,
                                            experiment_dictionary=yamlDict,
                                            kineticSens = kineticSens,

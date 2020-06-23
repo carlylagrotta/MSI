@@ -85,23 +85,26 @@ class testing_code(object):
         for i,exp in enumerate(self.experimental_dict_list):
             length_of_experimental_data=[]
             observable_counter=0
-            for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables']):
+            for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables'] + exp['ignition_delay_observables']):
                 if observable == None:
                     continue
                 if observable in exp['mole_fraction_observables']:
-                    length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Time'].shape[0])
+                    length_of_experimental_data.append(exp['experimental_data'][observable_counter].shape[0])
                     observable_counter+=1
                     
                 if observable in exp['concentration_observables']:
-                    length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Time'].shape[0])
+                    length_of_experimental_data.append(exp['experimental_data'][observable_counter].shape[0])
                     observable_counter+=1
+                if observable in exp['ignition_delay_observables']:
+                    length_of_experimental_data.append(exp['experimental_data'][observable_counter].shape[0])
+                    observable_counter+=1                    
                     
 
             if 'perturbed_coef' in exp.keys():
                 wavelengths = self.parsed_yaml_list[i]['absorbanceCsvWavelengths']
                 absorbance_wl=0
                 for k,wl in enumerate(wavelengths):
-                    length_of_experimental_data.append(exp['absorbance_experimental_data'][k]['time'].shape[0])
+                    length_of_experimental_data.append(exp['absorbance_experimental_data'][k].shape[0])
                     absorbance_wl+=1
             else:
                 absorbance_wl=0

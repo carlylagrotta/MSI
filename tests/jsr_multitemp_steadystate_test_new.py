@@ -2,8 +2,8 @@ import sys, os
 sys.path.append('../../') #get rid of this at some point with central test script or when package is built
 os.chdir('../../')
 
-import MSI2.simulations.instruments.jsr_steadystate as jsr
-import MSI2.cti_core.cti_processor as pr
+import MSI.simulations.instruments.jsr_steadystate as jsr
+import MSI.cti_core.cti_processor as pr
 import cantera as ct
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,11 +17,11 @@ import pandas as pd
 #outfile='C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\N2O_AR\\glar_comp_lam_2027.csv'
 
 #outfile2='C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\N2O_AR\\glar_comp_lam_2027_ksens.csv'
-test_p=pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke Group\\Codes\\Mechanisms\\Lamoreaux\\lam_3p5_1050.cti')
+test_p=pr.Processor('C:\\Users\\Skoron\\Desktop\\MSI\\data\\N2O\\glarborg_updated.cti')
 jsr1 = jsr.JSR_multiTemp_steadystate(volume=8.2e-5,pressure=1.02069,
-                         temperatures=np.arange(900,1100,25),
-                         observables=['OH','O2'],
-                         kineticSens=0,
+                         temperatures=np.arange(900,1100,10),
+                         observables=['NO'],
+                         kineticSens=1,
 						 physicalSens=0,
                          conditions={'N2O':0.045,'Ar':0.955},
                          thermalBoundary='Adiabatic',
@@ -32,7 +32,12 @@ jsr1 = jsr.JSR_multiTemp_steadystate(volume=8.2e-5,pressure=1.02069,
 
 tic=time.time()						 
 solution,ksens=jsr1.run()
-
+# tempsens=ksens[10,:,:].flatten()
+# sens=pd.DataFrame(columns=['Rxn','NO'])
+# sens['NO']=tempsens
+# sens['Rxn']=test_p.solution.reaction_equations()
+# sens['abs']=np.abs(sens['NO'])
+# sens=sens.sort_values(by=['abs'],ascending=False)
 toc=time.time()
 print('Total Simulation time was {:3.2f}s to compute'.format(toc-tic))
 methane_profile=[]
@@ -62,7 +67,8 @@ methane_profile=[]
 #with open(data,'w') as f:
 #	f.writelines(temp)
 import pandas as pd
-solution.to_csv('C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\ESSCI_2020_N2O\\lam_results_3p5_1050.csv')
+#solution.to_csv('C:\\Users\\Skoron\\Google Drive\\Burke Group\\JSR Experiments\\N2ODecomp\\glarborg_updated.csv')
+
 #m=pd.read_csv(data,delimiter=',')
 #measT=m['T']
 

@@ -190,6 +190,8 @@ class JSR_steadystate(sim.Simulation):
         if bool(self.observables) and self.kineticSens==1:
             for i in range(gas.n_reactions):
                 stirredReactor.add_sensitivity_reaction(i)
+        reactorNetwork.rtol_sensitivity=0.00001
+        print('Sens tols:'+str(reactorNetwork.atol_sensitivity)+', '+str(reactorNetwork.rtol_sensitivity))
         # now compile a list of all variables for which we will store data
         columnNames = [stirredReactor.component_name(item) for item in range(stirredReactor.n_vars)]
         columnNames = ['pressure'] + columnNames
@@ -226,19 +228,23 @@ class JSR_steadystate(sim.Simulation):
         print('Main Solver Took {:3.2f}s to compute'.format(posttoc-posttic))
         final_pressure=stirredReactor.thermo.P
         sens=reactorNetwork.sensitivities()
+        #print(sens[:,787])
+        #print(gas.species_names)
+        #print(self.observables)
         #print(sens)
         if self.kineticSens==1 and bool(self.observables):
             #print((pd.DataFrame(sens[0,:])).transpose())
             #test=pd.concat([pd.DataFrame(),pd.DataFrame(sens[0,:]).transpose()])
             #print(test)
             for k in range(len(self.observables)):
-                dfs[k] = dfs[k].append(((pd.DataFrame(sens[k,:])).transpose()),ignore_index=True)
+                index=gas.species_names.index(self.observables[k])
+                dfs[k] = dfs[k].append(((pd.DataFrame(sens[index+3,:])).transpose()),ignore_index=True)
                 #dfs[k]=pd.concat([dfs[k],pd.DataFrame(sens[k,:]).transpose()])
                 #dfs[k]=pd.DataFrame(sens[k,:]).transpose()
             #print(dfs)  
         toc = time.time()
         print('Simulation Took {:3.2f}s to compute'.format(toc-tic)+' at T = '+str(stirredReactor.T))
-   
+        #print(dfs[0])
         columnNames = []
         #Store solution to a solution array
         #for l in np.arange(stirredReactor.n_vars):

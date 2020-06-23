@@ -7,42 +7,31 @@ import MSI.optimization.matrix_loader as ml
 import MSI.optimization.opt_runner as opt
 import MSI.simulations.absorbance.curve_superimpose as csp
 import MSI.simulations.yaml_parser as yp
-import MSI.master_equation.master_equation as meq
-import MSI.cti_core.cti_combine as ctic
-import MSI.utilities.testing_class as testing_class 
 import MSI.master_equation.master_equation_six_parameter_fit as mespf
-import pandas as pd
-
-#import the testing class 
-
-
+import MSI.master_equation.master_equation as mecheb
+import MSI.cti_core.cti_combine as ctic
 import copy
 import cantera as ct
 import numpy as np
-import pickle
+import pandas as pd 
 
-#
 
-class perturb_X_Shell(object):
-                
+class MSI_optimization_chebyshev(object):
+        
     def __init__(self, cti_file:str,perturbment:int,
                  kineticSens:int,physicalSens:int,
                  data_directory:str,yaml_file_list:list,
                  reaction_uncertainty_csv:str,
                  k_target_values_csv:str,
                  master_equation_reactions:list=[],
-                 molecular_parameter_sensitivities:dict={},
-                 six_parameter_fit_sensitivities:dict={},
+ 
+                 chebyshev_sensitivities:dict={},
                  master_reaction_equation_cti_name:str = '',
                  master_index = [],
                  master_equation_uncertainty_df = None,
-                 six_paramter_fit_nominal_parameters_dict = None,
-                 shape_of_X = None,
-                 shape_of_X_counter= None,
-                 S_matrix_original = None,
-                 Y_matrix_original = None,
-                 experimental_dict_uncertainty_original = None,
-                 original_experimental_dicts = None):
+                 chebyshev_fit_nominal_parameters_dict = None):
+        
+        
         
         self.cti_file_name = cti_file
         copy.deepcopy(self.cti_file_name)
@@ -60,26 +49,19 @@ class perturb_X_Shell(object):
         self.k_target_values_csv = k_target_values_csv
         self.master_equation_reactions = master_equation_reactions
         self.MP_for_S_matrix = np.array(())
-        self.six_paramter_fit_nominal_parameters_dict = six_paramter_fit_nominal_parameters_dict
-        
-        self.shape_of_X = shape_of_X
-        self.shape_of_X_counter = shape_of_X_counter
-        self.S_matrix_original = S_matrix_original
-        self.Y_matrix_original = Y_matrix_original
-        self.experimental_dict_uncertainty_original = experimental_dict_uncertainty_original,
-        self.original_experimental_dicts = original_experimental_dicts
         
         if bool(self.master_equation_reactions):
             self.master_equation_flag = True
             self.master_reaction_equation_cti_name = master_reaction_equation_cti_name
             self.master_index = master_index
             self.master_equation_uncertainty_df = master_equation_uncertainty_df
-            self.six_paramter_fit_nominal_parameters_dict = six_paramter_fit_nominal_parameters_dict
-            self.six_parameter_fit_sensitivities = six_parameter_fit_sensitivities
+            self.chebyshev_fit_nominal_parameters_dict = chebyshev_fit_nominal_parameters_dict
+            self.chebyshev_sensitivities = chebyshev_sensitivities
         else:
             self.master_equation_flag=False
             self.master_equation_uncertainty_df=None
-        self.molecular_parameter_sensitivities = molecular_parameter_sensitivities
+
+       
         
     # call all of leis functions where we do the molecular paramter stuff and turn a flag on 
     
@@ -111,6 +93,7 @@ class perturb_X_Shell(object):
                                                                       file_name= self.cti_file_name.replace('.cti','')+'_updated')
             self.new_cti_file = new_file
             
+        
         processor = pr.Processor(self.new_cti_file)
         #processor = pr.Processor(self.data_directory +'/'+ self.cti_file_name)
         self.processor = processor
@@ -171,20 +154,30 @@ class perturb_X_Shell(object):
         
            
         self.experiment_dictonaries = experiment_dictonaries
+       
+
         #maybe save this and just pass it in 
         return
     def master_equation_s_matrix_building(self,loop_counter=0):
-        master_equation_six_param_fit_instance = mespf.Master_Equation_Six_Parameter_Fit()
-        self.master_equation_six_param_fit_instance = master_equation_six_param_fit_instance
+        master_equation_cheby_instance = mecheb.Master_Equation()
+        self.master_equation_cheby_instance = master_equation_cheby_instance
         
-        MP_for_S_matrix = master_equation_six_param_fit_instance.master_equation_handling(self.experiment_dictonaries,
-                                                                                          self.list_of_parsed_yamls,
-                                                                                          self.molecular_parameter_sensitivities,
-                                                                                          self.master_equation_reactions)
+        
+        mapped_to_alpha_full_simulation,nested_list = master_equation_cheby_instance.map_to_alpha(self.chebyshev_sensitivities,
+                                                                                                  self.experiment_dictonaries,
+                                                                                                  self.list_of_parsed_yamls,
+                                                                                                  self.master_equation_reactions)   
+        self.mapped_to_alpha_full_simulation = mapped_to_alpha_full_simulation
+        MP_for_S_matrix,new_sens_dict,broken_up_by_reaction,tottal_dict,tester = master_equation_cheby_instance.map_parameters_to_s_matrix(self.mapped_to_alpha_full_simulation,
+                                                                                    self.chebyshev_sensitivities,
+                                                                                    self.master_equation_reactions)
 
         self.MP_for_S_matrix = MP_for_S_matrix
+        self.new_sens_dict = new_sens_dict
+        self.broken_up_by_reaction = broken_up_by_reaction
+        self.tottal_dict = tottal_dict
+        self.tester=tester
         return
-        
         
     def building_matrices(self,loop_counter=0):
         matrix_builder_instance = ml.OptMatrix()
@@ -231,42 +224,52 @@ class perturb_X_Shell(object):
         self.active_parameters = active_parameters
         return
     
+    
+
     def adding_k_target_values(self,loop_counter=0):
         
-        ### add dataframe  start hete  
-        k_target_values_for_z,sigma_target_values,z_data_frame = self.master_equation_six_param_fit_instance.target_values_for_Z_six_paramter_fit(self.data_directory+'/'+ self.k_target_values_csv,
+        ### This needs to be editied to accomidate chebychev 
+
+        adding_target_values_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,self.Y_data_frame,self.z_data_frame)
+        
+        self.adding_target_values_instance = adding_target_values_instance
+        
+        k_target_values_for_z,sigma_target_values,z_data_frame = self.adding_target_values_instance.target_values_for_Z(self.data_directory+'/'+ self.k_target_values_csv,
                                                                                                                             self.z_data_frame)
+        
+        
         if loop_counter == 0:
-            k_target_values_for_Y,Y_data_frame = self.master_equation_six_param_fit_instance.target_values_Y_six_parameter_fit(self.data_directory+'/'+ self.k_target_values_csv,
-                                                                                                                self.experiment_dictonaries,
-                                                                                                                self.Y_data_frame,
-                                                                                                                master_equation_reaction_list=self.master_equation_reactions,
-                                                                                                                updated_six_paramter_fits_dict=self.six_paramter_fit_nominal_parameters_dict)
+    
+            
+            k_target_values_for_Y,Y_data_frame = self.adding_target_values_instance.target_values_Y(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                              self.experiment_dictonaries,self.Y_data_frame)
         else:
-            k_target_values_for_Y,Y_data_frame = self.master_equation_six_param_fit_instance.target_values_Y_six_parameter_fit(self.data_directory+'/'+ self.k_target_values_csv,
-                                                                                                                self.experiment_dictonaries,
-                                                                                                                self.Y_data_frame,
-                                                                                                                master_equation_reaction_list=self.master_equation_reactions,
-                                                                                                                updated_six_paramter_fits_dict=self.updated_six_parameter_fits_dict)        
+            k_target_values_for_Y,Y_data_frame = self.adding_target_values_instance.target_values_Y(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                              self.experiment_dictonaries,self.Y_data_frame)       
         
 
         
         
-        k_target_values_for_S = self.master_equation_six_param_fit_instance.target_values_for_S_six_parameter_fit(self.data_directory+'/'+ self.k_target_values_csv,
-                                                                                                                  self.experiment_dictonaries,
-                                                                                                                  self.S_matrix,
-                                                                                                                  master_equation_reaction_list=self.master_equation_reactions,
-                                                                                                                  six_parameter_fit_sensitivity_dict=self.six_parameter_fit_sensitivities)
+       
+
+        k_target_values_for_S = self.adding_target_values_instance.target_values_for_S(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                 self.experiment_dictonaries,
+                                                                                 self.S_matrix,
+                                                                                 master_equation_reaction_list = self.master_equation_reactions,
+                                                                                 master_equation_sensitivites = self.chebyshev_sensitivities)    
+
         
 
-        S_matrix,Y_matrix,z_matrix,sigma = self.master_equation_six_param_fit_instance.appending_target_values(k_target_values_for_z,
+                                
+        S_matrix,Y_matrix,z_matrix,sigma = self.adding_target_values_instance.appending_target_values(k_target_values_for_z,
                                                                                                                k_target_values_for_Y,
                                                                                                                k_target_values_for_S,
                                                                                                                sigma_target_values,
                                                                                                                self.S_matrix,
                                                                                                                self.Y_matrix,
                                                                                                                self.z_matrix,
-                                                                                                               self.sigma)
+                                                                                                               self.sigma)                        
+
         
         
         
@@ -276,15 +279,9 @@ class perturb_X_Shell(object):
         self.sigma = sigma
         self.Y_data_frame = Y_data_frame
         self.z_data_frame = z_data_frame
-        self.k_target_values_for_s = k_target_values_for_S
+        self.k_target_values_for_S = k_target_values_for_S
         return
     
-    
-    def set_X(self):
-        testing_instance = testing_class.testing_code(shape_of_X=self.shape_of_X,shape_of_X_counter=self.shape_of_X_counter)
-        X = testing_instance.perturb_X(self.shape_of_X_counter)
-        self.X = X
-        
     def matrix_math(self,loop_counter = 0):
         if loop_counter ==0:
             X,covarience,s_matrix,y_matrix,delta_X,z_matrix,X_data_frame,prior_diag,prior_diag_df,sorted_prior_diag,covariance_prior_df,prior_sigmas_df = self.matrix_builder_instance.matrix_manipulation(loop_counter,self.S_matrix,self.Y_matrix,self.z_matrix,XLastItteration = np.array(()),active_parameters=self.active_parameters)            
@@ -319,13 +316,12 @@ class perturb_X_Shell(object):
             self.posterior_over_prior['posterior/prior'] = (self.posterior_diag_df['value'] / self.prior_diag_df['value'])
             self.posterior_over_prior = self.posterior_over_prior.sort_values(by=['posterior/prior'])
             self.posterior_sigmas_df = posterior_sigmas_df
-        return
 
         
-    def breakup_delta_X(self,loop_counter = 0):
+
         if self.master_equation_flag == True:
             deltaXAsNsEas,physical_observables,absorbance_coef_update_dict, X_to_subtract_from_Y,delta_x_molecular_params_by_reaction_dict,kinetic_paramter_dict = self.matrix_builder_instance.breakup_X(self.X,
-                                                                                                                                          self.original_experimental_dicts,
+                                                                                                                                          self.experiment_dictonaries,
                                                                                                                                           self.experiment_dict_uncertainty_original,
                                                                                                                                             loop_counter=loop_counter,
                                                                                                                                             master_equation_flag = self.master_equation_flag,
@@ -334,7 +330,7 @@ class perturb_X_Shell(object):
             self.delta_x_molecular_params_by_reaction_dict = delta_x_molecular_params_by_reaction_dict
         else:
             deltaXAsNsEas,physical_observables,absorbance_coef_update_dict, X_to_subtract_from_Y,kinetic_paramter_dict = self.matrix_builder_instance.breakup_X(self.X,
-                                                                                                                                          self.original_experimental_dicts,
+                                                                                                                                          self.experiment_dictonaries,
                                                                                                                                           self.experiment_dict_uncertainty_original,
                                                                                                                                             loop_counter=loop_counter)
         
@@ -344,7 +340,6 @@ class perturb_X_Shell(object):
         self.X_to_subtract_from_Y = X_to_subtract_from_Y
         self.kinetic_paramter_dict = kinetic_paramter_dict
         return
-
     
     
     def saving_first_itteration_matrices(self,loop_counter=0):
@@ -363,9 +358,7 @@ class perturb_X_Shell(object):
             
             original_covarience = copy.deepcopy(self.covarience)
             self.original_covarience = original_covarience
-            
-            six_paramter_fit_nominal_parameters_dict = copy.deepcopy(self.six_paramter_fit_nominal_parameters_dict)
-            self.six_paramter_fit_nominal_parameters_dict = six_paramter_fit_nominal_parameters_dict
+
             
             #original_experiment_dictonaries  = copy.deepcopy(self.experiment_dictonaries[0]['ksens'])
 
@@ -383,7 +376,7 @@ class perturb_X_Shell(object):
             
             updated_absorption_file_name_list = self.yaml_instance.absorption_file_updates(self.updated_file_name_list,
                                                                                        self.list_of_parsed_yamls,
-                                                                                       self.original_experimental_dicts,
+                                                                                       self.experiment_dictonaries,
                                                                                        self.absorbance_coef_update_dict,
                                                                                        loop_counter = loop_counter)
             
@@ -392,7 +385,7 @@ class perturb_X_Shell(object):
         else:
             
             updated_file_name_list = self.yaml_instance.yaml_file_updates(self.updated_yaml_file_name_list,
-                                                 self.list_of_parsed_yamls,self.original_experimental_dicts,
+                                                 self.list_of_parsed_yamls,self.experiment_dictonaries,
                                                  self.physical_obervable_updates_list,
                                                  loop_counter = loop_counter)
             
@@ -402,7 +395,7 @@ class perturb_X_Shell(object):
             
             updated_absorption_file_name_list = self.yaml_instance.absorption_file_updates(self.updated_yaml_file_name_list,
                                                                                        self.list_of_parsed_yamls,
-                                                                                       self.original_experimental_dicts,
+                                                                                       self.experiment_dictonaries,
                                                                                        self.absorbance_coef_update_dict,
                                                                                        loop_counter = loop_counter)
             #print(self.original_experimental_conditions_local[0]['coupledCoefficients'],' ',loop_counter,'post simulation')
@@ -414,27 +407,23 @@ class perturb_X_Shell(object):
        
         
         if self.master_equation_flag == True:
-            updated_six_parameter_fits_dict = self.master_equation_six_param_fit_instance.update_six_paramter_fits_dict(self.six_parameter_fit_sensitivities,
-                                                                                      self.delta_x_molecular_params_by_reaction_dict, 
-                                                                                      self.master_equation_reactions,
-                                                                                      self.six_paramter_fit_nominal_parameters_dict)
-        
-            self.updated_six_parameter_fits_dict = updated_six_parameter_fits_dict
-            
-            
-        if self.master_equation_flag == True:
-            master_equation_surrogate_model_update_dictonary = self.master_equation_six_param_fit_instance.surrogate_model_molecular_parameters(self.molecular_parameter_sensitivities,
-                                                                                                                                                self.master_equation_reactions,
-                                                                                                                                                self.delta_x_molecular_params_by_reaction_dict,
-                                                                                                                                                self.experiment_dictonaries)
+
+                                                   
+            master_equation_surrogate_model_update_dictonary = self.master_equation_cheby_instance.surrogate_model_molecular_parameters_chevy(self.chebyshev_sensitivities,
+                                                                                                                                              self.new_sens_dict,
+                                                                                                                                              self.master_equation_reactions,
+                                                                                                                                              self.delta_x_molecular_params_by_reaction_dict,
+                                                                                                                                              self.experiment_dictonaries)     
                                                                                                                                                 
-            
-            
 
         #this may not be the best way to do this 
 
             
             self.master_equation_surrogate_model_update_dictonary = master_equation_surrogate_model_update_dictonary
+            
+        lei=False
+        if lei==True:
+            print('This is where lei would run his stuff')
             
         if self.master_equation_flag == False:
             self.master_equation_surrogate_model_update_dictonary = {}
@@ -465,36 +454,6 @@ class perturb_X_Shell(object):
         
         return
      
-    #def one_run_shock_tube_optimization(self,loop_counter=0):
-        #self.append_working_directory()
-        #every loop run this, probably not?
-        #self.establish_processor(loop_counter=loop_counter)
-        #self.parsing_yaml_files(loop_counter = loop_counter)
-
-        
-        #if loop_counter == 0:
-            #original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
-            #self.original_experimental_conditions_local = original_experimental_conditions_local
-            #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
-        
-        #self.set_X()
-        #self.matrix_math(loop_counter=1)
-        #self.updating_files(loop_counter=0)
-        
-        
-        
-        #self.running_shock_tube_simulations(loop_counter=1)
-        
-        #if self.master_equation_flag == True:
-            #self.master_equation_s_matrix_building(loop_counter=loop_counter)
-            
-            
-            
-        #self.building_matrices(loop_counter=loop_counter)
-        #if bool(self.k_target_values_csv):
-            #self.adding_k_target_values()
-        
-        #self.calculate_sensitivity_residuals()
     def one_run_optimization(self,loop_counter=0):
         self.append_working_directory()
         #every loop run this, probably not?
@@ -513,79 +472,46 @@ class perturb_X_Shell(object):
             self.master_equation_s_matrix_building(loop_counter=loop_counter)
             #need to add functionality to update with the surgate model or drop out of loop
         self.building_matrices(loop_counter=loop_counter)
-        
         if bool(self.k_target_values_csv):
             self.adding_k_target_values(loop_counter=loop_counter)
             
         self.matrix_math(loop_counter=loop_counter)
-        self.set_X()
-        self.breakup_delta_X(loop_counter= loop_counter)
-        
         if loop_counter==0:
             self.saving_first_itteration_matrices(loop_counter=loop_counter)
             
-        self.calculate_sensitivity_residuals()
+
         self.updating_files(loop_counter=loop_counter)
-        
-    # def one_run_shock_tube_optimization(self,loop_counter=0):
-    #     self.append_working_directory()
-    #     #every loop run this, probably not?
-    #     self.establish_processor(loop_counter=loop_counter)
-    #     self.parsing_yaml_files(loop_counter = loop_counter)
 
-        
-    #     if loop_counter == 0:
-    #         original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
-    #         self.original_experimental_conditions_local = original_experimental_conditions_local
-    #         #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
-        
-        
-    #     self.running_shock_tube_simulations(loop_counter=loop_counter)
-        
-    #     if self.master_equation_flag == True:
-    #         self.master_equation_s_matrix_building(loop_counter=loop_counter)
-    #         #need to add functionality to update with the surgate model or drop out of loop
-    #     self.building_matrices(loop_counter=loop_counter)
-    #     if bool(self.k_target_values_csv):
-    #         self.adding_k_target_values()
-            
-        
-    #     self.matrix_math(loop_counter=loop_counter)
-    #     self.set_X()
-    #     self.breakup_delta_X(loop_counter= loop_counter)
-        
-    #     print(self.deltaXAsNsEas)
-        
-    #     if loop_counter==0:
-    #         self.saving_first_itteration_matrices(loop_counter=loop_counter)
-            
-    #     self.calculate_sensitivity_residuals()
-    #     self.updating_files(loop_counter=loop_counter)            
-    
-    def calculate_sensitivity_residuals(self):
-        
-
-        testing_instance_redifiend = testing_class.testing_code(shape_of_X=self.shape_of_X,
-                                                                shape_of_X_counter=self.shape_of_X_counter,
-                                                                Y_matrix = self.Y_matrix,
-                                                                experimental_dict_list = self.experiment_dictonaries,
-                                                                S_matrix_original = self.S_matrix_original,
-                                                                Y_matrix_original = self.Y_matrix_original)
-        testing_instance_redifiend.lengths_of_experimental_data()
-        Sij, Y_difference,S_new, S_percent_difference = testing_instance_redifiend.calculate_Sij()
-        self.Sij = Sij
-        self.Y_difference = Y_difference
-        self.S_new = S_new
-        self.S_percent_difference = S_percent_difference
-        
         
         
     def multiple_runs(self,loops):
-        X_list = []
+        delta_X_list = []
         for loop in range(loops):            
             self.one_run_optimization(loop_counter=loop)
-            X_list.append(self.X)
-        return X_list
+            delta_x_df = pd.DataFrame(self.delta_X)
+            delta_x_df = pd.concat([self.X_data_frame,delta_x_df],axis=1)
+            delta_x_df.columns = ['parameter', 'X_values','delta_X_values']
+            delta_x_df = delta_x_df.sort_values(by=['delta_X_values'])
+
+            if loop==0:
+                delta_x_df_norm_sig_prior = pd.DataFrame(delta_x_df['delta_X_values']/self.prior_sigmas_df['value'])
+                delta_x_df_norm_sig_prior = pd.concat([self.X_data_frame,delta_x_df_norm_sig_prior],axis=1)
+                delta_x_df_norm_sig_prior.columns = ['parameter', 'X_values','delta_X_values']
+                delta_x_df_norm_sig_prior = delta_x_df_norm_sig_prior.sort_values(by=['delta_X_values'])
+                self.delta_x_df_norm_sig_prior = delta_x_df_norm_sig_prior
+            
+            else:
+                delta_x_df_norm_sig_posterior = delta_x_df['delta_X_values']/self.posterior_sigmas_df['value']
+                delta_x_df_norm_sig_posterior = pd.concat([self.X_data_frame,delta_x_df_norm_sig_posterior],axis=1)
+                delta_x_df_norm_sig_posterior.columns = ['parameter', 'X_values','delta_X_values']
+                delta_x_df_norm_sig_posterior = delta_x_df_norm_sig_posterior.sort_values(by=['delta_X_values'])
+                self.delta_x_df_norm_sig_posterior = delta_x_df_norm_sig_posterior
+            
+            
+            self.delta_x_df = delta_x_df
+            delta_X_list.append(self.delta_x_df)
+            
+        return delta_X_list
             
     
                                                                   

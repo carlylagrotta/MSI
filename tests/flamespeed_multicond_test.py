@@ -8,16 +8,22 @@ import cantera as ct
 import matplotlib.pyplot as plt
 import numpy as np
 
-#test_p = pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke #Group\\Codes\\Mechanisms\\heptane_lowT\\Mech.cti')
 
 
 test_p=pr.Processor('C:\\Users\\Skoron\\Google Drive\\Burke Group\\Codes\\Mechanisms\\FFCM-1\\FFCM1.cti')
-f1 = f.flamespeed_multi_condition(pressures=[1.0520602],
-                         temperatures=[400.0],
-                         observables=['OH','H2O'],
+f1 = f.flamespeed_multi_condition(pressures=[1.00],
+                         temperatures=[298.0],
                          kineticSens=1,
 						 physicalSens=0,
-                         conditions=[{'CH4':0.09506,'O2':0.19011,'N2':0.71483},{'CH4':0.19012,'O2':0.19011,'N2':0.71483}],
+                         conditions=[{'H2':0.5,'O2':0.5,'He':4.0},
+                                     {'H2':0.75,'O2':0.5,'He':4.0},
+                                     {'H2':1.0,'O2':0.5,'He':4.0},
+                                     {'H2':1.25,'O2':0.5,'He':4.0},
+                                     {'H2':1.5,'O2':0.5,'He':4.0},
+                                     {'H2':1.75,'O2':0.5,'He':4.0},
+                                     {'H2':2.0,'O2':0.5,'He':4.0},
+                                     {'H2':2.25,'O2':0.5,'He':4.0},
+                                     {'H2':2.5,'O2':0.5,'He':4.0}],
                          thermalBoundary='Adiabatic'                         ,
                          processor=test_p,
                          save_physSensHistories=0,save_timeHistories=1,loglevel=0)						 
@@ -34,7 +40,11 @@ methane_profile=[]
 #plt.savefig('C:\\Users\\HP USER\\Google Drive\\Burke Group\\Mark\\MSI\\data\\jsr_test\\methane.pdf',
 #				dpi=1200, bbox_inches='tight')
 #print(solution['ch4'])
-#print(ksens)
-
+#print(ksen
+plt.figure()
+plt.plot(solution['H2'],solution['u0'],'k-')
+plt.xlabel('Equivalence Ratio')
+plt.ylabel('Flame Speed (m/s)')
+plt.title('H2/O2/He Flame speed, O2/(O2+He)=0.125')
 
 

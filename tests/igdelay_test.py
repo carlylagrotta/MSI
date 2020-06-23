@@ -7,22 +7,30 @@ import MSI.cti_core.cti_processor as pr
 import cantera as ct
 import matplotlib.pyplot as plt
 import numpy as np
+import MSI.simulations.instruments.ignition_delay as ig
 
 #test_p = pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke #Group\\Codes\\Mechanisms\\heptane_lowT\\Mech.cti')
 
 
-test_p=pr.Processor('C:\\Users\\Skoron\\Google Drive\\Burke Group\\Codes\\Mechanisms\\FFCM-1\\FFCM1_custom_cheb.cti')
-f2 = f.free_flame(pressure=1.0,
-                         temperature=298.0,
+test_p=pr.Processor('C:\\Users\\Skoron\\Desktop\\MSI\\data\\igdelay_test_H2_O2\\chem_mixed_rxns.cti')
+s = ig.ignition_delay(pressure=1.909,
+                         temperature=875.0,
                          observables=['OH','H2O'],
                          kineticSens=1,
 						 physicalSens=0,
-                         conditions={'H2':1.0,'O2':0.5,'He':4.0},
-                         thermalBoundary='Adiabatic'                         ,
+                         conditions={'H2':0.09506,'O2':0.19011,'N2':0.7405413023911442},
+                         thermalBoundary='Adiabatic',
+                         mechanicalBoundary='constant pressure',
                          processor=test_p,
-                         save_physSensHistories=0,save_timeHistories=1,log_name='C:\\Users\\Skoron\\Desktop\\log8.txt')						 
-solution,ksens=f2.run_single()
-methane_profile=[]
+                         finalTime=1.0,
+                         target='temperature',
+                         target_type='max derivative',
+                         save_physSensHistories=0,save_timeHistories=1,n_processors=2)		
+
+				 
+solution,sens=s.run_single()
+print(solution,sens)
+#methane_profile=[]
 #for i in jsr1.JSR_objects:
 #	print(i.pressure,i.temperature,i.conditions)
 #	print(i.solution['ch4'],i.reactorPressure)

@@ -14,6 +14,7 @@ class Parser(object):
     def load_to_obj(self, path:str = ''):
         with open(path) as f:
             config = yaml.load(f,Loader=yaml.FullLoader)
+            #print(config)
         return config
     
     def get_sim_type(self,loaded_exp:dict={}):
@@ -124,10 +125,17 @@ class Parser(object):
         thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
         mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
         mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
+        for i in range(len(mole_fraction_observables)):
+            if not mole_fraction_observables[i]:
+                mole_fraction_observables[i]='NO'
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
         species_uncertainties = dict(zip(species_names,species_uncertainties))
         observables = [x for x in mole_fraction_observables if x is not None]
+        for i in range(len(observables)):
+            if not observables[i]:
+                observables[i]='NO'
+        #print(observables)
         mole_fraction_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['mole-fraction']]
         csv_files = [x for x in mole_fraction_csv_files if x is not None]
         temp_relative_uncertainty = loaded_exp['common-properties']['temperature']['relative-uncertainty']
@@ -161,7 +169,8 @@ class Parser(object):
                'volume': volume,
                'residence_time': residence_time,
                'experimentType':experiment_type,
-               'residenceTimeRelativeUncertainty':restime_relative_uncertainty
+               'residenceTimeRelativeUncertainty':restime_relative_uncertainty,
+               'concentrationObservables': [None]
            }
         else:
             print('Placeholder: no JSR absorption')
@@ -239,7 +248,8 @@ class Parser(object):
                'csvFiles': csv_files,
                'simulationType':  simulation_type,
                'timeShift':time_shift,
-               'experimentType':experiment_type
+               'experimentType':experiment_type,
+               'ignitionDelayObservables':[None]
            }
         
         else: #absorbtion file given
@@ -322,9 +332,11 @@ class Parser(object):
                    'functionalForm':functional_form,
                    'simulationType':  simulation_type,
                    'timeShift':time_shift,
-                   'experimentType':experiment_type
+                   'experimentType':experiment_type,
+                   'ignitionDelayObservables':[None]
                    }
-    def parse_ignition_dealy_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+    def parse_ignition_delay_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+
     
         simulation_type = loaded_exp['apparatus']['kind']
         pressure_list = loaded_exp['common-properties']['pressure']['value-list']
@@ -369,7 +381,10 @@ class Parser(object):
         relative_uncertainty_in_group_list = [[] for groups in species_groups]
         species = []
         mole_fractions = []
-    
+        species_names = []
+        for i,group in enumerate(species_groups):
+            for j, dictonary in enumerate(group):
+                species_names.append(dictonary['name'])
     
         for i,group in enumerate(species_groups):
             for j, dictonary in enumerate(group):
@@ -378,6 +393,25 @@ class Parser(object):
                 mole_fractions.append(dictonary['mole-fraction']['value-list'])
         
         conditions = dict(zip(species,mole_fractions))
+        conditions_dict_list=copy.deepcopy(conditions)
+        max_cond_length=0
+        for species in conditions.keys():
+            if len(conditions[species])>max_cond_length:
+                max_cond_length=len(conditions[species])
+        temp_dict={}
+        for species in conditions.keys():
+            if len(conditions[species])==1:
+                temp_dict[species]=max_cond_length*[conditions[species]]
+            else:
+                temp_dict[species]=conditions[species]
+                
+        conditions_to_run = [{key:value[index] for key, value in temp_dict.items()}
+                             for index in range(len(list(temp_dict.values())[0]))]
+        for i in range(len(conditions_to_run)):
+            for j in conditions_to_run[i].keys():
+                if type(conditions_to_run[i][j])==list:
+                    conditions_to_run[i][j]=conditions_to_run[i][j][0]
+        
         species_by_group = dict(zip(species_group_numbers,species_in_group_list))
     
         for i,group in enumerate(attribute_group):
@@ -406,10 +440,10 @@ class Parser(object):
     
         if loaded_absorption == {}:
             return{
-                   'pressure':pressure_list,
-                   'pressureRelativeUncertainty': pressure_relative_uncertainty,
-                   'temperature':temperature_list,
-                    'tempRelativeUncertainty':temp_relative_uncertainty,
+                   'pressures':pressure_list,
+                   'pressureRelativeUncertainty': [pressure_relative_uncertainty],
+                   'temperatures':temperature_list,
+                    'tempRelativeUncertainty':[temp_relative_uncertainty],
                    'conditions':conditions,
                    'thermalBoundary':thermal_boundary,
                    'mechanicalBoundary':mechanical_boundary,
@@ -417,16 +451,16 @@ class Parser(object):
                    'observables':observables,
                    'initialTime':initial_time,
                    'finalTime':final_time,
-                   'speciesNames':species,
+                   'speciesNames':species_names,
                    'pathLength':path_length,
                    'MoleFractions':mole_fractions,
                    'ignitionDelayCsvFiles':ignition_delay_csv_files,
                    'timeShiftUncertainty':time_shift_uncertainty,
-                   'ignitionDelayRelativeUncertainity':ignition_dealy_relative_uncertainity,
+                   'ignitionDelayRelativeUncertainty':ignition_dealy_relative_uncertainity,
                    'ignitionDelayAbsoluteUncertainty':ignition_dealy_absolute_uncertainty,
                    'csvFiles': csv_files,
                    'simulationType':  simulation_type,
-                   'timeShift':time_shift,
+                   'time_shift':time_shift,
                    'experimentType':experiment_type,
                     'speciesGroupNumbers':species_group_numbers,
                     'speciesInGroupList':species_in_group_list,
@@ -434,8 +468,13 @@ class Parser(object):
                     'relativeUncertaintyBySpecies':relative_uncertainty_by_species,
                     'speciesByGroup':species_by_group,
                     'overallDict': overall_dict,
-                    'typeToSpeciesDict':type_dict
-    
+                    'typeToSpeciesDict':type_dict,
+                    'target':ignition_target,
+                    'target_type':ignition_type,
+                    'conditions_to_run':conditions_to_run,
+                    'conditions_dict_list':conditions_dict_list,
+                    'concentrationObservables': [None],
+                    'moleFractionObservables': [None]
                    }       
         else:
             print('We do not have absorbance installed for ignition delay')
@@ -448,7 +487,8 @@ class Parser(object):
                 #print(file)
                 temp.append(self.load_to_obj(file))
             list_of_yaml_objects.append(temp) 
-        list_of_yaml_objects = [tuple(lst) for lst in list_of_yaml_objects ]               
+        list_of_yaml_objects = [tuple(lst) for lst in list_of_yaml_objects ] 
+        #print(list_of_yaml_objects[0][0])              
         return list_of_yaml_objects
     
     def parsing_multiple_dictonaries(self,list_of_yaml_objects:list = [],loop_counter=0):
@@ -486,12 +526,12 @@ class Parser(object):
                 else:
                     experiment_dictonaries.append(self.parse_flame_speed_obj(loaded_exp = tup[0]))
                 
-            elif re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ii]gnition[ -][Dd]elay'):
+            elif re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ii]gnition[ -][Dd]elay',experiment_type):
                 if len(tup)>1:
-                    experiment_dictonaries.append(self.parse_ignition_dealy_obj(loaded_exp = tup[0],
+                    experiment_dictonaries.append(self.parse_ignition_delay_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
                 else:
-                    experiment_dictonaries.append(self.parse_ignition_dealy_obj(loaded_exp = tup[0]))                
+                    experiment_dictonaries.append(self.parse_ignition_delay_obj(loaded_exp = tup[0]))                
             else:
                 print('Failed to parse Yaml files- unrecognized simulation type for tuple index: '+str(counter))
             counter=counter+1
@@ -571,15 +611,25 @@ class Parser(object):
                 new_file_name = file_name_list[yaml_file][0]
     
             if experiment_dict_list[0]['simulation'].physicalSens ==1 :
-                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
+                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperature']
                     time_shift = self.original_experimental_conditions[yaml_file]['timeShift']
+                    press = self.original_experimental_conditions[yaml_file]['pressure']
+                    conditions = self.original_experimental_conditions[yaml_file]['conditions']
+                    
+                elif re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
+                    temp = self.original_experimental_conditions[yaml_file]['temperatures']
+                    time_shift = self.original_experimental_conditions[yaml_file]['time_shift']
+                    press = self.original_experimental_conditions[yaml_file]['pressures']
+                    conditions = self.original_experimental_conditions[yaml_file]['conditions']
+                    
+                    
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperatures']
                     res = self.original_experimental_conditions[yaml_file]['residence_time']
-                press = self.original_experimental_conditions[yaml_file]['pressure']
+                    press = self.original_experimental_conditions[yaml_file]['pressure']
+                    conditions = self.original_experimental_conditions[yaml_file]['conditions']
                 #mole_fractions = self.original_experimental_conditions[yaml_file]['MoleFractions']
-                conditions = self.original_experimental_conditions[yaml_file]['conditions']
                 
                 print('__________________________________________________________________________')
                 print('loop:',loop_counter)
@@ -589,14 +639,34 @@ class Parser(object):
                 if re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
                     print(res)
                 print('__________________________________________________________________________')
-                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
+                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
                     updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
                     updatedTemp = round(updatedTemp,9)
                     #updatedTimeShift =  (np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * experiment_dict_list[yaml_file]['average_time']) - experiment_dict_list[yaml_file]['average_time']
-                    
+                    updatedPress = np.exp(physical_observables_updates_list[yaml_file]['P_experiment_'+str(yaml_file)]) * press
+                    updatedPress = round(updatedPress,9)
                     updatedTimeShift = physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)] + time_shift
 
                     updatedTimeShift = round(updatedTimeShift,9)
+                    species_to_loop =  experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['species']
+                    dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
+                    updated_mole_fractions = {}
+                    count = 0
+                    for specie in species_to_loop:
+                        if specie in dilluant:
+                            continue
+                        updated = np.exp(physical_observables_updates_list[yaml_file]['X_'+str(count)+'_experiment_'+str(yaml_file)])*conditions[specie]
+                        updated = round(updated,9)
+                        updated_mole_fractions[specie] = updated
+                        count+=1
+    
+                    for specie in species_to_loop:
+                        if specie in dilluant:
+                            updated_mole_fractions[specie] = conditions[specie]
+                    
+                    updated_mole_fraction_list = []
+                    for specie in species_to_loop:
+                        updated_mole_fraction_list.append(updated_mole_fractions[specie])
                     
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']) or  re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):
                     updatedTemp=[]
@@ -604,44 +674,88 @@ class Parser(object):
                         updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))
                     updatedResTime=np.exp(physical_observables_updates_list[yaml_file]['R_experiment_'+str(yaml_file)])*res
                     updatedResTime=round(updatedResTime,9)
-                updatedPress = np.exp(physical_observables_updates_list[yaml_file]['P_experiment_'+str(yaml_file)]) * press
-                updatedPress = round(updatedPress,9)
-                
-                
+                    updatedPress = np.exp(physical_observables_updates_list[yaml_file]['P_experiment_'+str(yaml_file)]) * press
+                    updatedPress = round(updatedPress,9)
+                    species_to_loop =  experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['species']
+                    dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
+                    updated_mole_fractions = {}
+                    count = 0
+                    for specie in species_to_loop:
+                        if specie in dilluant:
+                            continue
+                        updated = np.exp(physical_observables_updates_list[yaml_file]['X_'+str(count)+'_experiment_'+str(yaml_file)])*conditions[specie]
+                        updated = round(updated,9)
+                        updated_mole_fractions[specie] = updated
+                        count+=1
+    
+                    for specie in species_to_loop:
+                        if specie in dilluant:
+                            updated_mole_fractions[specie] = conditions[specie]
+                    
+                    updated_mole_fraction_list = []
+                    for specie in species_to_loop:
+                        updated_mole_fraction_list.append(updated_mole_fractions[specie])
+                    
+                elif re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
+                    updatedTemp=[]
+                    diluent=[]   
+                    if 'Diluent' in experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
+                        diluent = experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict']['diluent']
+                    for i,T in enumerate(temp):
+                        updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))
+                    updatedPress=[]
+                    for i,P in enumerate(press):
+                        updatedPress.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['P'+str(i+1)+'_experiment_'+str(yaml_file)]) * P,9)))
+                    updated_mole_fractions = {}
+                    #print(physical_observables_updates_list[yaml_file])
+                    counter=0
+                    for i,species in enumerate(self.original_experimental_conditions[yaml_file]['conditions'].keys()):
+                        temp_spec_list=[]
+                        if species in diluent:
+                            continue
+                        else:   
+                            for j,value in enumerate(self.original_experimental_conditions[yaml_file]['conditions'][species]):
+                                temp_spec_list.append(np.exp(physical_observables_updates_list[yaml_file]['X'+str(counter+1)+'_cond'+str(j)+'_'+species+'_experiment_'+str(yaml_file)])*self.original_experimental_conditions[yaml_file]['conditions'][species][j])
+                                temp_spec_list[-1]=float(round(temp_spec_list[-1],9))
+                            counter=counter+1
+                        updated_mole_fractions[species]=copy.deepcopy(temp_spec_list)
+                    updatedTimeShift = physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)] + time_shift
 
-                species_to_loop =  experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['species']
-                dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
-                updated_mole_fractions = {}
-                count = 0
-                for specie in species_to_loop:
-                    if specie in dilluant:
-                        continue
-                    updated = np.exp(physical_observables_updates_list[yaml_file]['X_'+str(count)+'_experiment_'+str(yaml_file)])*conditions[specie]
-                    updated = round(updated,9)
-                    updated_mole_fractions[specie] = updated
-                    count+=1
-
-                for specie in species_to_loop:
-                    if specie in dilluant:
-                        updated_mole_fractions[specie] = conditions[specie]
+                    updatedTimeShift = float(round(updatedTimeShift,9))
+                        
                 
-                updated_mole_fraction_list = []
-                for specie in species_to_loop:
-                    updated_mole_fraction_list.append(updated_mole_fractions[specie])
  # starting to do file updates here 
                
                 with open(new_file_name) as f:
                     config2 = yaml.safe_load(f)
                 
-                config2['common-properties']['pressure']['value']=float(updatedPress)
-                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']):
+                
+                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
                     config2['common-properties']['temperature']['value']=float(updatedTemp)
                     config2['common-properties']['time-shift']['value']=float(updatedTimeShift)
+                    config2['common-properties']['pressure']['value']=float(updatedPress)
+                    for i,moleFraction in enumerate(updated_mole_fraction_list):
+                        config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):    
                     config2['common-properties']['temperature']['value-list']=updatedTemp
                     config2['apparatus']['residence-time']['value']=float(updatedResTime)
-                for i,moleFraction in enumerate(updated_mole_fraction_list):
-                    config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)
+                    config2['common-properties']['pressure']['value']=float(updatedPress)
+                    for i,moleFraction in enumerate(updated_mole_fraction_list):
+                        config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)
+                    
+                elif re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
+                    config2['common-properties']['temperature']['value-list']=updatedTemp
+                    config2['common-properties']['pressure']['value-list']=updatedPress
+                    
+                    for j,group in enumerate(config2['common-properties']['composition']):
+                       #print(group['mixture'])
+                       for n,obj in enumerate(group['mixture']):
+                           if obj['name'] not in diluent:
+                               obj['mole-fraction']['value-list']=updated_mole_fractions[obj['name']]
+                           #print(updated_mole_fractions[obj['name']])
+                    #config2['common-properties']['composition'][i]['mole-fraction']=updated_mole_fractions[species]
+                    config2['common-properties']['time-shift']['value']=float(updatedTimeShift)
+                
                     
                 with open(new_file_name,'w') as f:
                     yaml.safe_dump(config2, f,default_flow_style=False)
