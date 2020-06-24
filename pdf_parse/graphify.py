@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from PIL import Image, ImageTk
-import graph_parser as gp
+import pdf_parse.graph_parser as gp
 import tkinter as tk
 import pandas as pd
 import pandas as pd
@@ -16,26 +16,21 @@ import sys
 from tkinter import ttk
 from skimage import io
 
-win = 30
-
-if(len(sys.argv)==1):
-    fname = input("Filename: ")
-else:
-    fname = sys.argv[1].rstrip()
-imgCV = io.imread(fname);
-    
-
 
 class Graphify(ttk.Frame):
-    def __init__(self):
+    def __init__(self, fname, win=30, dim=(800,800)):
         super().__init__()
+        self.dim = dim
         self.savename = 'test.csv'
-        self.pattern = imgCV[0:win, 0:win]
+        self.fname = fname
+        self.imgCV = io.imread(fname)
+        self.pattern = self.imgCV[0:win, 0:win]
+        self.win = win
         self.initUI()
 
     def click(self, event):
         # Upon click show locations and colors at location
-        self.px = imgCV[event.y, event.x]
+        self.px = self.imgCV[event.y, event.x]
         #print(self.px)
         self.pos = [event.y, event.x]
         #print(self.pos)
@@ -43,8 +38,8 @@ class Graphify(ttk.Frame):
         self.lname.set("Location %d %d" % (self.pos[0], self.pos[1]))
 
         # Show pattern on screen:
-        self.pattern = imgCV[self.pos[0]:self.pos[0]+win,
-                             self.pos[1]:self.pos[1]+win]
+        self.pattern = self.imgCV[self.pos[0]:self.pos[0]+self.win,
+                             self.pos[1]:self.pos[1]+self.win]
 
         self.pattern_im = ImageTk.PhotoImage(image=Image.fromarray(self.pattern))
         self.patt.create_image(0,0, anchor=tk.NW, image=self.pattern_im)        
@@ -69,7 +64,8 @@ class Graphify(ttk.Frame):
                                 (self.xpos[0][0],self.xpos[0][1]),
                                 (self.xpos[1][0],self.xpos[1][1]),
                                 yval, xval,
-                                (self.pos[0], self.pos[1]), self.pattern_use, fname)
+                                (self.pos[0], self.pos[1]), self.pattern_use,
+                                self.fname)
 
         if(self.opt.get() == 0):
             pt = graph.get_pts()
@@ -197,7 +193,7 @@ class Graphify(ttk.Frame):
         # Screen Handler
         self.pattern_im = ImageTk.PhotoImage(image=Image.fromarray(self.pattern))
 
-        self.patt = tk.Canvas(self, width=win, height=win, bg='white')
+        self.patt = tk.Canvas(self, width=self.win, height=self.win, bg='white')
         self.patt.grid(row=4,column=6)
         self.patt.create_image(0,0, anchor=tk.NW, image=self.pattern_im)
 
@@ -210,20 +206,46 @@ class Graphify(ttk.Frame):
 
 
         # Image Handler
-        self.canvas = tk.Canvas(width=800, height=800, bg='white')
+        self.canvas = tk.Canvas(width=self.dim[0], height=self.dim[1], bg='white')
         self.canvas.pack()
-        self.img = tk.PhotoImage(file=fname)        
+        self.img = tk.PhotoImage(file=self.fname)        
         self.canvas.create_image(0,0,image=self.img, anchor=tk.NW)
         self.canvas.bind("<Button-1>", self.click)
         #self.canvas.bind()
         
+def run_graphify(fname=None, dim:tuple=(800,800)):
+    '''
+    Extract points from file under path `fname`
 
-        
+    If not specified will prompt user input
+
+    Optional parameter `dim` to change dimensions to adjust to image sizes
+    '''
+    if(not(fname)):
+        fname = input("Filename: ")
+
+    w = tk.Tk()
+    w.geometry(str(dim[0])+"x"+str(dim[1]))
+    app = Graphify(fname, dim=dim)
+    w.mainloop()
+     
+'''       
 def main():
+    win = 30
+
+    if(len(sys.argv)==1):
+        fname = input("Filename: ")
+    else:
+        fname = sys.argv[1].rstrip()
+    imgCV = io.imread(fname);
+    
     w = tk.Tk()
     w.geometry("800x800")
-    app = Graphify()
+    app = Graphify(imgCV)
     w.mainloop()
+'''
 
+'''
 if __name__=='__main__':
     main()
+'''

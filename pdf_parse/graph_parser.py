@@ -17,6 +17,7 @@ win = 30
 #v1 - v2
 
 def pattern_match(mold:np.array, template:np.array, threshold:float=0.6):
+    '''Detects patterns from `template` using `mold`'''
     res = match_template(mold, template)
     peaks = peak_local_max(res,min_distance=0,threshold_rel=threshold)
     return peaks[:,1]+win/2, peaks[:,0]+win/2
@@ -36,13 +37,29 @@ def proj(a:tuple, b:tuple):
     return tuple([factor*x for x in b])
 
 class Axis(object):
-    # Graph axis object for graph parser
-    # self.loc = ((x1,y1), (x2,y2))
-    # self.val = ( val1  , val2   )
+    '''Representation of graph axis'''
     def __init__(self, start:tuple, end:tuple, values:tuple=None):
+        '''
+        `start` and `end should be tuples representing axis endpoints as image
+        coordinates
+        
+        `values` should be a tuple representing the value at the start and end of the axis
+        '''
         self.loc = (start, end);
         if(values):
             self.val = sorted(values)
+
+    def pt_approx(self, pt:tuple):
+        '''Approximate value at given point `pt` relative to axis'''
+        v1   = vsub(pt         , self.loc[0])
+        v2   = vsub(self.loc[1], self.loc[0])
+
+        v_proj = proj(v1, v2)
+
+        vlen = magn(proj(v1, v2))
+        if (np.dot(v_proj, v2) < 0):
+            return -vlen/magn(v2)*(self.val[1]-self.val[0])+self.val[0]
+        return vlen/magn(v2)*(self.val[1]-self.val[0])+self.val[0]
             
     # acccessors        
     def get_ycoord(self):
@@ -54,22 +71,8 @@ class Axis(object):
     def get_range(self):
         return self.val
 
-    # mutator
     def set_value(self, values:tuple):
         self.val = values;
-    
-    def pt_approx(self, pt:tuple):
-        # Approximate value at given point relative to axis
-        v1   = vsub(pt         , self.loc[0])
-        v2   = vsub(self.loc[1], self.loc[0])
-
-        v_proj = proj(v1, v2)
-
-        vlen = magn(proj(v1, v2))
-        if (np.dot(v_proj, v2) < 0):
-            return -vlen/magn(v2)*(self.val[1]-self.val[0])+self.val[0]
-        return vlen/magn(v2)*(self.val[1]-self.val[0])+self.val[0]
-
 
 class Graph_Parser(object):
     # vax=vertical axis, hax=horizontal Axis
@@ -108,8 +111,17 @@ class Graph_Parser(object):
             self.color = self.img[self.color_pt[0], self.color_pt[1]]
     
     # Approximate time-series      
-    def get_pts(self, step:int = 1, mode:str='color', kernel:int = 30,
-            corr:float=0.6):
+    def get_pts(self, step:int = 1, mode:str='color', corr:float=0.6):
+        '''
+        Approximate all points from the graph based upon UI inputs
+
+        `mode` includes `color`, `color-all`, and `pattern`
+
+        `corr` is for pattern mode and determines a correlation threshold to
+        detect the pattern
+
+        Adjust to extract the most points
+        '''
         if(mode == 'color'):
             xax = self.hax.get_xcoord()
             yax = self.vax.get_ycoord()
@@ -120,12 +132,6 @@ class Graph_Parser(object):
                 c = 0
                 
                 for v in range(yax[0], yax[1]-3):
-                    # If color matches
-                    #if(pattern):
-                    #    if((v+kernel<yax[1]-4 and t+kernel < xax[1]-1) and pattern_match(self.pattern, self.img[v:v+kernel, t:t+kernel])):
-                    #        vval += self.vax.pt_approx((int(v+kernel/2),int(t+kernel/2)))
-                    #        tval += self.hax.pt_approx((int(v+kernel/2),int(t+kernel/2)))
-                    #        c += 1
                     if(np.array_equal(self.img[v, t], self.color)):
                             vval += self.vax.pt_approx((v, t))
                             tval += self.hax.pt_approx((v, t))
