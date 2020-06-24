@@ -70,8 +70,14 @@ files_to_include = [['Hong_0.yaml'],
                     ['Hong_HO2_fake_data_13.yaml','Hong_HO2_fake_data_13_abs.yaml'],
                     ['Hong_HO2_fake_data_14.yaml','Hong_HO2_fake_data_14_abs.yaml'],
                     ['Hong_HO2_fake_data_15.yaml','Hong_HO2_fake_data_15_abs.yaml'],
-                    ['Lightfoot_6.yaml','Lightfoot_6_abs.yaml'],
-                    ['Lightfoot_0.yaml','Lightfoot_0_abs.yaml']]   
+                    ['Lightfoot_0.yaml','Lightfoot_0_abs.yaml'],
+                    ['Lightfoot_1.yaml','Lightfoot_1_abs.yaml'],
+                    ['Lightfoot_2.yaml','Lightfoot_2_abs.yaml'],
+                    ['Lightfoot_3.yaml','Lightfoot_3_abs.yaml'],
+                    ['Lightfoot_4.yaml','Lightfoot_4_abs.yaml'],
+                    ['Lightfoot_5.yaml','Lightfoot_5_abs.yaml'],                    
+                    ['Lightfoot_6.yaml','Lightfoot_6_abs.yaml']]   
+
 
 #files_to_include=[                    ['Farooq_0_large_uncertainty.yaml'],
 #                    ['Farooq_1_large_uncertainty_2.yaml'],

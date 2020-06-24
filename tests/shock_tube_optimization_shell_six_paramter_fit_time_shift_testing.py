@@ -34,7 +34,7 @@ files_to_include = [['Hong_0.yaml'],
 
 files_to_include = [['Hong_5.yaml','Hong_5_abs.yaml']]
 #files_to_include = [['Hong_0_time_shift_test.yaml']]
-numer_of_iterations = 50
+numer_of_iterations =2
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
@@ -173,7 +173,7 @@ MSI_st_instance_one.deltaXAsNsEas
 Ydf_original = MSI_st_instance_one.Y_data_frame
 Zdf_original = MSI_st_instance_one.z_data_frame
 
-
+original_Y_matrix = MSI_st_instance_one.original_Y_matrix 
 
 #need to fix this and return _s_matrix and y_matrix
 
@@ -248,53 +248,53 @@ else:
 ##########################################################################################################################
 #csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_FFCM1.csv'
 #csv_file_sigma =  MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_glarborg.csv'
-csv_file_sigma = ''
-plotting_instance = plotter.Plotting(S_matrix,
-                                      s_matrix,
-                                      Y_matrix,
-                                      y,
-                                      z_matrix,
-                                      X,
-                                      sigma,
-                                      covarience,
-                                      original_covariance,
-                                      S_matrix_original,
-                                      exp_dict_list_optimized,
-                                      exp_dict_list_original,
-                                      parsed_yaml_list,
-                                      Ydf,
-                                      target_value_rate_constant_csv= MSI_st_instance_two.data_directory +'/'+ rate_constant_target_value_data_for_plotting ,
-                                      target_value_rate_constant_csv_extra_values = MSI_st_instance_two.data_directory +'/'+rate_constant_target_value_data_extra,
-                                      k_target_value_S_matrix =k_target_value_S_matrix,
-                                      k_target_values=run_with_k_target_values,
-                                      working_directory = working_directory,
-                                      sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma)
-#csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_updated.csv'
-observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
-sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
-sigmas_original,test2 = plotting_instance.calculating_sigmas(S_matrix_original,original_covariance)
-plotting_instance.plotting_observables(sigmas_original = sigmas_original,sigmas_optimized= sigmas_optimized)
-diag = plotting_instance.getting_matrix_diag(covarience)
+# csv_file_sigma = ''
+# plotting_instance = plotter.Plotting(S_matrix,
+#                                       s_matrix,
+#                                       Y_matrix,
+#                                       y,
+#                                       z_matrix,
+#                                       X,
+#                                       sigma,
+#                                       covarience,
+#                                       original_covariance,
+#                                       S_matrix_original,
+#                                       exp_dict_list_optimized,
+#                                       exp_dict_list_original,
+#                                       parsed_yaml_list,
+#                                       Ydf,
+#                                       target_value_rate_constant_csv= MSI_st_instance_two.data_directory +'/'+ rate_constant_target_value_data_for_plotting ,
+#                                       target_value_rate_constant_csv_extra_values = MSI_st_instance_two.data_directory +'/'+rate_constant_target_value_data_extra,
+#                                       k_target_value_S_matrix =k_target_value_S_matrix,
+#                                       k_target_values=run_with_k_target_values,
+#                                       working_directory = working_directory,
+#                                       sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma)
+# #csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_updated.csv'
+# observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
+# sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
+# sigmas_original,test2 = plotting_instance.calculating_sigmas(S_matrix_original,original_covariance)
+# plotting_instance.plotting_observables(sigmas_original = sigmas_original,sigmas_optimized= sigmas_optimized)
+# diag = plotting_instance.getting_matrix_diag(covarience)
 
 
-#plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
+# #plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
 
 
 
                                 
 
 
-sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
-obs = plotting_instance.plotting_uncertainty_weighted_sens()
+# sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
+# obs = plotting_instance.plotting_uncertainty_weighted_sens()
 
-plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MSI_st_instance_two.new_cti_file,
-                                original_cti_file=original_cti_file,
-                                initial_temperature=250,
-                                final_temperature=2500,
-                                master_equation_reactions = master_equation_reactions,
-                                six_parameter_fit_dict_optimized = six_parameter_fit_dict_optimized,
-                                six_parameter_fit_dict_nominal = six_parameter_fit_nominal_parameters_dict,
-                                six_parameter_fit_sensitivity_dict =six_parameter_fit_sensitivities )
+# plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MSI_st_instance_two.new_cti_file,
+#                                 original_cti_file=original_cti_file,
+#                                 initial_temperature=250,
+#                                 final_temperature=2500,
+#                                 master_equation_reactions = master_equation_reactions,
+#                                 six_parameter_fit_dict_optimized = six_parameter_fit_dict_optimized,
+#                                 six_parameter_fit_dict_nominal = six_parameter_fit_nominal_parameters_dict,
+#                                 six_parameter_fit_sensitivity_dict =six_parameter_fit_sensitivities )
 
 
 

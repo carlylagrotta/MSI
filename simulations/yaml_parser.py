@@ -183,9 +183,10 @@ class Parser(object):
         species_uncertainties = dict(zip(species_names,species_uncertainties))
         
         
-        concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']]            
+        concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']]
+           
         observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]
-        
+ 
         initial_time = loaded_exp['common-properties']['time']['initial-time']['value']
         #eventually going to get this from a csv file 
         final_time = loaded_exp['common-properties']['time']['final-time']['value']
