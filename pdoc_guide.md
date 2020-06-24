@@ -21,4 +21,4 @@ MSI
       --> `module.py`
 
 `export PYTHONPATH="/path_to_MSI/"` set the path to search the module from
-`pdoc --html src --html-di /path_to_documentation_folder/`
+`pdoc --html src --html-dir /path_to_documentation_folder/`
