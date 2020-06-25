@@ -205,10 +205,7 @@ class Parser(object):
         #print(concentration_observables,len(concentration_observables))
         observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]
         
-        for i in range(len(observables)):
-            if not observables[i]:
-                observables[i]='NO'
-        print(observables, len(observables))
+
         initial_time = loaded_exp['common-properties']['time']['initial-time']['value']
         #eventually going to get this from a csv file 
         final_time = loaded_exp['common-properties']['time']['final-time']['value']
@@ -509,13 +506,20 @@ class Parser(object):
         mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
         experiment_type = loaded_exp['experiment-type']
         mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
+        if mole_fraction_observables[0]!=None:
+            for i in range(len(mole_fraction_observables)):
+                if not mole_fraction_observables[i]:
+                    mole_fraction_observables[i]='NO'
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
         species_uncertainties = dict(zip(species_names,species_uncertainties))
             
             
         concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']]
-               
+        if concentration_observables[0]!=None:
+            for i in range(len(concentration_observables)):
+                if not concentration_observables[i]:
+                    concentration_observables[i]='NO'               
         observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]
      
         initial_time = loaded_exp['common-properties']['time']['initial-time']['value']
@@ -524,7 +528,6 @@ class Parser(object):
        
         mole_fraction_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['mole-fraction']]
         concentration_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['concentration']]
-        path_length = loaded_exp['apparatus']['inner-diameter']['value']
         csv_files = [x for x in (mole_fraction_csv_files + concentration_csv_files) if x is not None]
     
     
@@ -541,7 +544,9 @@ class Parser(object):
         mole_fraction_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]
     
         mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
-
+        if len(temperature_list) > 1 len(residence_time_list) ==1:
+            residence_time_list = residence_time_list*len(temperature_list)
+            
         if loaded_absorption=={}:
             return{
                    'pressure':pressure,
@@ -556,7 +561,6 @@ class Parser(object):
                    'observables':observables,
                    'initialTime':initial_time,
                    'speciesNames':species_names,
-                   'pathLength':path_length,
                    'MoleFractions':mole_fractions,
                    'moleFractionCsvFiles':mole_fraction_csv_files,
                    'concentrationCsvFiles':concentration_csv_files,
@@ -635,7 +639,15 @@ class Parser(object):
                     experiment_dictonaries.append(self.parse_ignition_delay_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
                 else:
-                    experiment_dictonaries.append(self.parse_ignition_delay_obj(loaded_exp = tup[0]))                
+                    experiment_dictonaries.append(self.parse_ignition_delay_obj(loaded_exp = tup[0])) 
+            elif  re.match('[Ff]low[- ][Rr]eactor',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
+                if len(tup)>1:
+                    experiment_dictonaries.append(self.parse_flow_reactor_obj()(loaded_exp = tup[0],
+                                                                            loaded_absorption = tup[1]))
+                else:
+                    experiment_dictonaries.append(self.parse_flow_reactor_obj(loaded_exp = tup[0])) 
+
+                    
             else:
                 print('Failed to parse Yaml files- unrecognized simulation type for tuple index: '+str(counter))
             counter=counter+1
