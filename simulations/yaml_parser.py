@@ -478,6 +478,96 @@ class Parser(object):
                    }       
         else:
             print('We do not have absorbance installed for ignition delay')
+            
+    def parse_flow_reactor_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+        residence_time_list = loaded_exp['apparatus']['residence-time']['value-list']
+        
+        
+        
+        simulation_type = loaded_exp['apparatus']['kind']
+        pressure = loaded_exp['common-properties']['pressure']['value']
+        temperature_list = loaded_exp['common-properties']['temperature']['value-list']
+        mole_fractions = [((concentration['mole-fraction'])) for concentration in loaded_exp['common-properties']['composition']]
+        mole_fractions = [float(elm) for elm in mole_fractions]
+        species_names = [(species['species']) for species in loaded_exp['common-properties']['composition']]
+        conditions = dict(zip(species_names,mole_fractions))
+        thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
+        mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
+        experiment_type = loaded_exp['experiment-type']
+        mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
+        species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
+        species_uncertainties = [float(elm) for elm in species_uncertainties]
+        species_uncertainties = dict(zip(species_names,species_uncertainties))
+            
+            
+        concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']]
+               
+        observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]
+     
+        initial_time = loaded_exp['common-properties']['time']['initial-time']['value']
+            #eventually going to get this from a csv file 
+        
+       
+        mole_fraction_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['mole-fraction']]
+        concentration_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['concentration']]
+        path_length = loaded_exp['apparatus']['inner-diameter']['value']
+        csv_files = [x for x in (mole_fraction_csv_files + concentration_csv_files) if x is not None]
+    
+    
+            #importing unceratinty values 
+        temp_relative_uncertainty = loaded_exp['common-properties']['temperature']['relative-uncertainty']
+        temp_relative_uncertainty = float(temp_relative_uncertainty)
+        pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
+        pressure_relative_uncertainty = float(pressure_relative_uncertainty)
+        time_shift = float(loaded_exp['common-properties']['time-shift']['value'])
+        time_shift_uncertainty = loaded_exp['common-properties']['time-shift']['absolute-uncertainty']['value']
+        concentration_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
+        concentration_relative_uncertainity = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
+    
+        mole_fraction_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]
+    
+        mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
+
+        if loaded_absorption=={}:
+            return{
+                   'pressure':pressure,
+                   'temperature_list':temperature_list,
+                   'residence_time_list':residence_time_list,
+                   'conditions':conditions,
+                   'speciesUncertaintys':species_uncertainties,
+                   'thermalBoundary':thermal_boundary,
+                   'mechanicalBoundary':mechanical_boundary,
+                   'moleFractionObservables':mole_fraction_observables,
+                   'concentrationObservables': concentration_observables,               
+                   'observables':observables,
+                   'initialTime':initial_time,
+                   'speciesNames':species_names,
+                   'pathLength':path_length,
+                   'MoleFractions':mole_fractions,
+                   'moleFractionCsvFiles':mole_fraction_csv_files,
+                   'concentrationCsvFiles':concentration_csv_files,
+                   'tempRelativeUncertainty':temp_relative_uncertainty,
+                   'pressureRelativeUncertainty': pressure_relative_uncertainty,
+                   'timeShiftUncertainty':time_shift_uncertainty,
+                   'concentrationAbsoluteUncertainty':concentration_absolute_uncertainty,
+                   'concentrationRelativeUncertainity':concentration_relative_uncertainity,
+                   'moleFractionAbsoluteUncertainty':mole_fraction_absolute_uncertainty,
+                   'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
+                   'csvFiles': csv_files,
+                   'simulationType':  simulation_type,
+                   'timeShift':time_shift,
+                   'experimentType':experiment_type
+               }        
+        else:
+            print('We do not have absorbance installed for ignition delay')
+        
+    
+    
+    
+    
+    
+    
+    
     def load_yaml_list(self, yaml_list:list = []):
         #print(yaml_list)
         list_of_yaml_objects = []
