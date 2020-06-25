@@ -17,6 +17,8 @@ import re
 import os
 import MSI.simulations.instruments.ignition_delay as ig
 import MSI.cti_core.cti_processor as pr
+import MSI.simulations.instruments.jsr_steadystate as jsr
+
 
 
 
@@ -207,9 +209,51 @@ class Plotting(object):
         soln,temp=ig_delay.run()
         
         
-        print(soln)
+        #print(soln)
         return soln
+    def run_jsr(self,exp,cti,n_of_data_points=10):
         
+        p=pr.Processor(cti)
+        
+        tempmin=np.min(exp['simulation'].fullParsedYamlFile['temperatures'])
+        print('Tempmin: '+str(tempmin))
+        tempmax=np.max(exp['simulation'].fullParsedYamlFile['temperatures'])
+        print('Tempmax: '+str(tempmax))
+        if tempmax!=tempmin:
+            total_range=tempmax-tempmin
+            tempmax=tempmax+0.1*total_range
+            tempmin=tempmin-0.1*total_range
+        elif tempmax==tempmin:
+            tempmax=tempmax*1.1
+            tempmin=tempmin*0.9
+        temprange=np.linspace(tempmin,tempmax,n_of_data_points)
+        print(temprange)
+        pressures=exp['simulation'].fullParsedYamlFile['pressure']
+        conds=exp['simulation'].fullParsedYamlFile['conditions']
+            
+            
+            
+        
+        jsr1=jsr.JSR_multiTemp_steadystate(volume=exp['simulation'].fullParsedYamlFile['volume'],
+                    pressure=pressures,
+                    temperatures=temprange,
+                    observables=exp['simulation'].fullParsedYamlFile['observables'],
+                    kineticSens=0,
+                    physicalSens=0,
+                    conditions=conds,
+                    thermalBoundary=exp['simulation'].fullParsedYamlFile['thermalBoundary'],
+                    mechanicalBoundary=exp['simulation'].fullParsedYamlFile['mechanicalBoundary'],
+                    processor=p,
+                    save_physSensHistories=0,
+                    save_timeHistories=0,
+                    residence_time=exp['simulation'].fullParsedYamlFile['residence_time'],
+                    moleFractionObservables = exp['simulation'].fullParsedYamlFile['moleFractionObservables'],
+                    fullParsedYamlFile = exp['simulation'].fullParsedYamlFile)
+        soln,temp=jsr1.run()
+        
+        
+        #print(soln)
+        return soln
     
     def plotting_observables(self,sigmas_original=[],sigmas_optimized=[]):
         
@@ -260,8 +304,11 @@ class Plotting(object):
     
                         observable_counter+=1
                     elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
-                        plt.plot(exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0][observable],'b',label='MSI')
-                        plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable],'r',label= "$\it{A priori}$ model")
+                        nominal=self.run_jsr(self.exp_dict_list_original[i],self.nominal_cti)
+                        print(nominal)
+                        MSI_model=self.run_jsr(exp,self.new_cti)
+                        plt.plot(MSI_model['temperature'],MSI_model[observable],'b',label='MSI')
+                        plt.plot(nominal['temperature'],nominal[observable],'r',label= "$\it{A priori}$ model")
                         plt.plot(exp['experimental_data'][observable_counter]['Temperature'],exp['experimental_data'][observable_counter][observable],'o',color='black',label='Experimental Data')
                         plt.xlabel('Temperature (K)')
                         plt.ylabel('Mole Fraction '+''+str(observable))
@@ -274,8 +321,12 @@ class Plotting(object):
                             low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
                             low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values)
                             #plt.figure()
-                            plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'b--')
-                            plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'b--')
+                            if len(high_error_optimized)>1 and len(low_error_optimized) > 1:
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'b--')
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'b--')
+                            else:
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'bX')
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'bX')
                             
                             
                             
@@ -339,7 +390,7 @@ class Plotting(object):
                     observable_counter+=1
                 if observable in exp['ignition_delay_observables']:
                     if len(exp['simulation'].temperatures)>1:
-                        nominal=self.run_ignition_delay(exp, self.nominal_cti)
+                        nominal=self.run_ignition_delay(self.exp_dict_list_original[i], self.nominal_cti)
                         MSI_model=self.run_ignition_delay(exp, self.new_cti)
                         plt.semilogy(1000/MSI_model['temperature'],MSI_model['delay'],'b',label='MSI')
                         plt.semilogy(1000/nominal['temperature'],nominal['delay'],'r',label= "$\it{A priori}$ model")
