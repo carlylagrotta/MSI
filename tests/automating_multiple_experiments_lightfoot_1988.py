@@ -87,7 +87,8 @@ for i in range(df.shape[0]):
     abs_loaded = parser.load_to_obj('MSI/data/automating_lightfoot_1988/automation_template_abs.yaml')
     
     abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,140.0,kinetic_sens=0)
-    plt.plot(test_tube.timeHistories[0]['time'],abs_data[wavelength],label='constant value rate constants')
+    plt.plot(test_tube.timeHistories[0]['time'],abs_data[wavelength],label=Temp)
+    plt.legend()
 
 #    fall_off = time_History['O'][0]/time_History['O']
 #    temp=None
