@@ -544,14 +544,14 @@ class Parser(object):
         mole_fraction_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]
     
         mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
-        if len(temperature_list) > 1 len(residence_time_list) ==1:
+        if len(temperature_list) > 1 and len(residence_time_list) ==1:
             residence_time_list = residence_time_list*len(temperature_list)
             
         if loaded_absorption=={}:
             return{
                    'pressure':pressure,
-                   'temperature_list':temperature_list,
-                   'residence_time_list':residence_time_list,
+                   'temperatures':temperature_list,
+                   'residenceTimes':residence_time_list,
                    'conditions':conditions,
                    'speciesUncertaintys':species_uncertainties,
                    'thermalBoundary':thermal_boundary,

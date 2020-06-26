@@ -101,7 +101,6 @@ class ignition_delay(sim.Simulation):
     def run_shocktube(self,args=[],temp_proc=None):
         
         if not args:
-            print(self.temperature,self.pressure,self.conditions,self.thermalBoundary,self.finalTime)
             shock_tube = st.shockTube(pressure =self.pressure,
                          temperature = self.temperature,
                          observables = self.observables,

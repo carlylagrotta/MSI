@@ -8,6 +8,7 @@ import MSI.simulations.instruments.shock_tube as st
 import MSI.simulations.instruments.jsr_steadystate as jsr
 import MSI.simulations.instruments.flames as fl
 import MSI.simulations.instruments.ignition_delay as ig
+import MSI.simulations.instruments.flow_reactor as fr
 import pandas as pd
 import numpy as np
 
@@ -303,8 +304,44 @@ class Optimization_Utility(object):
         return experiment
         
         
-        
-        
+    def running_flow_reactor(self,processor=None,
+                             experiment_dictionary:dict={},
+                             kineticSens = 1,
+                             physicalSens = 1,
+                             dk = 0.01,
+                             exp_number = 1):
+        flow_reactor = fr.flow_reactor_wrapper(pressure = experiment_dictionary['pressure'],
+                                                temperatures = experiment_dictionary['temperatures'],
+                                                observables = experiment_dictionary['observables'],
+                                                moleFractionObservables = experiment_dictionary['moleFractionObservables'],
+                                                concentrationObservables = experiment_dictionary['concentrationObservables'],
+                                                fullParsedYamlFile = experiment_dictionary,
+                                                kineticSens=kineticSens,
+                                                physicalSens=physicalSens,
+                                                conditions=experiment_dictionary['conditions'],
+                                                thermalBoundary=experiment_dictionary['thermalBoundary'],
+                                                mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
+                                                processor=processor,
+                                                cti_path="", 
+                                                save_physSensHistories=1,
+                                                save_timeHistories=1,
+                                                timeshift=experiment_dictionary['timeShift'],
+                                                initialTime=experiment_dictionary['initialTime'],
+                                                residenceTimes=experiment_dictionary['residenceTimes'])
+        soln,ksen=flow_reactor.run(ksens=kineticSens ,psens=physicalSens)
+        int_ksens_exp_mapped= flow_reactor.map_and_interp_ksens()
+        #tsoln=flow_reactor.sensitivity_adjustment(temp_del = dk)
+        #psoln=flow_reactor.sensitivity_adjustment(pres_del = dk)
+        #diluent=[]                                          
+                                               
+                                        
+            
+    
+        return 
+    
+    
+    
+            
     def running_full_jsr(self,processor=None,
                              experiment_dictionary:dict={},
                              kineticSens = 1,
@@ -335,7 +372,7 @@ class Optimization_Utility(object):
         psoln=jet_stirred_reactor.sensitivity_adjustment(pres_del = dk)
         ssoln=jet_stirred_reactor.species_adjustment(dk)
         rsoln=jet_stirred_reactor.sensitivity_adjustment(res_del = dk)
-        print(experiment_dictionary['observables'])
+        
         
         tsen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],tsoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
         psen=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],psoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
@@ -613,6 +650,7 @@ class Optimization_Utility(object):
     
     
     def looping_over_parsed_yaml_files(self,list_of_parsed_yamls,list_of_yaml_paths,processor=None,kineticSens=1,physicalSens=1,dk=.01):
+       
         experiment_list = []
         for i,yamlDict in enumerate(list_of_parsed_yamls):
          
@@ -729,6 +767,26 @@ class Optimization_Utility(object):
                         print('Absorbance currently not enabled for jsr')
             elif re.match('[Ff]lame[ -][Ss]peed',simulation_type) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',experiment_type):
                 print("ADD FLAME SPEED DICT HERE")           
+            
+            
+            
+            elif re.match('[Ff]low[ -][Rr]eactor',simulation_type) and re.match('[Ss]pecies[- ][Pp]rofile',experiment_type):
+                
+                
+                    if 'absorbanceObservables' not in yamlDict.keys():
+                        experiment = self.running_flow_reactor(processor=processor,
+                                           experiment_dictionary=yamlDict,
+                                           kineticSens = kineticSens,
+                                           physicalSens = physicalSens,
+                                           dk = dk,
+                                           exp_number=i)
+                        experiment_list.append(experiment)
+                    elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
+
+                        print('Absorbance currently not enabled for flow reactor')
+                    else:
+
+                        print('Absorbance currently not enabled for jsr')                
             else:
                 print('We do not have this simulation installed yet')
             
