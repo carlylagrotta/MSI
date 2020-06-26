@@ -136,7 +136,7 @@ class flow_reactor(sim.Simulation):
                          time_shift_value = self.timeshift)    
             return shock_tube
     
-    def run_single(self):
+    def run_single(self,ksens=self.kineticSens,psens=self.physicalSens):
         
                 
         sens=[]        
@@ -168,6 +168,7 @@ class flow_reactor(sim.Simulation):
     def get_res_time_data(self,data):        
         
         res_time_data = data.tail(1)
+        res_time_data = res_time_data.reset_index(drop=True)
         #reset index
         return res_time_data
 
@@ -241,7 +242,7 @@ class flow_reactor_wrapper(sim.Simulation):
         
         
         
-    def run(self):
+    def run(self,ksens=self.kineticSens,psens=self.physicalSens):
         
         
         
@@ -271,7 +272,7 @@ class flow_reactor_wrapper(sim.Simulation):
                                    initialTime=self.initialTime,
                                    residenceTime=self.residenceTimes[i])
     
-            res_time_data,k_sens=temp_flow.run_single()
+            res_time_data,k_sens=temp_flow.run_single(ksens=self.kineticSens,psens=self.physicalSens)
             
             temp=[]
             temp1=[]
@@ -341,7 +342,7 @@ class flow_reactor_wrapper(sim.Simulation):
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                       self.pressure+self.pressure*pres_del)
         
-        data,trash = self.run() #Ignore trash, just temp storage for empty kinetic sens array
+        data,trash = self.run(ksens=0,psens=1) #Ignore trash, just temp storage for empty kinetic sens array
         #print(data)
         
         #data = sim.Simulation.sensitivity_adjustment(self,temp_del,pres_del,spec_pair)
