@@ -215,6 +215,8 @@ class shockTube(sim.Simulation):
                             pd.DataFrame(tempArray[self.observables.index(observable)])).transpose()),
                             ignore_index=True)
             counter+=1
+        
+        
         if self.timeHistories != None:
 
             self.timeHistory.time = self.timeHistory.time + self.time_shift_value

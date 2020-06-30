@@ -536,7 +536,9 @@ class Parser(object):
         temp_relative_uncertainty = float(temp_relative_uncertainty)
         pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
         pressure_relative_uncertainty = float(pressure_relative_uncertainty)
-        time_shift = float(loaded_exp['common-properties']['time-shift']['value'])
+        time_shift_list = loaded_exp['common-properties']['time-shift']['value-list']
+        for i,value in enumerate(time_shift_list):
+            time_shift_list[i]=float(value)
         time_shift_uncertainty = loaded_exp['common-properties']['time-shift']['absolute-uncertainty']['value']
         concentration_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
         concentration_relative_uncertainity = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
@@ -546,6 +548,8 @@ class Parser(object):
         mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
         if len(temperature_list) > 1 and len(residence_time_list) ==1:
             residence_time_list = residence_time_list*len(temperature_list)
+        if len(temperature_list) > 1 and len(time_shift_list) ==1:
+            time_shift_list = time_shift_list*len(temperature_list)            
             
         if loaded_absorption=={}:
             return{
@@ -573,7 +577,7 @@ class Parser(object):
                    'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
                    'csvFiles': csv_files,
                    'simulationType':  simulation_type,
-                   'timeShift':time_shift,
+                   'timeShift':time_shift_list,
                    'experimentType':experiment_type
                }        
         else:

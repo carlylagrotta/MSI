@@ -73,8 +73,8 @@ class flow_reactor(sim.Simulation):
     
 
     
-    def run_shocktube(self,ksens=1 ,psens=1):
-        if ksens ==0 and psens==0:
+    def run_shocktube(self,ksens_marker=1 ,psens_marker=1):
+        if ksens_marker ==0 and psens_marker==0:
             shock_tube = st.shockTube(pressure =self.pressure,
                           temperature = self.temperature,
                           observables = self.observables,
@@ -96,7 +96,7 @@ class flow_reactor(sim.Simulation):
 
             return shock_tube
         
-        elif ksens ==1 and psens==0:
+        elif ksens_marker ==1 and psens_marker==0:
             shock_tube = st.shockTube(pressure =self.pressure,
                               temperature = self.temperature,
                               observables = self.observables,
@@ -117,7 +117,29 @@ class flow_reactor(sim.Simulation):
             shock_tube.run()
             return shock_tube
         
-        elif ksens ==1 and psens==1:
+        elif ksens_marker ==0 and psens_marker==1:
+            shock_tube = st.shockTube(pressure =self.pressure,
+                              temperature = self.temperature,
+                              observables = self.observables,
+                              kineticSens = 0,
+                              physicalSens = 1,
+                              conditions = self.conditions,
+                              initialTime = self.initialTime,
+                              finalTime = self.finalTime,
+                              thermalBoundary = self.thermalBoundary,
+                              mechanicalBoundary = self.mechanicalBoundary,
+                              processor = self.processor,
+                              save_timeHistories = 1,
+                              save_physSensHistories = 0,
+                              moleFractionObservables = self.moleFractionObservables,
+                              concentrationObservables = self.concentrationObservables,
+                              fullParsedYamlFile = self.fullParsedYamlFile,
+                              time_shift_value = self.timeshift)  
+            shock_tube.run()
+            return shock_tube
+
+        
+        elif ksens_marker ==1 and psens_marker==1:
             shock_tube = st.shockTube(pressure =self.pressure,
                               temperature = self.temperature,
                               observables = self.observables,
@@ -138,39 +160,50 @@ class flow_reactor(sim.Simulation):
             shock_tube.run()
             return shock_tube
     
-    def run_single(self,ksens=1,psens=1):
+    def run_single(self,ksens_marker=1,psens_marker=1):
         
                
-        sens=[]        
+               
         if self.kineticSens: 
             
-            s = self.run_shocktube(ksens=1,psens=0)
+            s = self.run_shocktube(ksens_marker=1,psens_marker=0)
             self.timehistory=copy.deepcopy(s.timeHistory)
             res_time_measurment=None
             res_time_measurment = self.get_res_time_data(self.timehistory)   
-            print(s.kineticSensitivities.shape)
+            
+            #print(s.kineticSensitivities.shape)
             ksens = s.kineticSensitivities[-1,:,:]
-            xdim = s.kineticSensitivities.shape[0]
+            #xdim = s.kineticSensitivities.shape[0]
             ydim = s.kineticSensitivities.shape[1]
             zdim = s.kineticSensitivities.shape[2]
 
 
             ksens = ksens.reshape((1,ydim,zdim))
-            print(ksens.shape)
+            #print(ksens.shape)
+            
             self.kineticSensitivities = ksens
-                
-        
+            
+        elif ksens_marker==0 and psens_marker==1:
+            
+            s = self.run_shocktube(ksens_marker=0,psens_marker=1)
+            
+            self.timehistory=copy.deepcopy(s.timeHistory)
+            
+            res_time_measurment=None
+            res_time_measurment = self.get_res_time_data(self.timehistory)             
+            
         else:
-            s = self.run_shocktube(ksens=0,psens=0)
+            s = self.run_shocktube(ksens_marker=0,psens_marker=0)
             self.timehistory=copy.deepcopy(s.timeHistory)
             res_time_measurment=None
             res_time_measurment = self.get_res_time_data(self.timehistory) 
             
 
         if self.kineticSens:  
-            return res_time_measurment,self.kineticSensitivities
+            
+            return res_time_measurment,self.kineticSensitivities,self.timehistory
         else:
-            return res_time_measurment,[]
+            return res_time_measurment,[],None
             
         
         
@@ -185,6 +218,7 @@ class flow_reactor(sim.Simulation):
 
     
     def sensitivityCalculation(self,originalValues,newValues,dk=.01):
+
         sensitivity=(np.log(newValues)-np.log(originalValues))/dk
                            
         return sensitivity
@@ -200,7 +234,7 @@ class flow_reactor_wrapper(sim.Simulation):
                  save_physSensHistories=0,moleFractionObservables:list=[],
                  concentrationObservables:list=[],
                  fullParsedYamlFile:dict={}, save_timeHistories:int=0,
-                 timeshift:float=0.0,initialTime:float=0.0,
+                 timeshifts:list=[],initialTime:float=0.0,
                  residenceTimes:list=1.0):
         
         
@@ -229,31 +263,31 @@ class flow_reactor_wrapper(sim.Simulation):
         self.moleFractionObservables = moleFractionObservables
         self.fullParsedYamlFile =  fullParsedYamlFile
         #self.energycon='off'
-        self.timeshift=timeshift
+        self.timeshifts=timeshifts
         self.timeHistory = None
         self.experimentalData = None
         self.initialTime=initialTime
         self.residenceTimes = residenceTimes
-        self.finalTime = list(np.array(self.timeshift) + np.array(self.residenceTimes))
+        self.finalTimes = list(np.array(self.timeshifts) + np.array(self.residenceTimes))
         self.save_physSensHistories = save_physSensHistories
         self.save_timeHistories = save_timeHistories
         
         #self.yaml_file=yaml_file
         if save_timeHistories == 1:
             self.timeHistories=[]
-            self.timeHistoryInterpToExperiment = None
-            self.pressureAndTemperatureToExperiment = None
+            self.fullTimeHistories=[]
+
         else:
             self.timeHistories=None
         if save_physSensHistories == 1:
             self.physSensHistories = []
         #self.setTPX()
-        self.dk = 0.01
+        self.dk = [0]
         self.solution=None
         
         
         
-    def run(self,ksens=1,psens=1):
+    def run(self,ksens_marker=1,psens_marker=1):
         
         
         
@@ -277,11 +311,16 @@ class flow_reactor_wrapper(sim.Simulation):
                                    concentrationObservables=self.concentrationObservables,
                                    fullParsedYamlFile=self.fullParsedYamlFile, 
                                    save_timeHistories=self.save_timeHistories,
-                                   timeshift=self.timeshift,
+                                   timeshift=self.timeshifts[i],
                                    initialTime=self.initialTime,
                                    residenceTime=self.residenceTimes[i])
             
-            res_time_data,k_sens=temp_flow.run_single(ksens=self.kineticSens,psens=self.physicalSens)
+            #res_time_data,k_sens=temp_flow.run_single(ksens=self.kineticSens,psens=self.physicalSens)
+            res_time_data,k_sens,fullTimeHistory=temp_flow.run_single(ksens_marker=ksens_marker,psens_marker=psens_marker)
+            if self.kineticSens==1:
+                self.fullTimeHistories.append(fullTimeHistory)
+                
+            
             
             temp=[]
             temp1=[]
@@ -293,6 +332,7 @@ class flow_reactor_wrapper(sim.Simulation):
             if not ksens_1stIter and self.kineticSens==1:
                 ksens=temp1
                 ksens_1stIter=True
+                
             elif self.kineticSens==1 and ksens_1stIter:
                 ksens=np.vstack([ksens,temp1])
                     #print(ksens)
@@ -300,15 +340,17 @@ class flow_reactor_wrapper(sim.Simulation):
         #print(np.shape(ksens))
         #print(self.timeHistories)
         #print(solution)
+
         if self.timeHistories != None:
             self.timeHistories.append(solution)
+            
         self.kineticSensitivities=ksens
         return (solution,ksens)
         
         
     def sensitivity_adjustment(self,temp_del:float=0.0,
                                pres_del:float=0.0,
-                               spec_triplet:(str,float,int)=('',0.0,0),
+                               spec_pair:(str,float)=('',0.0),
                                res_del:float=0.0):
         
         #this is where we would make the dk fix
@@ -316,12 +358,12 @@ class flow_reactor_wrapper(sim.Simulation):
             self.dk.append(temp_del)
         if pres_del != 0.0:       
             self.dk.append(pres_del) 
-        if spec_triplet[1] != 0.0:
-            self.dk.append(spec_triplet[1])
+        if spec_pair[1] != 0.0:
+            self.dk.append(spec_pair[1])
         
         temptemp=copy.deepcopy(self.temperatures)
-        temppres=copy.deepcopy(self.pressures)
-        tempcond=copy.deepcopy(self.conditions[spec_triplet[2]])
+        temppres=copy.deepcopy(self.pressure)
+        tempcond=copy.deepcopy(self.conditions)
         kin_temp = self.kineticSens
         self.kineticSens = 0
         '''
@@ -329,14 +371,14 @@ class flow_reactor_wrapper(sim.Simulation):
         are passed and set directly species need to go through an additional step in the 
         setTPX function. 
         '''
-        if spec_triplet[0] != '':
+        if spec_pair[0] != '':
             self.temperatures=np.array(self.temperatures)+temp_del*np.array(self.temperatures)
-            self.pressures=np.array(self.pressures)+pres_del*np.array(self.pressures)
-            #self.pressure=self.pressure+pres_del*self.pressure
-            xj=self.conditions[spec_triplet[2]][spec_triplet[0]]
-            delxj=spec_triplet[1]*self.conditions[spec_triplet[2]][spec_triplet[0]]
-            
-            self.conditions[spec_triplet[2]][spec_triplet[0]]=np.divide(np.multiply(xj+delxj,1-xj),1-xj-delxj)
+            #self.pressures=np.array(self.pressures)+pres_del*np.array(self.pressures)
+            self.pressure=self.pressure+pres_del*self.pressure
+            xj=self.conditions[spec_pair[0]]
+            delxj=spec_pair[1]*self.conditions[spec_pair[0]]
+            #print(xj,delxj)
+            self.conditions[spec_pair[0]]=np.divide(np.multiply(xj+delxj,1-xj),1-xj-delxj)
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                   self.pressure+self.pressure*pres_del,
 #                   {spec_pair[0]:self.conditions[spec_pair[0]]*spec_pair[1]})
@@ -344,20 +386,20 @@ class flow_reactor_wrapper(sim.Simulation):
            
         else:
            self.temperatures=np.array(self.temperatures)+temp_del*np.array(self.temperatures)
-           self.pressures=np.array(self.pressures)+pres_del*np.array(self.pressures)
-           #self.pressure=self.pressure+pres_del*self.pressure
+           #self.pressures=np.array(self.pressure)+pres_del*np.array(self.pressure)
+           self.pressure=self.pressure+pres_del*self.pressure
            #self.residence_time=self.residence_time+res_del*self.residence_time
            
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                       self.pressure+self.pressure*pres_del)
         
-        data,trash = self.run(ksens=0,psens=1) #Ignore trash, just temp storage for empty kinetic sens array
+        data,trash = self.run(ksens_marker=0,psens_marker=1) #Ignore trash, just temp storage for empty kinetic sens array
         #print(data)
         
         #data = sim.Simulation.sensitivity_adjustment(self,temp_del,pres_del,spec_pair)
         self.temperatures=temptemp
         self.pressures=temppres
-        self.conditions[spec_triplet[2]]=tempcond
+        self.conditions=tempcond
         self.kineticSens = kin_temp
         
         
@@ -365,10 +407,10 @@ class flow_reactor_wrapper(sim.Simulation):
     
 
     
-    def species_adjustment(self,spec_del:float=0.0, diluents=[]):
-        # inert_species=['Ar','AR','HE','He','Kr','KR',
-        #                'Xe','XE','NE','Ne']
-        inert_species=diluents
+    def species_adjustment(self,spec_del:float=0.0):
+        inert_species=['Ar','AR','HE','He','Kr','KR',
+                       'Xe','XE','NE','Ne']
+        
         '''
         Creates tuples of specie that need to be perturbed and the
         percent value by which to perturb its mole fraction 
@@ -376,11 +418,10 @@ class flow_reactor_wrapper(sim.Simulation):
         # gets the mole fraction and the species which are going to be 
         #perturbed in order to run a sensitivity calculation 
         data = []
-        for i in range(len(self.conditions)):
-            for x in self.conditions[i].keys():
-                if x not in inert_species:
-                    data.append(self.sensitivity_adjustment(spec_triplet=(x,spec_del,i)))
-        #print(len(data))
+        for x in self.conditions.keys():
+            if x not in inert_species:
+                data.append(self.sensitivity_adjustment(spec_pair=(x,spec_del)))
+
         return data
     
     def importExperimentalData(self,csvFileList):
@@ -396,7 +437,7 @@ class flow_reactor_wrapper(sim.Simulation):
     
     def map_and_interp_ksens(self,temp_history=None):
         A = self.kineticSensitivities
-        print(self.kineticSensitivities.shape)
+        #print(self.kineticSensitivities.shape)
         #print(np.shape(A))
         N = np.zeros(A.shape)
         Ea = np.zeros(A.shape)
@@ -443,17 +484,59 @@ class flow_reactor_wrapper(sim.Simulation):
             print("Error: wrong datatype, both must be pandas data frames")
             return -1
     
-    def calculate_time_shift_sens(self,nominal, dtau=1e-8):
+
         
-        new_delay=np.array(nominal)+dtau*np.ones(len(np.array(nominal)))
-        sens=(np.log(new_delay)-np.log(np.array(nominal)))/dtau
-        sensdata=pd.DataFrame(columns=['delay'])
-        sensdata['delay']=sens
+            
+    def get_res_time_data(self,data):        
         
-        return new_delay,sensdata
+        res_time_data = data.tail(1)
+        res_time_data = res_time_data.reset_index(drop=True)
+        #reset index
+        return res_time_data
+    
+    def calculate_time_shift_sensitivity(self,simulation,timeHistory,dk):
+        lst_obs = simulation.moleFractionObservables + simulation.concentrationObservables
+        lst_obs = [i for i in lst_obs if i] 
+        mean_times_of_experiments = []
+            
+        one_percent_of_average = 1e-8
+                        
         
+        original_time = timeHistory['time']
+        new_time = original_time + one_percent_of_average
+            
+
+        #interpolate to the orignal time 
+        interpolated_against_original_time = []
+        for i,obs in enumerate(lst_obs):
+            interpolated_original_observable_against_original_time = np.interp(original_time,new_time,timeHistory[lst_obs[i]])
+            s1 = pd.Series(interpolated_original_observable_against_original_time,name=lst_obs[i])
+            interpolated_against_original_time.append(s1)
         
+        observables_interpolated_against_original_time_df = pd.concat(interpolated_against_original_time,axis=1)
         
+        #calculate sensitivity
+        
+        calculated_sensitivity = []
+        for i,obs in enumerate(lst_obs):
+                      
+           sens = (observables_interpolated_against_original_time_df[obs].apply(np.log) - timeHistory[obs].apply(np.log))/one_percent_of_average
+           s1 = pd.Series(sens,name=lst_obs[i])
+           calculated_sensitivity.append(s1)
+            
+        calculated_sensitivity_df = pd.concat(calculated_sensitivity,axis=1)
+
+        
+
+        time_shift_sensitivity = calculated_sensitivity_df
+        #how to call this from the other class?
+        time_shift_sensitivity = self.get_res_time_data(time_shift_sensitivity)
+        
+
+        #self.time_shift_sensitivity = time_shift_sensitivity
+        average_time=1
+        self.average_time = average_time
+        return time_shift_sensitivity       
         
         
         

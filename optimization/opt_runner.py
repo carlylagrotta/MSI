@@ -104,6 +104,15 @@ class Optimization_Utility(object):
             exp_dict['mole_fraction_observables'] = [None]
             exp_dict['uncertainty']=self.build_uncertainty_flame_speed_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['ignition_delay_observables'] = [None]
+        
+        elif re.match('[Ss]pecies[- ][Pp]rofile',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ff]low[ -][Rr]eactor',simulation.fullParsedYamlFile['simulationType']):
+            exp_dict['concentration_observables'] = simulation.concentrationObservables
+            exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
+            exp_dict['time_shift'] = interpolated_time_shift_sens
+            exp_dict['uncertainty']        = self.build_uncertainty_flow_reactor_dict(exp_dict['simulation'].fullParsedYamlFile)
+            exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
+            exp_dict['flame_speed_observables']= [None]
+            exp_dict['ignition_delay_observables'] = [None]            
 
         if len(interpolated_absorbance) != 0:
             exp_dict['absorbance_model_data'] = interpolated_absorbance[0]
@@ -163,6 +172,18 @@ class Optimization_Utility(object):
         uncertainty_dict['mole_fraction_absolute_uncertainty'] = experiment_dictionary['moleFractionAbsoluteUncertainty'] 
         return uncertainty_dict
     
+    def build_uncertainty_flow_reactor_dict(self,experiment_dictionary:dict={}):
+        uncertainty_dict={}
+        #Don't worry about absorbance for now
+        uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['tempRelativeUncertainty']
+        uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
+        uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['speciesUncertaintys'],
+                        'species':experiment_dictionary['speciesNames']}
+        uncertainty_dict['mole_fraction_relative_uncertainty'] = experiment_dictionary['moleFractionRelativeUncertainty']
+        uncertainty_dict['mole_fraction_absolute_uncertainty'] = experiment_dictionary['moleFractionAbsoluteUncertainty'] 
+        uncertainty_dict['concentration_relative_uncertainty'] = experiment_dictionary['concentrationRelativeUncertainity']
+        uncertainty_dict['concentration_absolute_uncertainty'] = experiment_dictionary['concentrationAbsoluteUncertainty']
+        return uncertainty_dict    
     
     def build_uncertainty_shock_tube_dict(self,experiment_dictonarie:dict={}):
         uncertainty_dict = {}
@@ -325,19 +346,53 @@ class Optimization_Utility(object):
                                                 cti_path="", 
                                                 save_physSensHistories=1,
                                                 save_timeHistories=1,
-                                                timeshift=experiment_dictionary['timeShift'],
+                                                timeshifts=experiment_dictionary['timeShift'],
                                                 initialTime=experiment_dictionary['initialTime'],
                                                 residenceTimes=experiment_dictionary['residenceTimes'])
-        soln,ksen=flow_reactor.run(ksens=kineticSens ,psens=physicalSens)
+        soln,ksen=flow_reactor.run(ksens_marker=kineticSens ,psens_marker=physicalSens)
+
         int_ksens_exp_mapped= flow_reactor.map_and_interp_ksens()
-        #tsoln=flow_reactor.sensitivity_adjustment(temp_del = dk)
-        #psoln=flow_reactor.sensitivity_adjustment(pres_del = dk)
-        #diluent=[]                                          
+        tsoln=flow_reactor.sensitivity_adjustment(temp_del = dk)
+        psoln=flow_reactor.sensitivity_adjustment(pres_del = dk)
+        ssoln=flow_reactor.species_adjustment(dk)
+        tsen=flow_reactor.sensitivityCalculation(soln[flow_reactor.observables],
+                                                 tsoln[flow_reactor.observables],
+                                                 dk=dk)
+                                                 
+        
+        psen=flow_reactor.sensitivityCalculation(soln[flow_reactor.observables],
+                                                 psoln[flow_reactor.observables],dk=dk)
+        
+        
+        ssens=[]
+        for i in range(len(ssoln)):            
+            ssens.append(flow_reactor.sensitivityCalculation(soln[flow_reactor.observables],
+                                                             ssoln[i][flow_reactor.observables],
+                                                             dk=dk))
+        time_shift_sens =[]
+        for i,timehist in enumerate(flow_reactor.fullTimeHistories):
+            time_shift_sens.append(flow_reactor.calculate_time_shift_sensitivity(flow_reactor,timehist,1e-8))
+            
+        time_shift_sens_df = pd.concat(time_shift_sens,ignore_index=True)    
+        print(time_shift_sens_df)
+            
+        csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] if x is not None]
+        #print(csv_paths)
+        exp_data = flow_reactor.importExperimentalData(csv_paths)
+        
+        experiment = self.build_single_exp_dict(exp_number,
+                                            flow_reactor,
+                                            int_ksens_exp_mapped,
+                                            [tsen,psen],
+                                            ssens,
+                                            interpolated_time_shift_sens = time_shift_sens_df,
+                                            experimental_data = exp_data,
+                                            yaml_dict=experiment_dictionary)                                                
                                                
                                         
             
     
-        return 
+        return experiment
     
     
     
