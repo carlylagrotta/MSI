@@ -1185,8 +1185,9 @@ class Plotting(object):
                     else:
                         pressure = target_press[i]
                         
-                    gas.TPX = target_temp[i],pressure*101325,{'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237}
-                    
+                    #gas.TPX = target_temp[i],pressure*101325,{'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237}
+                    gas.TPX = target_temp[i],pressure*101325,{'H2O2(15)':0.003094,'O2(7)':0.000556,'H2O(13)':0.001113,'Ar':0.995237}
+
                     
                     reaction_number_in_cti = reactions_in_cti_file.index(reaction)
                     k = gas.forward_rate_constants[reaction_number_in_cti]
@@ -1268,7 +1269,7 @@ class Plotting(object):
                                                                   initial_temperature=250,
                                                                   final_temperature=2500,
                                                                   pressure=1.635,
-                                                                  conditions={'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237},
+                                                                  conditions={'H2O2(15)':0.003094,'O2(7)':0.000556,'H2O(13)':0.001113,'Ar':0.995237},
                                                                   dictonary = six_parameter_fit_dict_optimized,
                                                                   master_equation_reactions = master_equation_reactions)
                 
@@ -1300,7 +1301,7 @@ class Plotting(object):
                                                                   initial_temperature=250,
                                                                   final_temperature=2500,
                                                                   pressure=1.635,
-                                                                  conditions={'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237},
+                                                                  conditions={'H2O2(15)':0.003094,'O2(7)':0.000556,'H2O(13)':0.001113,'Ar':0.995237},
                                                                   dictonary = six_parameter_fit_dict_nominal,
                                                                   master_equation_reactions = master_equation_reactions)
                 
