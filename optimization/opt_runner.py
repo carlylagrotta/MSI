@@ -183,6 +183,7 @@ class Optimization_Utility(object):
         uncertainty_dict['mole_fraction_absolute_uncertainty'] = experiment_dictionary['moleFractionAbsoluteUncertainty'] 
         uncertainty_dict['concentration_relative_uncertainty'] = experiment_dictionary['concentrationRelativeUncertainity']
         uncertainty_dict['concentration_absolute_uncertainty'] = experiment_dictionary['concentrationAbsoluteUncertainty']
+        uncertainty_dict['time_shift_uncertainty'] = experiment_dictionary['timeShiftUncertainty']
         return uncertainty_dict    
     
     def build_uncertainty_shock_tube_dict(self,experiment_dictonarie:dict={}):
@@ -326,29 +327,29 @@ class Optimization_Utility(object):
         
         
     def running_flow_reactor(self,processor=None,
-                             experiment_dictionary:dict={},
+                             experiment_dictonary:dict={},
                              kineticSens = 1,
                              physicalSens = 1,
                              dk = 0.01,
                              exp_number = 1):
-        flow_reactor = fr.flow_reactor_wrapper(pressure = experiment_dictionary['pressure'],
-                                                temperatures = experiment_dictionary['temperatures'],
-                                                observables = experiment_dictionary['observables'],
-                                                moleFractionObservables = experiment_dictionary['moleFractionObservables'],
-                                                concentrationObservables = experiment_dictionary['concentrationObservables'],
-                                                fullParsedYamlFile = experiment_dictionary,
+        flow_reactor = fr.flow_reactor_wrapper(pressure = experiment_dictonary['pressure'],
+                                                temperatures = experiment_dictonary['temperatures'],
+                                                observables = experiment_dictonary['observables'],
+                                                moleFractionObservables = experiment_dictonary['moleFractionObservables'],
+                                                concentrationObservables = experiment_dictonary['concentrationObservables'],
+                                                fullParsedYamlFile = experiment_dictonary,
                                                 kineticSens=kineticSens,
                                                 physicalSens=physicalSens,
-                                                conditions=experiment_dictionary['conditions'],
-                                                thermalBoundary=experiment_dictionary['thermalBoundary'],
-                                                mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
+                                                conditions=experiment_dictonary['conditions'],
+                                                thermalBoundary=experiment_dictonary['thermalBoundary'],
+                                                mechanicalBoundary=experiment_dictonary['mechanicalBoundary'],
                                                 processor=processor,
                                                 cti_path="", 
                                                 save_physSensHistories=1,
                                                 save_timeHistories=1,
-                                                timeshifts=experiment_dictionary['timeShift'],
-                                                initialTime=experiment_dictionary['initialTime'],
-                                                residenceTimes=experiment_dictionary['residenceTimes'])
+                                                timeshifts=experiment_dictonary['timeShift'],
+                                                initialTime=experiment_dictonary['initialTime'],
+                                                residenceTimes=experiment_dictonary['residenceTimes'])
         soln,ksen=flow_reactor.run(ksens_marker=kineticSens ,psens_marker=physicalSens)
 
         int_ksens_exp_mapped= flow_reactor.map_and_interp_ksens()
@@ -376,7 +377,7 @@ class Optimization_Utility(object):
         time_shift_sens_df = pd.concat(time_shift_sens,ignore_index=True)    
         print(time_shift_sens_df)
             
-        csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] if x is not None]
+        csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
         #print(csv_paths)
         exp_data = flow_reactor.importExperimentalData(csv_paths)
         
@@ -387,7 +388,7 @@ class Optimization_Utility(object):
                                             ssens,
                                             interpolated_time_shift_sens = time_shift_sens_df,
                                             experimental_data = exp_data,
-                                            yaml_dict=experiment_dictionary)                                                
+                                            yaml_dict=experiment_dictonary)                                                
                                                
                                         
             
@@ -830,7 +831,7 @@ class Optimization_Utility(object):
                 
                     if 'absorbanceObservables' not in yamlDict.keys():
                         experiment = self.running_flow_reactor(processor=processor,
-                                           experiment_dictionary=yamlDict,
+                                           experiment_dictonary=yamlDict,
                                            kineticSens = kineticSens,
                                            physicalSens = physicalSens,
                                            dk = dk,

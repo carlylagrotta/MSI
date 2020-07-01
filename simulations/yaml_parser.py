@@ -546,6 +546,8 @@ class Parser(object):
         mole_fraction_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]
     
         mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
+        
+        time_shift_original = loaded_exp['common-properties']['time-shift']['value-list']
         if len(temperature_list) > 1 and len(residence_time_list) ==1:
             residence_time_list = residence_time_list*len(temperature_list)
         if len(temperature_list) > 1 and len(time_shift_list) ==1:
@@ -578,7 +580,8 @@ class Parser(object):
                    'csvFiles': csv_files,
                    'simulationType':  simulation_type,
                    'timeShift':time_shift_list,
-                   'experimentType':experiment_type
+                   'experimentType':experiment_type,
+                   'timeShiftOriginal':time_shift_original
                }        
         else:
             print('We do not have absorbance installed for ignition delay')
