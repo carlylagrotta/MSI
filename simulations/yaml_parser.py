@@ -752,6 +752,13 @@ class Parser(object):
                     res = self.original_experimental_conditions[yaml_file]['residence_time']
                     press = self.original_experimental_conditions[yaml_file]['pressure']
                     conditions = self.original_experimental_conditions[yaml_file]['conditions']
+                elif re.match('[Ff]low[- ][Rr]eactor', self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Ss]pecies[ -][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
+                    
+                    temp = self.original_experimental_conditions[yaml_file]['temperatures']
+                    press = self.original_experimental_conditions[yaml_file]['pressure']
+                    conditions = self.original_experimental_conditions[yaml_file]['conditions']
+                    time_shifts = self.original_experimental_conditions[yaml_file]['timeShiftOriginal']
+
                 #mole_fractions = self.original_experimental_conditions[yaml_file]['MoleFractions']
                 
                 print('__________________________________________________________________________')
@@ -818,7 +825,36 @@ class Parser(object):
                     updated_mole_fraction_list = []
                     for specie in species_to_loop:
                         updated_mole_fraction_list.append(updated_mole_fractions[specie])
+                if re.match('[Ff]low[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
+                    updatedTemp=[]
+                    for i,T in enumerate(temp):
+                        updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))
+                    updatedPress = np.exp(physical_observables_updates_list[yaml_file]['P_experiment_'+str(yaml_file)]) * press
+                    updatedPress = round(updatedPress,9)
                     
+                    updatedTimeShift = []
+                    for i,time in enumerate(time_shifts):
+                        updatedTimeShift.append(float(round((physical_observables_updates_list[yaml_file]['Time_Shift'+str(i+1)+'_experiment_'+str(yaml_file)] + time),9)))
+                    
+                    species_to_loop =  experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['species']
+                    dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
+                    updated_mole_fractions = {}
+                    count = 0
+                    for specie in species_to_loop:
+                        if specie in dilluant:
+                            continue
+                        updated = np.exp(physical_observables_updates_list[yaml_file]['X_'+str(count)+'_experiment_'+str(yaml_file)])*conditions[specie]
+                        updated = round(updated,9)
+                        updated_mole_fractions[specie] = updated
+                        count+=1
+    
+                    for specie in species_to_loop:
+                        if specie in dilluant:
+                            updated_mole_fractions[specie] = conditions[specie]
+                    
+                    updated_mole_fraction_list = []
+                    for specie in species_to_loop:
+                        updated_mole_fraction_list.append(updated_mole_fractions[specie])                    
                 elif re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
                     updatedTemp=[]
                     diluent=[]   
@@ -866,6 +902,13 @@ class Parser(object):
                     for i,moleFraction in enumerate(updated_mole_fraction_list):
                         config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)
                     
+                elif re.match('[Ss]pecies[- ][Pp]rofile', self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Ff]low[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):    
+                    config2['common-properties']['temperature']['value-list']=updatedTemp
+                    config2['common-properties']['pressure']['value']=float(updatedPress)
+                    config2['common-properties']['time-shift']['value-list']=updatedTimeShift
+                    for i,moleFraction in enumerate(updated_mole_fraction_list):
+                        config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)
+                
                 elif re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
                     config2['common-properties']['temperature']['value-list']=updatedTemp
                     config2['common-properties']['pressure']['value-list']=updatedPress

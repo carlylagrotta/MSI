@@ -1002,7 +1002,7 @@ class OptMatrix(object):
                     
                     
                     
-                    elif re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experimentType']) and re.match('[Ff]low[ -][Rr]eactor',exp_dict_list[i]['simulationType']):
+                    elif re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']) and re.match('[Ff]low[ -][Rr]eactor',exp_dict_list[i]['simulation_type']):
                         
                         
                         dict_of_conditions = exp_dic['simulation'].conditions
@@ -1242,12 +1242,11 @@ class OptMatrix(object):
                             species_sensitivty.append(single_species_sensitivty)
                             
                         species_sensitivty = np.hstack((species_sensitivty))
-                        if len(parsed_yaml_list[i])>1:
+                        if len(parsed_yaml_list[i]['timeShiftOriginal'])>1:
                             time_shift_sensitivity = np.array(exp['time_shift'][observable])*np.identity(len(exp['simulation'].temperatures))  
                         else:
                             time_shift_sensitivity = np.array(exp['time_shift'][observable])
-                            time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))
-
+                            time_shift_sensitivity = time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))
 
                         
                     elif re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']) and re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']):
@@ -1772,6 +1771,7 @@ class OptMatrix(object):
                     previous_value = new_value
                     #print(temp_dict)
                 elif re.match('[Jj][Ss][Rr]',exp_dic['simulation_type']):
+                    
                     dic_of_conditions = exp_dic['simulation'].conditions
                         #subtract out the dilluant 
                     species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
@@ -1790,6 +1790,38 @@ class OptMatrix(object):
                     for variable in range(species_in_simulation):
                         temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
                     temp_keys.append('R'+'_'+'experiment'+'_'+str(i))
+                    temp_dict = dict(zip(temp_keys,single_experiment_physical_observables))
+                    physical_observables.append(temp_dict)
+                    ##come back to this and do a test on paper
+                    previous_value = new_value
+                    
+                    
+                    
+                elif re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']) and re.match('[Ff]low[ -][Rr]eactor',exp_dict_list[i]['simulation_type']):
+                    dic_of_conditions = exp_dic['simulation'].conditions
+                        #subtract out the dilluant 
+                    species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
+                        #add two for Temperature and Pressure
+                    time_shift_length = len(exp_dic['simulation'].fullParsedYamlFile['timeShiftOriginal'])
+                    
+                    len_of_phsycial_observables_in_simulation = species_in_simulation + 1+len(exp_dic['simulation'].temperatures)+time_shift_length 
+                    #print(len_of_phsycial_observables_in_simulation)
+                    new_value = previous_value + len_of_phsycial_observables_in_simulation
+                    single_experiment_physical_observables = X_new[(value1+value2+previous_value):(value1+value2+new_value)]
+                    #print(len(single_experiment_physical_observables))
+                    physical_observables_for_Y.append(single_experiment_physical_observables)
+                    temp_keys = []
+                        #stacking the zeros onto the Y array 
+                    for j in range(len(exp_dic['simulation'].temperatures)):
+                        temp_keys.append('T'+str(j+1)+'_'+'experiment'+'_'+str(i))
+                    temp_keys.append('P'+'_'+'experiment'+'_'+str(i))
+                    
+                    for variable in range(species_in_simulation):
+                        temp_keys.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))
+                        
+                    for j in range(time_shift_length):
+                        temp_keys.append('Time_Shift'+str(j+1)+'_'+'experiment'+'_'+str(i))
+                    
                     temp_dict = dict(zip(temp_keys,single_experiment_physical_observables))
                     physical_observables.append(temp_dict)
                     ##come back to this and do a test on paper
