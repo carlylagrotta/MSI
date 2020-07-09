@@ -93,7 +93,7 @@ class ignition_delay(sim.Simulation):
                          concentrationObservables = self.concentrationObservables,
                          fullParsedYamlFile = self.fullParsedYamlFile,
                          time_shift_value = self.timeshift,
-                         rtol=1e-14,atol=1e-15,rtol_sens=1e-9,atol_sens=1e-10)
+                         rtol=1e-9,atol=1e-15,rtol_sens=0.0001,atol_sens=1e-6)
         
         shock_tube.run()
         return shock_tube
@@ -169,8 +169,8 @@ class ignition_delay(sim.Simulation):
                 #Function to calculate sensitivity
                 #Replace to use different method
                 
-                #sens=self.direct_ksens('a',dk=self.dk)
-                sens=self.BFM(delay)
+                sens=self.direct_ksens('a',dk=self.dk)
+                #sens=self.BFM(delay)
                 #sens=self.BFM_pool(delay,self.n_processors)
                 ##############################################################
                 
@@ -249,26 +249,47 @@ class ignition_delay(sim.Simulation):
     def direct_ksens(self,nominal,dk=0.01,observable=['temperature']):
         
         temp_st=self.run_shocktube_ksens(observables=observable)
-       
+        
         sens=temp_st.kineticSensitivities
         
         nom_soln=np.array(temp_st.timeHistory['temperature'])
         
         nom_delay=self.ig_dTdt(temp_st.timeHistory)
-        
+        import matplotlib.pyplot as plt
+        plt.plot(temp_st.timeHistory['time'],nom_soln,label='Nominal T')
+        print(sens[:,0,0])
         ksens=np.zeros(temp_st.processor.solution.n_reactions)
         for i in range(temp_st.processor.solution.n_reactions):
+            if i==0:
+                self.processor.solution.set_multiplier(1+0.001,0)
+                temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                self.processor.solution.set_multiplier(1.0,0)
             tempsen=sens[:,i,0]
+            sens_add=0.0
+            Tprime=copy.deepcopy(nom_soln)
+            # for j in range(len(sens[:,i,0])):
+            #     sens_add=sens_add+sens[j,i,0]*0.05
+            #     Tprime[j]=Tprime[j]+sens_add
             
-            Tprime=nom_soln+np.multiply(tempsen,0.5)
+            Tprime=nom_soln+np.multiply(tempsen,0.001)
             tempdata=pd.DataFrame(columns=['time','temperature'])
             tempdata['time']=temp_st.timeHistory['time']
             tempdata['temperature']=Tprime
             
             delayprime = self.ig_dTdt(tempdata)
-            ksens[i]=self.sensitivityCalculation(nom_delay,delayprime,0.5)
+            ksens[i]=self.sensitivityCalculation(nom_delay,delayprime,0.001)
             #print(tempsen)
-            
+            if i==0:
+                plt.plot(tempdata['time'],tempdata['temperature'],':',label=r'Fast T prime')
+                plt.plot(temp_history['time'],temp_history['temperature'],'-.',label=r'Brute Force T prime')
+                plt.legend()
+                #plt.xlim((0.7,0.9))
+                #plt.ylim((0,2000))
+                plt.figure()
+                plt.plot(tempdata['time'],np.array(tempdata['temperature'])-nom_soln)
+                plt.figure()
+                plt.plot(tempdata['time'],tempsen)
+                print('Oy '+str(ksens[i]))
         #print(ksens)
         return ksens
         #print(temp_st.kineticSensitivities)

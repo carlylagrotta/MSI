@@ -178,6 +178,7 @@ class shockTube(sim.Simulation):
         sim = ct.ReactorNet([shockTube])
         sim.rtol=self.rtol
         sim.atol=self.atol
+        #print(sim.rtol_sensitivity,sim.atol_sensitivity)
         sim.rtol_sensitivity=self.rtol_sensitivity
         sim.atol_sensitivity=self.atol_sensitivity
         
