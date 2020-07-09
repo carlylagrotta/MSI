@@ -123,14 +123,14 @@ class Graphify(ttk.Frame):
         self.x[0].grid(row=1,column=2)
 
         tk.Label(self, text='X_High', 
-                    borderwidth=1).grid(row=2,column=1)
+                    borderwidth=1).grid(row=1,column=3)
         self.x[1] = tk.Entry(self, borderwidth=1, width=4)
-        self.x[1].grid(row=2,column=2)
+        self.x[1].grid(row=1,column=4)
 
         tk.Label(self, text='Y_Low', 
-                    borderwidth=1).grid(row=1,column=3)
+                    borderwidth=1).grid(row=2,column=1)
         self.y[0] = tk.Entry(self, borderwidth=1, width=4)
-        self.y[0].grid(row=1,column=4)
+        self.y[0].grid(row=2,column=2)
 
         tk.Label(self, text='Y_High', 
                     borderwidth=1).grid(row=2,column=3)
@@ -144,10 +144,10 @@ class Graphify(ttk.Frame):
 
         
         tk.Label(self, textvariable=self.pname,
-                    borderwidth=1).grid(row=3, column=2)
+                    borderwidth=1).grid(row=5, column=1)
 
         tk.Label(self, textvariable=self.lname,
-                    borderwidth=1).grid(row=4, column=2)
+                    borderwidth=1).grid(row=6, column=1)
 
         # Set radiobuttons
         self.opt = tk.IntVar() # 0=one line 1=all 2=pattern
@@ -155,15 +155,15 @@ class Graphify(ttk.Frame):
         self.rb = []
         self.rb.append(tk.Radiobutton(self, text="Single Line",
             variable=self.opt, value=0))
-        self.rb[0].grid(row=1, column=7)
+        self.rb[0].grid(row=1, column=8)
 
         self.rb.append(tk.Radiobutton(self, text="All Points",
             variable=self.opt, value=1))
-        self.rb[1].grid(row=2, column=7)
+        self.rb[1].grid(row=2, column=8)
 
         self.rb.append(tk.Radiobutton(self, text="Pattern",
             variable=self.opt, value=2))
-        self.rb[2].grid(row=3, column=7)
+        self.rb[2].grid(row=3, column=8)
 
         # Buttons for submission
         coordButton = tk.Button(self, text='Approximate Data', command=self.calc_graph)
@@ -171,30 +171,30 @@ class Graphify(ttk.Frame):
         
         pos_but = [];
         pos_but.append(tk.Button(self, text = 'Set X-Low  Loc',
-            command=self.set_xlow).grid(row = 3, column=3))
+            command=self.set_xlow).grid(row = 3, column=1))
         pos_but.append(tk.Button(self, text = 'Set X-High Loc',
-            command=self.set_xhigh).grid(row=3, column=4))
+            command=self.set_xhigh).grid(row=3, column=3))
         pos_but.append(tk.Button(self, text = 'Set Y-Low  Loc',
-            command=self.set_ylow).grid(row=4, column=3))
+            command=self.set_ylow).grid(row=4, column=1))
         pos_but.append(tk.Button(self, text = 'Set Y-High Loc',
-            command=self.set_yhigh).grid(row=4, column=4))
+            command=self.set_yhigh).grid(row=4, column=3))
 
-        pos_but.append(tk.Button(self, text = 'Color',
-            command=self.set_color).grid(row=3, column=5, rowspan=1))
-        pos_but.append(tk.Button(self, text = 'Pattern',
-            command=self.set_pattern).grid(row=4, column=5, rowspan=1))
+        pos_but.append(tk.Button(self, text = 'Set Color',
+            command=self.set_color).grid(row=5, column=3, rowspan=1))
+        pos_but.append(tk.Button(self, text = 'Set Pattern',
+            command=self.set_pattern).grid(row=6, column=3, rowspan=1))
 
         # Savepath and filename options
         tk.Label(self, text='Savepath', 
-                    borderwidth=1).grid(row=6,column=1)
+                    borderwidth=1).grid(row=7,column=1)
         self.spath = tk.Entry(self, borderwidth=1, width=15)
-        self.spath.grid(row=6,column=2)
+        self.spath.grid(row=7,column=2)
 
         # Screen Handler
         self.pattern_im = ImageTk.PhotoImage(image=Image.fromarray(self.pattern))
 
         self.patt = tk.Canvas(self, width=self.win, height=self.win, bg='white')
-        self.patt.grid(row=4,column=6)
+        self.patt.grid(row=5,column=2)
         self.patt.create_image(0,0, anchor=tk.NW, image=self.pattern_im)
 
         # Slider for correlation
