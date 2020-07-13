@@ -252,27 +252,53 @@ class Optimization_Utility(object):
                                dk=0.01,
                                exp_number=1):
         
-        ig_delay=ig.ignition_delay_wrapper(pressures=experiment_dictionary['pressures'],
-                                           temperatures=experiment_dictionary['temperatures'],
-                                           observables=experiment_dictionary['observables'],
-                                           kineticSens=kineticSens,
-                                           physicalSens=physicalSens,
-                                           conditions=experiment_dictionary['conditions_to_run'],
-                                           thermalBoundary=experiment_dictionary['thermalBoundary'],
-                                           mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
-                                           processor=processor,
-                                           cti_path="", 
-                                           save_physSensHistories=1,
-                                           fullParsedYamlFile=experiment_dictionary, 
-                                           save_timeHistories=1,
-                                           log_file=True,
-                                           log_name='log.txt',
-                                           timeshift=experiment_dictionary['time_shift'],
-                                           initialTime=experiment_dictionary['initialTime'],
-                                           finalTime=experiment_dictionary['finalTime'],
-                                           target=experiment_dictionary['target'],
-                                           target_type=experiment_dictionary['target_type'],
-                                           n_processors=2)
+        
+        if 'volumeTraceCsv' in experiment_dictionary.keys():
+            
+            ig_delay=ig.ignition_delay_wrapper(pressures=experiment_dictionary['pressures'],
+                                               temperatures=experiment_dictionary['temperatures'],
+                                               observables=experiment_dictionary['observables'],
+                                               kineticSens=kineticSens,
+                                               physicalSens=physicalSens,
+                                               conditions=experiment_dictionary['conditions_to_run'],
+                                               thermalBoundary=experiment_dictionary['thermalBoundary'],
+                                               mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
+                                               processor=processor,
+                                               cti_path="", 
+                                               save_physSensHistories=1,
+                                               fullParsedYamlFile=experiment_dictionary, 
+                                               save_timeHistories=1,
+                                               log_file=False,
+                                               log_name='log.txt',
+                                               timeshift=experiment_dictionary['time_shift'],
+                                               initialTime=experiment_dictionary['initialTime'],
+                                               finalTime=experiment_dictionary['finalTime'],
+                                               target=experiment_dictionary['target'],
+                                               target_type=experiment_dictionary['target_type'],
+                                               n_processors=2,
+                                               volumeTrace = experiment_dictionary['volumeTraceCsv'])
+        else:
+            ig_delay=ig.ignition_delay_wrapper(pressures=experiment_dictionary['pressures'],
+                                               temperatures=experiment_dictionary['temperatures'],
+                                               observables=experiment_dictionary['observables'],
+                                               kineticSens=kineticSens,
+                                               physicalSens=physicalSens,
+                                               conditions=experiment_dictionary['conditions_to_run'],
+                                               thermalBoundary=experiment_dictionary['thermalBoundary'],
+                                               mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
+                                               processor=processor,
+                                               cti_path="", 
+                                               save_physSensHistories=1,
+                                               fullParsedYamlFile=experiment_dictionary, 
+                                               save_timeHistories=1,
+                                               log_file=False,
+                                               log_name='log.txt',
+                                               timeshift=experiment_dictionary['time_shift'],
+                                               initialTime=experiment_dictionary['initialTime'],
+                                               finalTime=experiment_dictionary['finalTime'],
+                                               target=experiment_dictionary['target'],
+                                               target_type=experiment_dictionary['target_type'],
+                                               n_processors=2)
         
         
         soln,ksen=ig_delay.run()
@@ -375,7 +401,7 @@ class Optimization_Utility(object):
             time_shift_sens.append(flow_reactor.calculate_time_shift_sensitivity(flow_reactor,timehist,1e-8))
             
         time_shift_sens_df = pd.concat(time_shift_sens,ignore_index=True)    
-        print(time_shift_sens_df)
+        #print(time_shift_sens_df)
             
         csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
         #print(csv_paths)
@@ -728,7 +754,7 @@ class Optimization_Utility(object):
                         
                     elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
                         path = list_of_yaml_paths[i][1]
-                        print(path)
+                        
                         experiment = self.running_shock_tube_absorption_only(processor=processor,
                                                                              experiment_dictonary = yamlDict,
                                                                              absorbance_yaml_file_path = path,
@@ -751,6 +777,41 @@ class Optimization_Utility(object):
                         
                         
             elif re.match('[Ss]hock [Tt]ube',simulation_type) and re.match('[Ii]gnition[- ][Dd]elay',experiment_type):
+                 if 'absorbanceObservables' not in yamlDict.keys():
+                        experiment = self.running_ignition_delay(processor=processor,
+                                           experiment_dictionary=yamlDict,
+                                           kineticSens = kineticSens,
+                                           physicalSens = physicalSens,
+                                           dk = dk,
+                                           exp_number=i)
+                        experiment_list.append(experiment)
+                
+                 elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
+#                        path = list_of_yaml_paths[i][1]
+#                        print(path)
+#                        experiment = self.running_shock_tube_absorption_only(processor=processor,
+#                                                                             experiment_dictonary = yamlDict,
+#                                                                             absorbance_yaml_file_path = path,
+#                                                                             kineticSens = kineticSens,
+#                                                                             physicalSens = physicalSens,
+#                                                                             dk = dk,
+#                                                                             exp_number=i)
+#                        experiment_list.append(experiment)
+                        print('Absorbance currently not enabled for ignition delay')
+                 else:
+#                        path = list_of_yaml_paths[i][1]
+#                        experiment = self.running_full_shock_tube_absorption(processor=processor,
+#                                           experiment_dictonary=yamlDict,
+#                                           absorbance_yaml_file_path = path,
+#                                           kineticSens = kineticSens,
+#                                           physicalSens = physicalSens,
+#                                           dk = dk,
+#                                           exp_number=i)
+#                        experiment_list.append(experiment)
+                        print('Absorbance currently not enabled for ignition delay')
+
+
+            elif re.match('[Rr][Cc][Mm]',simulation_type) and re.match('[Ii]gnition[- ][Dd]elay',experiment_type):
                  if 'absorbanceObservables' not in yamlDict.keys():
                         experiment = self.running_ignition_delay(processor=processor,
                                            experiment_dictionary=yamlDict,

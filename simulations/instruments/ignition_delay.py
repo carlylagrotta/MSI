@@ -7,6 +7,8 @@ import time
 import copy
 import re
 import MSI.simulations.instruments.shock_tube as st
+import MSI.simulations.instruments.RCM as rcmsim
+
 import time
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
@@ -22,7 +24,8 @@ class ignition_delay(sim.Simulation):
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={}, save_timeHistories:int=0,
                  log_file=True,log_name='log.txt',timeshift:float=0.0,initialTime:float=0.0,
-                 finalTime:float=1.0,target:str='temperature',target_type:str='max derivative',n_processors:int=2):
+                 finalTime:float=1.0,target:str='temperature',target_type:str='max derivative',n_processors:int=2,
+                 volumeTrace=''):
         
         
         if processor!=None and cti_path!="":
@@ -58,6 +61,7 @@ class ignition_delay(sim.Simulation):
         self.log_name=log_name
         self.log_file=log_file
         self.ignitionDelayObservables=['tau']
+        self.volumeTrace = volumeTrace
         #self.yaml_file=yaml_file
         if save_timeHistories == 1:
             self.timeHistories=[]
@@ -73,6 +77,32 @@ class ignition_delay(sim.Simulation):
         self.target=target
         self.target_type=target_type
     
+
+    def run_RCM(self,args=[],temp_proc=None):
+        
+        if not args:
+            rcm = rcmsim.RCM(pressure =self.pressure,
+                         temperature = self.temperature,
+                         observables = self.observables,
+                         kineticSens = 0,
+                         physicalSens = 0,
+                         conditions = self.conditions,
+                         initialTime = self.initialTime,
+                         finalTime = self.finalTime,
+                         thermalBoundary = self.thermalBoundary,
+                         mechanicalBoundary = self.mechanicalBoundary,
+                         processor = self.processor,
+                         save_timeHistories = 1,
+                         save_physSensHistories = 0,
+                         moleFractionObservables = self.moleFractionObservables,
+                         concentrationObservables = self.concentrationObservables,
+                         fullParsedYamlFile = self.fullParsedYamlFile,
+                         time_shift_value = self.timeshift,
+                         volumeTrace = self.volumeTrace)
+            rcm.run()
+            return rcm
+
+
     
     def run_shocktube_ksens(self,observables=['temperature'],temp_proc=None):
         
@@ -144,7 +174,13 @@ class ignition_delay(sim.Simulation):
     def run_single(self):
         
         tic=time.time()
-        s=self.run_shocktube()
+        
+        #check if shock tube or rcm
+        if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+            s=self.run_shocktube()
+            
+        elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+            s=self.run_RCM()
         
         self.timehistory=copy.deepcopy(s.timeHistory)
         delay=None
@@ -368,7 +404,7 @@ class ignition_delay_wrapper(sim.Simulation):
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={}, save_timeHistories:int=0,
                  log_file=True,log_name='log.txt',timeshift:float=0.0,initialTime:float=0.0,
-                 finalTime:float=1.0,target:str='temperature',target_type:str='max derivative',n_processors:int=2):
+                 finalTime:float=1.0,target:str='temperature',target_type:str='max derivative',n_processors:int=2, volumeTrace=''):
         
         
         
@@ -422,6 +458,7 @@ class ignition_delay_wrapper(sim.Simulation):
         self.solution=None
         self.target=target
         self.target_type=target_type
+        self.volumeTrace = volumeTrace
         
         
         
@@ -459,7 +496,8 @@ class ignition_delay_wrapper(sim.Simulation):
                                            finalTime=self.finalTime,
                                            target=self.target,
                                            target_type=self.target_type,
-                                           n_processors=self.n_processors)
+                                           n_processors=self.n_processors,
+                                           volumeTrace = self.volumeTrace)
             
                     a,b=temp_ig.run_single()
                     
