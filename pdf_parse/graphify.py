@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from PIL import Image, ImageTk
-import pdf_parse.graph_parser as gp
+
+from . import graph_parser as gp
 import tkinter as tk
 import pandas as pd
 import pandas as pd
 import numpy as np
 import skimage
 import math
-import sys
 
 from tkinter import ttk
 from skimage import io
