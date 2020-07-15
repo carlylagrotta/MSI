@@ -23,7 +23,8 @@ import MSI.simulations.yaml_parser as yp
 
 results_dataframe = pd.DataFrame(columns = ['T','P','k_original','k_optimized','k_table','A'])
 #df = pd.read_csv('Columbia/⁨MSI/⁩⁨data/⁨automating_HO2/experiment_conditions')
-df = pd.read_csv('MSI/data/automating_lightfoot_1988/experiment_conditions_corrected_values_test.csv')
+#experiment_conditions_corrected_values_test
+df = pd.read_csv('MSI/data/automating_lightfoot_1988/experiment_conditions_test.csv')
 pressure = df['Pressure']
 density = df['Density']
 temperature = df['Temperature']
