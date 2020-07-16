@@ -398,7 +398,7 @@ class Optimization_Utility(object):
                                                              dk=dk))
         time_shift_sens =[]
         for i,timehist in enumerate(flow_reactor.fullTimeHistories):
-            time_shift_sens.append(flow_reactor.calculate_time_shift_sensitivity(flow_reactor,timehist,1e-8))
+            time_shift_sens.append(flow_reactor.calculate_time_shift_sensitivity(flow_reactor,timehist,1e-8,flow_reactor.finalTimes[i]))
             
         time_shift_sens_df = pd.concat(time_shift_sens,ignore_index=True)    
         #print(time_shift_sens_df)
@@ -891,7 +891,7 @@ class Optimization_Utility(object):
                 
                 
                     if 'absorbanceObservables' not in yamlDict.keys():
-                        experiment = self.running_flow_reactor(processor=processor,
+                        experiment= self.running_flow_reactor(processor=processor,
                                            experiment_dictonary=yamlDict,
                                            kineticSens = kineticSens,
                                            physicalSens = physicalSens,

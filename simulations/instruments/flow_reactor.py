@@ -169,17 +169,20 @@ class flow_reactor(sim.Simulation):
             s = self.run_shocktube(ksens_marker=1,psens_marker=0)
             self.timehistory=copy.deepcopy(s.timeHistory)
             res_time_measurment=None
-            res_time_measurment = self.get_res_time_data(self.timehistory)   
+            res_time_measurment,index = self.get_res_time_data(self.timehistory,self.finalTime)   
             
             #print(s.kineticSensitivities.shape)
-            ksens = s.kineticSensitivities[-1,:,:]
+            #ksens = s.kineticSensitivities[-1,:,:]
+            ksens,temp_arrays = self.get_ksens_at_res_time(s.kineticSensitivities,self.timehistory['time'],self.finalTime)
+            #ksens = s.kineticSensitivities[index,:,:]
+            
             #xdim = s.kineticSensitivities.shape[0]
-            ydim = s.kineticSensitivities.shape[1]
-            zdim = s.kineticSensitivities.shape[2]
+            #ydim = s.kineticSensitivities.shape[1]
+            #zdim = s.kineticSensitivities.shape[2]
 
 
-            ksens = ksens.reshape((1,ydim,zdim))
-            #print(ksens.shape)
+            #ksens = ksens.reshape((1,ydim,zdim))
+            
             
             self.kineticSensitivities = ksens
             
@@ -190,31 +193,77 @@ class flow_reactor(sim.Simulation):
             self.timehistory=copy.deepcopy(s.timeHistory)
             
             res_time_measurment=None
-            res_time_measurment = self.get_res_time_data(self.timehistory)             
+            res_time_measurment,index = self.get_res_time_data(self.timehistory,self.finalTime)             
             
         else:
             s = self.run_shocktube(ksens_marker=0,psens_marker=0)
             self.timehistory=copy.deepcopy(s.timeHistory)
             res_time_measurment=None
-            res_time_measurment = self.get_res_time_data(self.timehistory) 
+            res_time_measurment,index = self.get_res_time_data(self.timehistory,self.finalTime) 
             
 
         if self.kineticSens:  
             
-            return res_time_measurment,self.kineticSensitivities,self.timehistory
+            return res_time_measurment,self.kineticSensitivities,self.timehistory,temp_arrays
         else:
-            return res_time_measurment,[],None
+            return res_time_measurment,[],None,None
             
         
         
-                
+    def get_ksens_at_res_time(self,ksens,time_array,res_time):
+        ksens_array = []
+        temp_arrays = []
+        for sheet in range(ksens.shape[2]):
+            temp = ksens[:,:,sheet]
+            time=time_array.values
+            time=time.reshape((time.shape[0],1))
+            temp_with_time = np.hstack((time,temp))
+            df =copy.deepcopy(temp_with_time)
+            df = pd.DataFrame(temp_with_time)
+            df=df.rename(columns = {0:'time'})
+            temp_arrays.append(df)
+            df.loc[-1, 'time'] = float(res_time)
+
+            df = df.sort_values('time').reset_index(drop=True)
+            
+            df = df.interpolate()
+            res_time_k_sens_data = df.iloc[(df['time']-res_time).abs().argsort()[:1]]
+            res_time_k_sens_data = res_time_k_sens_data.reset_index(drop=True)
+            res_time_k_sens_data = res_time_k_sens_data.drop(columns="time")
+            res_time_k_sens_data = res_time_k_sens_data.to_numpy()
+            
+    
+            res_time_k_sens_data = res_time_k_sens_data.reshape((res_time_k_sens_data.shape[0],res_time_k_sens_data.shape[1],1))
+            ksens_array.append(res_time_k_sens_data)
+            
+
+        ksens_array = np.dstack((ksens_array))
         
-    def get_res_time_data(self,data):        
+        return ksens_array,temp_arrays
+
+
+           
         
-        res_time_data = data.tail(1)
-        res_time_data = res_time_data.reset_index(drop=True)
+    def get_res_time_data(self,data,res_time):        
+        #res_time_data = data.tail(1)
+        #res_time_data = res_time_data.reset_index(drop=True)
+        
+        #print(res_time)
+        
+        #print(data.tail(1))
         #reset index
-        return res_time_data
+        df = copy.deepcopy(data)
+        
+        df.loc[-1, 'time'] = float(res_time)
+        df = df.sort_values('time').reset_index(drop=True)
+        df = df.interpolate()
+        
+        res_time_data = df.iloc[(df['time']-res_time).abs().argsort()[:1]]
+        res_time_data = res_time_data.reset_index(drop=True)
+        
+        index = df.iloc[(df['time']-res_time).abs().argsort()[:1]].index.values[0]
+        
+        return res_time_data,index
 
     
     def sensitivityCalculation(self,originalValues,newValues,dk=.01):
@@ -276,6 +325,7 @@ class flow_reactor_wrapper(sim.Simulation):
         if save_timeHistories == 1:
             self.timeHistories=[]
             self.fullTimeHistories=[]
+            self.temp_arrays=[]
 
         else:
             self.timeHistories=None
@@ -316,9 +366,12 @@ class flow_reactor_wrapper(sim.Simulation):
                                    residenceTime=self.residenceTimes[i])
             
             #res_time_data,k_sens=temp_flow.run_single(ksens=self.kineticSens,psens=self.physicalSens)
-            res_time_data,k_sens,fullTimeHistory=temp_flow.run_single(ksens_marker=ksens_marker,psens_marker=psens_marker)
+            
+            
+            res_time_data,k_sens,fullTimeHistory,temp_array=temp_flow.run_single(ksens_marker=ksens_marker,psens_marker=psens_marker)
             if self.kineticSens==1:
                 self.fullTimeHistories.append(fullTimeHistory)
+                self.temp_arrays.append(temp_array)
                 
             
             
@@ -487,14 +540,23 @@ class flow_reactor_wrapper(sim.Simulation):
 
         
             
-    def get_res_time_data(self,data):        
+    def get_res_time_data(self,data,res_time):        
+        df = copy.deepcopy(data)
         
-        res_time_data = data.tail(1)
+        df.loc[-1, 'time'] = float(res_time)
+        df = df.sort_values('time').reset_index(drop=True)
+        df = df.interpolate()
+        
+        res_time_data = df.iloc[(df['time']-res_time).abs().argsort()[:1]]
         res_time_data = res_time_data.reset_index(drop=True)
-        #reset index
+        
+        index = df.iloc[(df['time']-res_time).abs().argsort()[:1]].index.values[0]
+        
         return res_time_data
+
     
-    def calculate_time_shift_sensitivity(self,simulation,timeHistory,dk):
+    def calculate_time_shift_sensitivity(self,simulation,timeHistory,dk,finalTime):
+        
         lst_obs = simulation.moleFractionObservables + simulation.concentrationObservables
         lst_obs = [i for i in lst_obs if i] 
         mean_times_of_experiments = []
@@ -507,11 +569,13 @@ class flow_reactor_wrapper(sim.Simulation):
             
 
         #interpolate to the orignal time 
+
         interpolated_against_original_time = []
         for i,obs in enumerate(lst_obs):
             interpolated_original_observable_against_original_time = np.interp(original_time,new_time,timeHistory[lst_obs[i]])
             s1 = pd.Series(interpolated_original_observable_against_original_time,name=lst_obs[i])
             interpolated_against_original_time.append(s1)
+        
         
         observables_interpolated_against_original_time_df = pd.concat(interpolated_against_original_time,axis=1)
         
@@ -524,14 +588,15 @@ class flow_reactor_wrapper(sim.Simulation):
            s1 = pd.Series(sens,name=lst_obs[i])
            calculated_sensitivity.append(s1)
             
+        calculated_sensitivity.append(original_time)
         calculated_sensitivity_df = pd.concat(calculated_sensitivity,axis=1)
-
+        
         
 
         time_shift_sensitivity = calculated_sensitivity_df
         #how to call this from the other class?
-        time_shift_sensitivity = self.get_res_time_data(time_shift_sensitivity)
-        
+        time_shift_sensitivity = self.get_res_time_data(time_shift_sensitivity,finalTime)
+        time_shift_sensitivity = time_shift_sensitivity.drop(columns="time")
 
         #self.time_shift_sensitivity = time_shift_sensitivity
         average_time=1

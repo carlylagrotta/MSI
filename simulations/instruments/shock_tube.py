@@ -220,6 +220,7 @@ class shockTube(sim.Simulation):
         if self.timeHistories != None:
 
             self.timeHistory.time = self.timeHistory.time + self.time_shift_value
+            
             #self.timeHistory.time = self.timeHistory.time + 0
             
             self.timeHistories.append(self.timeHistory)
