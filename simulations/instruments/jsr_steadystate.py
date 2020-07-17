@@ -16,8 +16,10 @@ import re
 
 class JSR_steadystate(sim.Simulation):
     
-    '''child class of sim.Simulaton.  Inherits all attributes and methods including __init__().  
-    Also has internal init due to data requirements'''
+    '''Child class of sim.Simulaton.  Inherits all attributes and methods including __init__().  
+    Also has internal init due to data requirements.  JSR_steadystate is a single jet-stirred-reactor simulation 
+    and may be used to simulate a jet-stirred-reactor experiment at a single constant temperature, pressure, and 
+    mole fraction conditions.'''
     
     
     
@@ -44,24 +46,41 @@ class JSR_steadystate(sim.Simulation):
             self.processor = ctp.Processor(cti_path)
         
         self.pressure=pressure
+        '''Pressure of the reactor in atm'''
         self.temperature=temperature
+        '''Temperature of the reactor in K'''
         self.observables=observables
+        '''Observables to be used in kinetic sensitivity analysis.  Required only if `self.kineticSens` is set to 1'''
         self.kineticSens=kineticSens
+        '''Set to 1 to run kinetic sensitivity analysis, 0 otherwise'''
         self.physicalSens=physicalSens
+        '''Deprecated'''
         self.conditions=conditions
+        '''Mole fractions for the gas flow into the reactor.  Accepts a dictionary similarly to {\'H2\':0.1,\'O2\':0.1,\'Ar\':0.8}'''
         self.cti_path=cti_path
+        '''Full file path for Cantera cti file.  Only needed if `self.processor` has not been defined.'''
         self.thermalBoundary = thermalBoundary
+        '''Deprecated '''
         self.mechanicalBoundary = mechanicalBoundary
+        '''Deprecated'''
         self.kineticSensitivities= None
+        '''Stores an array of the kinetic sensitivities after calculation'''
         self.experimentalData = None
+        '''Deprecated'''
         self.concentrationObservables = concentrationObservables
         self.moleFractionObservables = moleFractionObservables
         self.absorbanceObservables = absorbanceObservables
         self.fullParsedYamlFile =  fullParsedYamlFile
         self.pvalveCoefficient=pvalveCoefficient
+        '''Controls the sensitivity of the pressure valve in the reactor network.  For most use cases, leave default value as is.  
+        Only adjust if final pressure substantially deviates from value set in `self.pressure`'''
         self.maxPrise=maxpRise
+        '''Max pressure rise allowed.  Leave unchanged in most use cases. 
+        Only adjust if final pressure substantially deviates from value set in `self.pressure`'''
         self.energycon='off'
+        '''Always set to \'off\' '''
         self.residence_time=residence_time
+        '''Residence time of the reactor'''
         self.timeHistory = None
         self.experimentalData = None
         
