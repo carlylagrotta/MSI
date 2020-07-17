@@ -137,7 +137,7 @@ print('_________________________perturbing______________________________')
 
 
 for row_in_X in range(np.shape(X_one_itteration)[0]):
-# #for row_in_X in range(5):
+#for row_in_X in range(5):
     MSI_st_perturb_instance = perturbX.perturb_X_Shell(cti_file,
                                                           .01,
                                                             1,
