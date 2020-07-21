@@ -27,9 +27,10 @@ s = ig.ignition_delay(pressure=1.909,
                          target_type='max derivative',
                          save_physSensHistories=0,save_timeHistories=1,n_processors=2)		
 
-				 
+			 
 solution,sens=s.run_single()
 print(solution,sens)
+print(np.shape(sens))
 #methane_profile=[]
 #for i in jsr1.JSR_objects:
 #	print(i.pressure,i.temperature,i.conditions)

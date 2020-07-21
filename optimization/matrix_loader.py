@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-import MSI.master_equation.master_equation as meq 
+from ..master_equation import master_equation as meq
+#import MSI.master_equation.master_equation as meq 
 import copy
 import re
 import cantera as ct
