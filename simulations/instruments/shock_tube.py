@@ -64,6 +64,12 @@ class shockTube(sim.Simulation):
         self.atol_sensitivity=atol_sens
         
     def printVars(self):
+        '''
+        Prints variables associated with the reactor initial conditions.
+    
+        '''        
+        
+        
         print('initial time: {0}\nfinal time: {1}\n'.format(self.initialTime,self.finalTime),
               '\nthermalBoundary: {0}\nmechanicalBoundary: {1}'.format(self.thermalBoundary,self.mechanicalBoundary),
               '\npressure: {0}\ntemperature: {1}\nobservables: {2}'.format(self.pressure,self.temperature,self.observables),
@@ -139,6 +145,11 @@ class shockTube(sim.Simulation):
         Appends the sensitivity adjustment to list, and calls sensitivity adjustment
         function from the simulations class, to adjust P,T,X for the sensitivity
         calculation
+        
+        Keyword arguments:
+        temp_del -- the decimal value of the percent by which temperature is perturbed (default 0.0)
+        pres_del -- the decimal value of the percent by which pressure is perturbed (default 0.0)
+        spec_pair -- the string of a species and the decimal value of the percent by which that species is perturbed (defaul '', 0.0)        
         '''
         if temp_del != 0.0:
             self.dk.append(temp_del)
@@ -157,6 +168,9 @@ class shockTube(sim.Simulation):
     def run(self,initialTime:float=-1.0, finalTime:float=-1.0):
         '''
         Run the shock tube simulation
+        Keyword arguments:
+        initialTime -- the time at which the reactor simulation begins, in seconds (default -1.0)
+        finalTime -- the time at which the reactor simulation ends, in seconds (default -1.0)
         '''
         if initialTime == -1.0:
             initialTime = self.initialTime 
@@ -235,9 +249,15 @@ class shockTube(sim.Simulation):
     #return more data about what was interpolated in a tuple?
     def interpolate_time(self,index:int=None,time_history=None):
         '''
-        This function interpolates the most recent time history against the oldest 
-        by default. Unless specific time history index is passed in then the time 
-        history associated with that index in the list is passed  in.
+        This function interpolates and returns the most recent time history against the oldest 
+        by default. Unless a specific time history index or time history is passed in. If an index
+        is passed in then an interpolated time history associated with 
+        that index in the list is returned. If a specific time_history is passed in then an interpolated
+        version of that time history is returned. 
+        
+        Keyword arguments:
+        index -- the index value of the specific time history to be interpolated (default None)
+        time_history -- pandas dataframe containing the time history from a simulation (default None )
         '''
         if self.timeHistories == None:
             print("Error: this simulation is not saving time histories, reinitialize with flag")
