@@ -105,7 +105,7 @@ class OptMatrix(object):
                 
                 x_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
                 #do we need to take the natrual log of this?
-                x_dependent_uncertainty = np.log(x_dependent_uncertainty+1)
+                #x_dependent_uncertainty = np.log(x_dependent_uncertainty+1)
                 #do we need to take the natrual log of this?
                 length_of_data = data.shape[0]
                 un_weighted_uncertainty = copy.deepcopy(x_dependent_uncertainty)
@@ -114,15 +114,20 @@ class OptMatrix(object):
 
                
             else:
+                
                 length_of_data = data.shape[0]
                 relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty)
                 
                 if absolute_uncertainty != 0:
+                    
                 #check if this weighting factor is applied in the correct place 
                 #also check if want these values to be the natural log values 
                    # print(data,absolute_uncertainty)
-                    absolute_uncertainty_array = np.divide(data,absolute_uncertainty)
-                    total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array)))
+                    #absolute_uncertainty_array = np.divide(data,absolute_uncertainty)
+                    absolute_uncertainty_array = np.divide(absolute_uncertainty, data)
+                    absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
+                    total_uncertainty = np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array))
+                    
                     un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
                      #weighting factor
                     total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )

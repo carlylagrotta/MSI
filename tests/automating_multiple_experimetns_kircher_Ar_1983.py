@@ -23,7 +23,7 @@ import MSI.simulations.yaml_parser as yp
 
 results_dataframe = pd.DataFrame(columns = ['T','P','k_original','k_optimized','k_table','A'])
 #df = pd.read_csv('Columbia/⁨MSI/⁩⁨data/⁨automating_HO2/experiment_conditions')
-df = pd.read_csv('MSI/data/automating_kircher_Ar_1983/experiment_conditions_Ar_average_species.csv')
+df = pd.read_csv('MSI/data/automating_kircher_Ar_1983/experiment_conditions_Ar_average_species_chlorine.csv')
 print(df)
 pressure = df['Pressure']
 density = df['Density']
@@ -33,6 +33,7 @@ Cl = df['Cl']
 CH3OH = df['CH3OH']
 O2 = df['O2']
 Ar = df['Ar']
+Cl2 = df['Cl2']
 wavelength = 227.5
 for i in range(df.shape[0]):
     Press = pressure[i]
@@ -42,9 +43,10 @@ for i in range(df.shape[0]):
     CH3OH_mf = CH3OH[i]
     O2_mf = O2[i]
     Ar_mf = Ar[i]
-    species_list = [Cl_mf,CH3OH_mf,O2_mf,Ar_mf]
-    species_string = ['cl','ch3oh','o2','ar']
-    uncertainty_string = [2.3,2.3,2.3,2.3]
+    Cl2_mf = Cl2[i]
+    species_list = [Cl_mf,CH3OH_mf,O2_mf,Cl2_mf,Ar_mf]
+    species_string = ['cl','ch3oh','o2','cl2','ar']
+    uncertainty_string = [2.3,2.3,2.3,2.3,2.3]
 #    
 ##    
     test_p = pr.Processor('MSI/data/automating_kircher_Ar_1983/i-pentanol_one_reaction.cti')

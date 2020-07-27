@@ -109,10 +109,12 @@ files_to_include = [['Hong_0.yaml'],
                     ['Lightfoot_3.yaml','Lightfoot_3_abs.yaml'],
                     ['Lightfoot_4.yaml','Lightfoot_4_abs.yaml'],
                     ['Lightfoot_5.yaml','Lightfoot_5_abs.yaml'],
-                    ['Lightfoot_6.yaml','Lightfoot_6_abs.yaml']]  
+                    ['Lightfoot_6.yaml','Lightfoot_6_abs.yaml']]
+                        
+#'Kircher_0.yaml','Kircher_0_abs.yaml']]  
 
-#files_to_include = [['Lightfoot_6.yaml','Lightfoot_6_abs.yaml']]
-
+                    #['Hippler_0.yaml','Hippler_0_abs.yaml']]
+#files_to_include = [['Kircher_0.yaml','Kircher_0_abs.yaml']]
 #files_to_include=[                    ['Farooq_0_large_uncertainty.yaml'],
 #                    ['Farooq_1_large_uncertainty_2.yaml'],
 #                    ['Farooq_2_large_uncertainty.yaml'],
@@ -221,7 +223,7 @@ files_to_include = [['Hong_0.yaml'],
 #                     ['Hong_HO2_fake_data_13.yaml','Hong_fake_data_fitted_abs.yaml'],
 #                     ['Hong_HO2_fake_data_14.yaml','Hong_fake_data_fitted_abs.yaml'],
 #                     ['Hong_HO2_fake_data_15.yaml','Hong_fake_data_fitted_abs.yaml']]                                 
-numer_of_iterations = 5
+numer_of_iterations = 2
 cti_file = 'cl2_mechanism_extra_reactions.cti'
 working_directory = 'MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_extra_reaction.csv'

@@ -88,7 +88,11 @@ for i in range(df.shape[0]):
     abs_loaded = parser.load_to_obj('MSI/data/automating_lightfoot_1988/automation_template_abs.yaml')
     
     abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,140.0,kinetic_sens=0)
+    print(abs_data[wavelength][0],'this is the value')
+   
     plt.plot(test_tube.timeHistories[0]['time'],abs_data[wavelength],label=Temp)
+    dff = pd.read_excel('/Users/carlylagrotta/Desktop/test.xlsx')
+    plt.plot(dff['time']/1000,dff['abs'],)
     plt.legend()
 
 #    fall_off = time_History['O'][0]/time_History['O']
