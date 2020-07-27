@@ -26,6 +26,28 @@ class OptMatrix(object):
                 master_equation_uncertainty_df=None,
                 master_equation_reaction_list=[],
                 master_equation_flag = False):
+        '''
+        Builds the Z vector. 
+        
+        Arguments:
+            exp_dic_list -- the dictonary that is built after a simulation
+            that contains things like sensitivity coefficients
+            parsed_yaml_file_list -- a list of dictonaries that contain the 
+            information stored in the yaml files. 
+        Keyword Arguments:
+            loop_counter -- keeps track of the iteration number for the optimization (default 0)
+            reaction_uncertainty -- a csv file that contains all the reactions
+            in the cti file being used for optimization and their corresponding
+            A,n and Ea uncertainty values (default None)
+            master_equation_uncertainty_df -- a pandas dataframe that contains
+            the reactions being treated with theory paramters along with the 
+            associated uncertainty values of those paramters (default None)
+            master_equation_reaction_list -- a list of the reactions being treated
+            with theory paramters (default [])
+            master_equation_flag -- a boolean that indicates if reactions being
+            represented by theory parameters are being used in the optimization (default False)
+            
+        '''
         Z = []
         Z_data_Frame = [] 
         sigma = []
