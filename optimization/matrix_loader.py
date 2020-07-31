@@ -94,57 +94,49 @@ class OptMatrix(object):
         #need to append to sigma
         def uncertainty_calc(relative_uncertainty,absolute_uncertainty,data,experimental_data):
             absolute_uncertainty=float(absolute_uncertainty)
-            if 'W' in list(experimental_data.columns):
-                weighting_factor = experimental_data['W'].values
-                if 'Relative_Uncertainty' in list(experimental_data.columns):
-                    x_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
-                    un_weighted_uncertainty = copy.deepcopy(x_dependent_uncertainty)
-                    total_uncertainty = x_dependent_uncertainty/weighting_factor
-                    
-                else:
-                    length_of_data = data.shape[0]
-                    relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty) 
-                    un_weighted_uncertainty = copy.deepcopy(relative_uncertainty_array)
-                    total_uncertainty = un_weighted_uncertainty/weighting_factor
-                
-            
-            
-            elif 'Relative_Uncertainty' in list(experimental_data.columns):  
+                       
+            length_of_data = data.shape[0]
+            if 'Relative_Uncertainty' in list(experimental_data.columns):  
                 
                 x_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
-                #do we need to take the natrual log of this?
-                x_dependent_uncertainty = np.log(x_dependent_uncertainty+1)
-                #do we need to take the natrual log of this?
-                length_of_data = data.shape[0]
-                un_weighted_uncertainty = copy.deepcopy(x_dependent_uncertainty)
-                total_uncertainty = np.divide(x_dependent_uncertainty,(1/length_of_data**.5) )
-#                
+                
+                relative_uncertainty_array = copy.deepcopy(x_dependent_uncertainty)
+                relative_uncertainty_array = relative_uncertainty_array.reshape((relative_uncertainty_array.shape[0],1))
 
-               
-            else:
-                length_of_data = data.shape[0]
+                
+            elif 'Relative_Uncertainty' not in list(experimental_data.columns):
+                
                 relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty)
-                
-                if absolute_uncertainty != 0:
-                #check if this weighting factor is applied in the correct place 
-                #also check if want these values to be the natural log values 
-                   # print(data,absolute_uncertainty)
-                    
-                    absolute_uncertainty_array = np.divide(data,absolute_uncertainty)
-                    total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array)))
-                    un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
-                     #weighting factor
-                    total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
-                
-                else:
-                    #total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array)))
-                    total_uncertainty = relative_uncertainty_array
-                    #weighting factor
-                    
-                    un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
-                    total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
+                relative_uncertainty_array = relative_uncertainty_array.reshape((relative_uncertainty_array.shape[0],1))
 
-            #make this return a tuple 
+            if 'Absolute_Uncertainty' in list(experimental_data.columns):
+                x_dependent_a_uncertainty = experimental_data['Absolute_Uncertainty'].values
+                
+                
+                absolute_uncertainty_array = copy.deepcopy(x_dependent_a_uncertainty)
+                absolute_uncertainty_array = np.divide(absolute_uncertainty_array,data)
+                absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
+                print(absolute_uncertainty_array ,'WE CARE HERE')
+            elif 'Absolute_Uncertainty' not in list(experimental_data.columns):
+                
+                absolute_uncertainty_array = np.divide(absolute_uncertainty,data)
+                absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
+                
+            print(absolute_uncertainty_array)
+            total_uncertainty = np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array))
+            print(total_uncertainty)
+            un_weighted_uncertainty = copy.deepcopy(total_uncertainty)                
+                
+            if 'W' not in list(experimental_data.columns):              
+                
+                total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
+                
+            elif 'W' in list(experimental_data.columns):
+                weighting_factor = experimental_data['W'].values
+                total_uncertainty = total_uncertainty/weighting_factor
+                
+                
+                
             return total_uncertainty,un_weighted_uncertainty
         #tab, start working here tomorrow with how we want to read in csv file     
         for i,exp_dic in enumerate(exp_dict_list):
