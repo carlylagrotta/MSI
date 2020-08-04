@@ -223,7 +223,7 @@ files_to_include = [['Hong_0.yaml'],
 #                     ['Hong_HO2_fake_data_13.yaml','Hong_fake_data_fitted_abs.yaml'],
 #                     ['Hong_HO2_fake_data_14.yaml','Hong_fake_data_fitted_abs.yaml'],
 #                     ['Hong_HO2_fake_data_15.yaml','Hong_fake_data_fitted_abs.yaml']]                                 
-numer_of_iterations = 2
+numer_of_iterations = 5
 cti_file = 'cl2_mechanism_extra_reactions.cti'
 working_directory = 'MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_extra_reaction.csv'

@@ -120,7 +120,7 @@ class OptMatrix(object):
                 
                 if absolute_uncertainty != 0:
                     
-                #check if this weighting factor is applied in the correct place 
+                 #check if this weighting factor is applied in the correct place 
                 #also check if want these values to be the natural log values 
                    # print(data,absolute_uncertainty)
                     #absolute_uncertainty_array = np.divide(data,absolute_uncertainty)

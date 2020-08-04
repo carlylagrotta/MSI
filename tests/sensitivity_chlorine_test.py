@@ -29,13 +29,14 @@ test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_me
 #                          processor=test_p,
 #                          save_timeHistories=1,
 #                          save_physSensHistories=1)
-
+#0.000745033
+#0.0027300000000000002
 test_tube = st.shockTube(pressure=.19,
                           temperature=240,
                           observables=['HO2(6)','H2O2(15)'],
                           kineticSens=1,
                           physicalSens=0,
-                          conditions={'Cl(2)':0.0027300000000000002 ,
+                          conditions={'Cl(2)':0.0000000745033 ,
                                       'CH4O(1)':0.000496976,
                                       'O2(7)': 0.045556129,
                                       'Cl2(5)':0.000745033,
