@@ -174,10 +174,10 @@ class Plotting(object):
                             
                             
                             
-                            high_error_original = np.exp(sigmas_original[i][observable_counter])
-                            high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
-                            low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
-                            low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            #high_error_original = np.exp(sigmas_original[i][observable_counter])
+                            #high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            #low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
+                            #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
                             
                             plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
                             plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
@@ -235,10 +235,10 @@ class Plotting(object):
                         
     
     
-                        high_error_original = np.exp(sigmas_original[i][observable_counter])
-                        high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
-                        low_error_original = np.exp(np.array(sigmas_original[i][observable_counter])*-1)
-                        low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                        #high_error_original = np.exp(sigmas_original[i][observable_counter])
+                        #high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                        #low_error_original = np.exp(np.array(sigmas_original[i][observable_counter])*-1)
+                        #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
                         
                         #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
                         #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
