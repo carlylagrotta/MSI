@@ -309,11 +309,32 @@ class VolumeProfileExactDerivative(object):
         self.vol_temp = self.arr[:, 1]
         self.volume = self.vol_temp/self.vol_temp[0]          
         #normalize the volume
-        coefs = poly.polyfit(self.time, self.volume, 50)
-        ffit = poly.polyval(self.time, coefs)
-        self.volume_fit = ffit
-        p2 = np.polyder(coefs)
-        deriv = poly.polyval(self.time, p2)
+        min_index = self.volume.idxmin()
+
+        
+        coeffs = np.polynomial.chebyshev.chebfit(self.time[:min_index], self.volume[:min_index], 15, rcond=None, full=False, w=None)
+        y_calculated1 = np.polynomial.chebyshev.chebval(xdata[:min_index], coeffs, tensor=True)
+        
+        coeffs2 = np.polynomial.chebyshev.chebfit(self.time[min_index:], self.volume[min_index:], 15, rcond=None, full=False, w=None)
+        y_calculated2 = np.polynomial.chebyshev.chebval(self.time[min_index:], coeffs2, tensor=True)        
+        
+        
+        deriv1 = np.polynomial.chebyshev.chebder(coeffs)
+        y_deriv_calculated = np.polynomial.chebyshev.chebval(self.time[:min_index], deriv1, tensor=True)        
+        
+        
+        
+        deriv2 = np.polynomial.chebyshev.chebder(coeffs2)
+        y_deriv_calculated2 = np.polynomial.chebyshev.chebval(self.time[min_index:], deriv2, tensor=True)
+        
+        y_deriv_calculated = y_deriv_calculated.to_numpy()
+        y_deriv_calculated2 = y_deriv_calculated2.to_numpy()
+    
+        y_deriv_calculated = y_deriv_calculated.reshape((y_deriv_calculated.shape[0],1))
+        y_deriv_calculated2 = y_deriv_calculated2.reshape((y_deriv_calculated2.shape[0],1))
+        deriv=np.vstack((y_deriv_calculated,y_deriv_calculated2))        
+        deriv = deriv.flatten()
+
         self.velocity = deriv
 
         # The velocity is calculated by fitting the volume function to a polynomial.
