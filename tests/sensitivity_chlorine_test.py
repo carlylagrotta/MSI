@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 #test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/chem_calories_extra_reaction.cti')
 #test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/chem_calories_extra_reaction_editing.cti')
-test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/cl2_mechanism_extra_reactions.cti')
+test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/cl2_mechanism_extra_reactions_editing.cti')
 
 #test_p = pr.Processor('MSI/data/klip_optimization_with_raw_hong_data_chlorine_mechanism/chem_calories_extra_reaction_editing_AnEa.cti')
 
@@ -36,8 +36,8 @@ test_tube = st.shockTube(pressure=.19,
                           observables=['HO2(6)','H2O2(15)'],
                           kineticSens=1,
                           physicalSens=0,
-                          conditions={'Cl(2)':0.0000000745033 ,
-                                      'CH4O(1)':0.000496976,
+                          conditions={'Cl(2)':(0.000745033*.1) ,
+                                      'CH4O(1)':0.000496976*.01,
                                       'O2(7)': 0.045556129,
                                       'Cl2(5)':0.000745033,
                                       'Ar':0.95},
