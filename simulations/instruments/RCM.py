@@ -77,7 +77,7 @@ class RCM(sim.Simulation):
         '''
         
         #p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
-        if self.exact_deriv_flag==False      
+        if self.exact_deriv_flag==False :     
             inp_time = self.volume_trace_class.time
             inp_vol = self.volume_trace_class.volume
         if self.exact_deriv_flag==True:
@@ -97,13 +97,13 @@ class RCM(sim.Simulation):
 
             print('RCM is not a constant pressure simulation')
         else:
-            if self.exact_deriv_flag == False
+            if self.exact_deriv_flag == False:
                 RCM = ct.IdealGasReactor(self.processor.solution)
                 env = ct.Reservoir(ct.Solution('air.xml'))
                 wall = ct.Wall(RCM, env, A=1.0, velocity=self.volume_trace_class)
                 sim = ct.ReactorNet([RCM])
                 sim.set_max_time_step(inp_time[1])
-            if self.exact_deriv_flag == True
+            if self.exact_deriv_flag == True:
                 RCM = ct.IdealGasReactor(self.processor.solution)
                 env = ct.Reservoir(ct.Solution('air.xml'))
                 wall = ct.Wall(RCM, env, A=1.0, velocity=self.volume_trace_class_exact_derivitive)
@@ -137,7 +137,7 @@ class RCM(sim.Simulation):
         #while t < self.finalTime and RCM.T < 2500:
         #should we have this temperature limiting factor?
         #while t < self.finalTime and RCM.T<2500:
-        while t < self.finalTime:
+        while t < self.finalTime and RCM.T<2500:
             t = sim.step()
             if mechanicalBoundary =='constant volume':
                 state = np.hstack([t,RCM.thermo.P,RCM.mass,RCM.volume,
@@ -304,16 +304,22 @@ class VolumeProfileExactDerivative(object):
         # velocity.
         self.df = pd.read_csv(volumeProfileCsv,float_precision='round_trip')
         self.arr = self.df.to_numpy()
+        
         self.time = self.arr[:, 0]
 
         self.vol_temp = self.arr[:, 1]
-        self.volume = self.vol_temp/self.vol_temp[0]          
+        
+        self.volume = self.vol_temp/self.vol_temp[0]   
+        
+        self.volume = pd.Series(self.volume)
+        
+        self.time = pd.Series(self.time)
         #normalize the volume
         min_index = self.volume.idxmin()
 
         
         coeffs = np.polynomial.chebyshev.chebfit(self.time[:min_index], self.volume[:min_index], 15, rcond=None, full=False, w=None)
-        y_calculated1 = np.polynomial.chebyshev.chebval(xdata[:min_index], coeffs, tensor=True)
+        y_calculated1 = np.polynomial.chebyshev.chebval(self.time[:min_index], coeffs, tensor=True)
         
         coeffs2 = np.polynomial.chebyshev.chebfit(self.time[min_index:], self.volume[min_index:], 15, rcond=None, full=False, w=None)
         y_calculated2 = np.polynomial.chebyshev.chebval(self.time[min_index:], coeffs2, tensor=True)        
@@ -334,8 +340,23 @@ class VolumeProfileExactDerivative(object):
         y_deriv_calculated2 = y_deriv_calculated2.reshape((y_deriv_calculated2.shape[0],1))
         deriv=np.vstack((y_deriv_calculated,y_deriv_calculated2))        
         deriv = deriv.flatten()
+        
+        self.time = self.time.to_numpy()
 
         self.velocity = deriv
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.plot(self.time[:min_index],y_calculated1)
+        plt.plot(self.time[:min_index],self.volume[:min_index])
+        plt.figure()
+        plt.plot(self.time[min_index:],y_calculated2)
+        plt.plot(self.time[min_index:],self.volume[min_index:])
+        plt.figure()
+        plt.plot(self.time[:min_index],y_deriv_calculated)
+        plt.plot(self.time[min_index:],y_deriv_calculated2)
+        
+
+
 
         # The velocity is calculated by fitting the volume function to a polynomial.
         # The derivitive is then calculated of this fitted polynomial to get the velocity

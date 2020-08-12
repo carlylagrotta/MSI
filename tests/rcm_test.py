@@ -27,14 +27,22 @@ test_tube = rcm.RCM(pressure=1.4939057488280285,
                          processor=test_p,
                          save_timeHistories=1,
                          save_physSensHistories=1,
-                         volumeTrace='MSI/data/RCM/volume_trace_file.csv')
+                         volumeTrace='MSI/data/RCM/volume_trace_file.csv',
+                         exactDerivFlag=True)
 
 test_tube.run()
 #test_tube.printVars()
 time_History = test_tube.timeHistory
+plt.figure()
 plt.plot(time_History['time'],time_History['pressure']/100000)
+plt.xlabel('Time')
+plt.ylabel('Presure')
 plt.ylim(0,140)
 plt.figure()
 plt.plot(time_History['time'],time_History['temperature'])
+plt.xlabel('Time')
+plt.ylabel('Temperature')
 plt.figure()
 plt.plot(time_History['time'],time_History['volume'])
+plt.xlabel('Time')
+plt.ylabel('Volume')

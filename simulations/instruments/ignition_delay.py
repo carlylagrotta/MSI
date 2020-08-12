@@ -205,7 +205,7 @@ class ignition_delay(sim.Simulation):
                 #Replace to use different method
                 
                 #sens=self.direct_ksens('a',dk=self.dk)
-                sens=self.BFM(delay)
+                sens=self.BFM(delay,simulation_type = '[Ss]hock[ -][Tt]ube')
                 #sens=self.BFM_pool(delay,self.n_processors)
                 ##############################################################
                 
@@ -250,7 +250,6 @@ class ignition_delay(sim.Simulation):
         dTdt[0:-1]=np.diff(TT)/np.diff(tt)
         dTdt[-1]=(TT[-1] - TT[-2])/(tt[-1] - tt[-2])
         delay=tt[np.argmax(dTdt)]
-        print(delay)
         return delay
         
     def ig_dPdt(self,data):
@@ -311,7 +310,7 @@ class ignition_delay(sim.Simulation):
         
     
         
-    def BFM(self,nominal):
+    def BFM(self,nominal,simulation_type = self.fullParsedYamlFile['simulationType']):
          
          sens=np.zeros(self.processor.solution.n_reactions)
          if re.match('[Mm]ax [Dd]erivative',self.target_type):
@@ -320,7 +319,11 @@ class ignition_delay(sim.Simulation):
                 for i in range(self.processor.solution.n_reactions):
                     print('Solving kinetic sensitivity for reaction '+str(i+1))
                     self.processor.solution.set_multiplier(1+self.dk,i)
-                    temp_history=copy.deepcopy(self.run_shocktube().timeHistory)                    
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType'])
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)
+
                     delay=self.ig_dTdt(temp_history)
                     sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
                     self.processor.solution.set_multiplier(1.0,i)
@@ -330,7 +333,10 @@ class ignition_delay(sim.Simulation):
                 for i in range(self.processor.solution.n_reactions):
                     print('Solving kinetic sensitivity for reaction '+str(i+1))
                     self.processor.solution.set_multiplier(1+self.dk,i)
-                    temp_history=copy.deepcopy(self.run_shocktube().timeHistory)                    
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType'])
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)                    
                     delay=self.ig_dPdt(temp_history)
                     sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
                     self.processor.solution.set_multiplier(1.0,i)
@@ -340,12 +346,19 @@ class ignition_delay(sim.Simulation):
                 for i in range(self.processor.solution.n_reactions):
                     print('Solving kinetic sensitivity for reaction '+str(i+1))
                     self.processor.solution.set_multiplier(1+self.dk,i)
-                    temp_history=copy.deepcopy(self.run_shocktube().timeHistory)                    
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType'])
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)                    
                     delay=self.ig_dXdt(temp_history,self.target)
                     sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
                     #print(nominal,delay,sens[i])
                     self.processor.solution.set_multiplier(1.0,i)
          return sens
+     
+        
+        
+        
         
     def BFM_pool(self,nominal,n_procs):
          info=[]
@@ -404,7 +417,9 @@ class ignition_delay_wrapper(sim.Simulation):
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={}, save_timeHistories:int=0,
                  log_file=True,log_name='log.txt',timeshift:float=0.0,initialTime:float=0.0,
-                 finalTime:float=1.0,target:str='temperature',target_type:str='max derivative',n_processors:int=2, volumeTrace=''):
+                 finalTime:float=1.0,target:str='temperature',
+                 target_type:str='max derivative',n_processors:int=2, 
+                 volumeTrace=''):
         
         
         
@@ -553,7 +568,7 @@ class ignition_delay_wrapper(sim.Simulation):
             #self.pressure=self.pressure+pres_del*self.pressure
             xj=self.conditions[spec_triplet[2]][spec_triplet[0]]
             delxj=spec_triplet[1]*self.conditions[spec_triplet[2]][spec_triplet[0]]
-            print(xj,delxj)
+            #print(xj,delxj)
             self.conditions[spec_triplet[2]][spec_triplet[0]]=np.divide(np.multiply(xj+delxj,1-xj),1-xj-delxj)
 #           self.setTPX(self.temperature+self.temperature*temp_del,
 #                   self.pressure+self.pressure*pres_del,

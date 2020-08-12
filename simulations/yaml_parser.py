@@ -174,7 +174,100 @@ class Parser(object):
            }
         else:
             print('Placeholder: no JSR absorption')
+            
+    def parse_variable_pressure_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+        simulation_type = loaded_exp['apparatus']['kind']
+        pressure = loaded_exp['common-properties']['pressure']['value']
+        temperature = loaded_exp['common-properties']['temperature']['value']
+        mole_fractions = [((concentration['mole-fraction'])) for concentration in loaded_exp['common-properties']['composition']]
+        mole_fractions = [float(elm) for elm in mole_fractions]
+        species_names = [(species['species']) for species in loaded_exp['common-properties']['composition']]
+        conditions = dict(zip(species_names,mole_fractions))
+        thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
+        mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
+        experiment_type = loaded_exp['experiment-type']
+        mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
+        if mole_fraction_observables[0]!=None:
+            for i in range(len(mole_fraction_observables)):
+                if not mole_fraction_observables[i]:
+                    mole_fraction_observables[i]='NO'
+        #print(mole_fraction_observables, len(mole_fraction_observables))
+        species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
+        species_uncertainties = [float(elm) for elm in species_uncertainties]
+        species_uncertainties = dict(zip(species_names,species_uncertainties))
+        
+        
+        concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']] 
+        if concentration_observables[0]!=None:
+            for i in range(len(concentration_observables)):
+                if not concentration_observables[i]:
+                    concentration_observables[i]='NO'    
+        #print(concentration_observables,len(concentration_observables))
+        observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]
+        
+        volume_trace_csv= loaded_exp['common-properties']['volume-trace']['csvfile']
+
+        initial_time = loaded_exp['common-properties']['time']['initial-time']['value']
+        #eventually going to get this from a csv file 
+        final_time = loaded_exp['common-properties']['time']['final-time']['value']
     
+   
+        mole_fraction_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['mole-fraction']]
+        concentration_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['concentration']]
+        path_length = loaded_exp['apparatus']['inner-diameter']['value']
+        csv_files = [x for x in (mole_fraction_csv_files + concentration_csv_files) if x is not None]
+
+
+        #importing unceratinty values 
+        temp_relative_uncertainty = loaded_exp['common-properties']['temperature']['relative-uncertainty']
+        temp_relative_uncertainty = float(temp_relative_uncertainty)
+        pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
+        pressure_relative_uncertainty = float(pressure_relative_uncertainty)
+        time_shift = float(loaded_exp['common-properties']['time-shift']['value'])
+        time_shift_uncertainty = loaded_exp['common-properties']['time-shift']['absolute-uncertainty']['value']
+        concentration_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
+        concentration_relative_uncertainity = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
+
+        mole_fraction_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]
+
+        mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
+
+        if loaded_absorption == {}:
+            return{
+               'pressure':pressure,
+               'temperature':temperature,
+               'conditions':conditions,
+               'speciesUncertaintys':species_uncertainties,
+               'thermalBoundary':thermal_boundary,
+               'mechanicalBoundary':mechanical_boundary,
+               'moleFractionObservables':mole_fraction_observables,
+               'concentrationObservables': concentration_observables,               
+               'observables':observables,
+               'initialTime':initial_time,
+               'finalTime':final_time,
+               'speciesNames':species_names,
+               'pathLength':path_length,
+               'MoleFractions':mole_fractions,
+               'moleFractionCsvFiles':mole_fraction_csv_files,
+               'concentrationCsvFiles':concentration_csv_files,
+               'tempRelativeUncertainty':temp_relative_uncertainty,
+               'pressureRelativeUncertainty': pressure_relative_uncertainty,
+               'timeShiftUncertainty':time_shift_uncertainty,
+               'concentrationAbsoluteUncertainty':concentration_absolute_uncertainty,
+               'concentrationRelativeUncertainity':concentration_relative_uncertainity,
+               'moleFractionAbsoluteUncertainty':mole_fraction_absolute_uncertainty,
+               'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
+               'csvFiles': csv_files,
+               'simulationType':  simulation_type,
+               'timeShift':time_shift,
+               'experimentType':experiment_type,
+               'ignitionDelayObservables':[None],
+               'volumeTraceCsv':volume_trace_csv
+
+           }
+        
+        else: 
+            print('Placeholder: no JSR absorption')
     def parse_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
@@ -802,7 +895,13 @@ class Parser(object):
                                                                             loaded_absorption = tup[1]))
                 else:
                     experiment_dictonaries.append(self.parse_RCM_obj(loaded_exp = tup[0]))                     
-                    
+                
+            elif re.match('[Vv]ariable[ -][Pp]ressure[ -][Ss]hock [- ][Tt]ube',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
+                if len(tup)>1:
+                    experiment_dictonaries.append(self.parse_variable_pressure_shock_tube_obj(loaded_exp = tup[0],
+                                                                            loaded_absorption = tup[1]))
+                else:
+                    experiment_dictonaries.append(self.parse_variable_pressure_shock_tube_obj(loaded_exp = tup[0]))                     
                     
             elif  re.match('[Ff]low[- ][Rr]eactor',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
                 if len(tup)>1:
@@ -902,6 +1001,13 @@ class Parser(object):
                     time_shift = self.original_experimental_conditions[yaml_file]['time_shift']
                     press = self.original_experimental_conditions[yaml_file]['pressures']
                     conditions = self.original_experimental_conditions[yaml_file]['conditions']
+
+                elif re.match('[Rr][Cc][Mm]',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
+                    temp = self.original_experimental_conditions[yaml_file]['temperatures']
+                    time_shift = self.original_experimental_conditions[yaml_file]['time_shift']
+                    press = self.original_experimental_conditions[yaml_file]['pressures']
+                    conditions = self.original_experimental_conditions[yaml_file]['conditions']
+
                     
                     
                 elif re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']):
@@ -909,6 +1015,7 @@ class Parser(object):
                     res = self.original_experimental_conditions[yaml_file]['residence_time']
                     press = self.original_experimental_conditions[yaml_file]['pressure']
                     conditions = self.original_experimental_conditions[yaml_file]['conditions']
+                    
                 elif re.match('[Ff]low[- ][Rr]eactor', self.original_experimental_conditions[yaml_file]['simulationType']) or re.match('[Ss]pecies[ -][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
                     
                     temp = self.original_experimental_conditions[yaml_file]['temperatures']
@@ -1038,7 +1145,32 @@ class Parser(object):
                     updatedTimeShift = physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)] + time_shift
 
                     updatedTimeShift = float(round(updatedTimeShift,9))
-                        
+                elif re.match('[Rr][Cc][Mm]',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
+                    updatedTemp=[]
+                    diluent=[]   
+                    if 'Diluent' in experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
+                        diluent = experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict']['diluent']
+                    for i,T in enumerate(temp):
+                        updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))
+                    updatedPress=[]
+                    for i,P in enumerate(press):
+                        updatedPress.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['P'+str(i+1)+'_experiment_'+str(yaml_file)]) * P,9)))
+                    updated_mole_fractions = {}
+                    #print(physical_observables_updates_list[yaml_file])
+                    counter=0
+                    for i,species in enumerate(self.original_experimental_conditions[yaml_file]['conditions'].keys()):
+                        temp_spec_list=[]
+                        if species in diluent:
+                            continue
+                        else:   
+                            for j,value in enumerate(self.original_experimental_conditions[yaml_file]['conditions'][species]):
+                                temp_spec_list.append(np.exp(physical_observables_updates_list[yaml_file]['X'+str(counter+1)+'_cond'+str(j)+'_'+species+'_experiment_'+str(yaml_file)])*self.original_experimental_conditions[yaml_file]['conditions'][species][j])
+                                temp_spec_list[-1]=float(round(temp_spec_list[-1],9))
+                            counter=counter+1
+                        updated_mole_fractions[species]=copy.deepcopy(temp_spec_list)
+                    updatedTimeShift = physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)] + time_shift
+
+                    updatedTimeShift = float(round(updatedTimeShift,9))                        
                 
  # starting to do file updates here 
                
@@ -1078,7 +1210,19 @@ class Parser(object):
                            #print(updated_mole_fractions[obj['name']])
                     #config2['common-properties']['composition'][i]['mole-fraction']=updated_mole_fractions[species]
                     config2['common-properties']['time-shift']['value']=float(updatedTimeShift)
-                
+
+                elif re.match('[Rr][Cc][Mm]',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
+                    config2['common-properties']['temperature']['value-list']=updatedTemp
+                    config2['common-properties']['pressure']['value-list']=updatedPress
+                    
+                    for j,group in enumerate(config2['common-properties']['composition']):
+                       #print(group['mixture'])
+                       for n,obj in enumerate(group['mixture']):
+                           if obj['name'] not in diluent:
+                               obj['mole-fraction']['value-list']=updated_mole_fractions[obj['name']]
+                           #print(updated_mole_fractions[obj['name']])
+                    #config2['common-properties']['composition'][i]['mole-fraction']=updated_mole_fractions[species]
+                    config2['common-properties']['time-shift']['value']=float(updatedTimeShift)                
                     
                 with open(new_file_name,'w') as f:
                     yaml.safe_dump(config2, f,default_flow_style=False)
