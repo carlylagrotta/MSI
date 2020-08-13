@@ -2,27 +2,14 @@ import cantera as ct
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-gas = ct.Solution('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/variable_pressure_shock_tube/jetsurf2.cti')
-#gas.TPX = T0, P0, 'IC8H18:0.016503292, N2:0.785871069, CO2:0.197625639'
-gas.TPX = 1350, 101325*1.4, 'NC7H16:.002, O2:0.022, Ar:.976'
-pressure_trace = pd.read_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/variable_pressure_shock_tube/pressure_trace.csv')
-print(pressure_trace.shape)
-S0 = gas.entropy_mass
-rho0 = gas.density
-print(gas.SV)
-Pressure_array = pressure_trace['Pressure'].to_numpy()*101325
+pressure_trace = pd.read_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/RCM/pressure_trace_github.csv',
+                             float_precision='round_trip')
+Pressure_array=pressure_trace['Pressure'].to_numpy()
 plt.figure()
-plt.plot(pressure_trace['Time'],pressure_trace['Pressure'].to_numpy()*101325)
-#V0 = gas.
-# for i in range(pressure_trace.shape[0]):
-#     P = pressure_trace['Pressure'][i] * 101325
-#     gas.SP = S0, P
-#     T_new = gas.T
-#     V_new = V0 * rho0 / gas.density
-
-    # print / save P,T_new,V_new
-
-
+plt.plot(pressure_trace['Time'],pressure_trace['Pressure'].to_numpy(),label='Data Given On Github Taken From Experiment')
+plt.xlabel('Time [s]')
+plt.ylabel('Pressure [bar]')
+plt.legend()
 class VolumeFromPressure(object):
     r"""Create a volume trace given a pressure trace.
     Using Cantera to evaluate the thermodynamic properties, compute a
@@ -51,19 +38,46 @@ class VolumeFromPressure(object):
     and the entropy to be constant. The volume is computed by the
     isentropic relationship described above.
     """
-    def __init__(self, pressure, v_initial, T_initial, chem_file='species.cti', cti_source=None):
+    def __init__(self, pressure, v_initial, T_initial, chem_file='species.cti', cti_source=None,time=None):
+        initial_density = []
+        gas_density = []
+        
+        one_bar_in_pa = 100000
         if cti_source is None:
             gas = ct.Solution(chem_file)
         else:
             gas = ct.Solution(source=cti_source)
-        gas.TP = T_initial, pressure[0]
+        gas.TP = T_initial, pressure[0]*one_bar_in_pa
         initial_entropy = gas.entropy_mass
         initial_density = gas.density
+        
+        print(initial_entropy,initial_density)
+
         self.volume = np.zeros((len(pressure)))
         for i, p in enumerate(pressure):
-            gas.SP = initial_entropy, p
+            gas.SP = initial_entropy, p*one_bar_in_pa
             self.volume[i] = v_initial*initial_density/gas.density
-
+            gas_density.append(gas.density)
+        
+        plt.figure()    
+        plt.plot(time,gas_density)
+        plt.ylabel('density')
     def __repr__(self):
         return 'VolumeFromPressure(volume={self.volume!r})'.format(self=self)
-instance = VolumeFromPressure(Pressure_array,.19,1350,chem_file='/Users/carlylagrotta/Dropbox/Columbia/MSI/data/variable_pressure_shock_tube/jetsurf2.cti')
+
+
+instance = VolumeFromPressure(Pressure_array,
+                              1, 323,
+                              chem_file ='/Users/carlylagrotta/Dropbox/Columbia/MSI/data/RCM/mech.cti',
+                              time=pressure_trace['Time'])
+print(instance.volume)
+
+
+
+cantera_calculated_volume_trace = pd.read_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/RCM/volume_trace_file.csv',float_precision='round_trip')
+plt.figure()
+plt.plot(cantera_calculated_volume_trace['Time'],cantera_calculated_volume_trace['Volume'],label='Data Given On Github')
+plt.plot(pressure_trace['Time'],instance.volume,label='Calculated Here')
+plt.xlabel('Time [s]')
+plt.ylabel('Volume [m**3]')
+plt.legend()
