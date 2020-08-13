@@ -122,7 +122,8 @@ class Plotting(object):
         for x in range(len(self.simulation_lengths_of_experimental_data)):
             for y in range(len(self.simulation_lengths_of_experimental_data[x])):
                 temp=[]
-                for z in np.arange(counter,(self.simulation_lengths_of_experimental_data[x][y]+counter)):       
+                for z in np.arange(counter,(self.simulation_lengths_of_experimental_data[x][y]+counter)):     
+                    print(z)
                     SC = np.dot(S_matrix[z,:],covarience)
                     sigma = np.dot(SC,np.transpose(S_matrix[z,:]))
                     test = sigma
