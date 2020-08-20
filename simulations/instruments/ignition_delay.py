@@ -176,6 +176,7 @@ class ignition_delay(sim.Simulation):
         tic=time.time()
         
         #check if shock tube or rcm
+       
         if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
             s=self.run_shocktube()
             
@@ -185,15 +186,16 @@ class ignition_delay(sim.Simulation):
         self.timehistory=copy.deepcopy(s.timeHistory)
         delay=None
         if re.match('[Mm]ax [Dd]erivative',self.target_type):
+            
             if re.match('[Tt]emperature',self.target):
                 
                 delay=self.ig_dTdt(self.timehistory)
                 
-            elif re.match('[Pp]ressure',self.target_type):
+            elif re.match('[Pp]ressure',self.target):
                 
                 delay=self.ig_dPdt(self.timehistory)
                 
-            elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target_type):
+            elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target):
                 
                 delay=self.ig_dXdt(self.timehistory,self.target)
                 
@@ -310,7 +312,7 @@ class ignition_delay(sim.Simulation):
         
     
         
-    def BFM(self,nominal,simulation_type = self.fullParsedYamlFile['simulationType']):
+    def BFM(self,nominal,simulation_type = ''):
          
          sens=np.zeros(self.processor.solution.n_reactions)
          if re.match('[Mm]ax [Dd]erivative',self.target_type):
@@ -319,7 +321,7 @@ class ignition_delay(sim.Simulation):
                 for i in range(self.processor.solution.n_reactions):
                     print('Solving kinetic sensitivity for reaction '+str(i+1))
                     self.processor.solution.set_multiplier(1+self.dk,i)
-                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType'])
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
                         temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
                     elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
                         temp_history=copy.deepcopy(self.run_RCM().timeHistory)
@@ -333,7 +335,7 @@ class ignition_delay(sim.Simulation):
                 for i in range(self.processor.solution.n_reactions):
                     print('Solving kinetic sensitivity for reaction '+str(i+1))
                     self.processor.solution.set_multiplier(1+self.dk,i)
-                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType'])
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
                         temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
                     elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
                         temp_history=copy.deepcopy(self.run_RCM().timeHistory)                    
@@ -346,7 +348,7 @@ class ignition_delay(sim.Simulation):
                 for i in range(self.processor.solution.n_reactions):
                     print('Solving kinetic sensitivity for reaction '+str(i+1))
                     self.processor.solution.set_multiplier(1+self.dk,i)
-                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType'])
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
                         temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
                     elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
                         temp_history=copy.deepcopy(self.run_RCM().timeHistory)                    

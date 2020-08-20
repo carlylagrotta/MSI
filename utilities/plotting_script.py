@@ -86,6 +86,7 @@ class Plotting(object):
     def lengths_of_experimental_data(self):
         simulation_lengths_of_experimental_data = []
         for i,exp in enumerate(self.exp_dict_list_optimized):
+           
             length_of_experimental_data=[]
             observable_counter=0
             for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables'] + exp['ignition_delay_observables']):
@@ -115,6 +116,16 @@ class Plotting(object):
                         observable_counter+=1                         
                 if observable in exp['ignition_delay_observables']:
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[iI]gnition[- ][Dd]elay',exp['experiment_type']):
+                        if 'temperature' in list(exp['experimental_data'][observable_counter].columns):
+                            length_of_experimental_data.append(exp['experimental_data'][observable_counter]['temperature'].shape[0])
+                            observable_counter+=1
+                        elif 'pressure' in list(exp['experimental_data'][observable_counter].columns):
+                            length_of_experimental_data.append(exp['experimental_data'][observable_counter]['pressure'].shape[0])
+                            observable_counter+=1
+                        else:
+                            length_of_experimental_data.append(exp['experimental_data'][observable_counter].shape[0])
+                            observable_counter+=1
+                    elif re.match('[Rr][Cc][Mm]',exp['simulation_type']) and re.match('[iI]gnition[- ][Dd]elay',exp['experiment_type']):
                         if 'temperature' in list(exp['experimental_data'][observable_counter].columns):
                             length_of_experimental_data.append(exp['experimental_data'][observable_counter]['temperature'].shape[0])
                             observable_counter+=1
@@ -167,56 +178,107 @@ class Plotting(object):
     def run_ignition_delay(self,exp,cti,n_of_data_points=10):
         
         p=pr.Processor(cti)
-        
-        if len(exp['simulation'].fullParsedYamlFile['temperatures'])>1:
-            tempmin=np.min(exp['simulation'].fullParsedYamlFile['temperatures'])
-            tempmax=np.max(exp['simulation'].fullParsedYamlFile['temperatures'])
-            total_range=tempmax-tempmin
-            tempmax=tempmax+0.1*total_range
-            tempmin=tempmin-0.1*total_range
-            temprange=np.linspace(tempmin,tempmax,n_of_data_points)
-            pressures=exp['simulation'].fullParsedYamlFile['pressures']
-            conds=exp['simulation'].fullParsedYamlFile['conditions_to_run']
+        if 'volumeTraceCsv' not in exp['simulation'].fullParsedYamlFile.keys():
+            if len(exp['simulation'].fullParsedYamlFile['temperatures'])>1:
+                tempmin=np.min(exp['simulation'].fullParsedYamlFile['temperatures'])
+                tempmax=np.max(exp['simulation'].fullParsedYamlFile['temperatures'])
+                total_range=tempmax-tempmin
+                tempmax=tempmax+0.1*total_range
+                tempmin=tempmin-0.1*total_range
+                temprange=np.linspace(tempmin,tempmax,n_of_data_points)
+                pressures=exp['simulation'].fullParsedYamlFile['pressures']
+                conds=exp['simulation'].fullParsedYamlFile['conditions_to_run']
+                
+            elif len(exp['simulation'].fullParsedYamlFile['pressures'])>1:
+                pmin = exp['simulation'].fullParsedYamlFile['pressures']*0.9
+                pmax = exp['simulation'].fullParsedYamlFile['pressures']*1.1
+                total_range=pmax-pmin
+                pmax=pmax+0.1*total_range
+                pmin=pmin-0.1*total_range
+                pressures = np.linspace(pmin,pmax,n_of_data_points)
+                temprange = exp['simulation'].fullParsedYamlFile['temperatures']
+                conds = exp['simulation'].fullParsedYamlFile['conditions_to_run']
+                
+            elif len(exp['simulation'].fullParsedYamlFile['conditions_to_run'])>1:
+                print('Plotting for conditions depedendent ignition delay not yet installed')
+                
+                
+                
             
-        elif len(exp['simulation'].fullParsedYamlFile['pressures'])>1:
-            pmin = exp['simulation'].fullParsedYamlFile['pressures']*0.9
-            pmax = exp['simulation'].fullParsedYamlFile['pressures']*1.1
-            total_range=pmax-pmin
-            pmax=pmax+0.1*total_range
-            pmin=pmin-0.1*total_range
-            pressures = np.linspace(pmin,pmax,n_of_data_points)
-            temprange = exp['simulation'].fullParsedYamlFile['temperatures']
-            conds = exp['simulation'].fullParsedYamlFile['conditions_to_run']
+            ig_delay=ig.ignition_delay_wrapper(pressures=pressures,
+                                               temperatures=temprange,
+                                               observables=exp['simulation'].fullParsedYamlFile['observables'],
+                                               kineticSens=0,
+                                               physicalSens=0,
+                                               conditions=conds,
+                                               thermalBoundary=exp['simulation'].fullParsedYamlFile['thermalBoundary'],
+                                               mechanicalBoundary=exp['simulation'].fullParsedYamlFile['mechanicalBoundary'],
+                                               processor=p,
+                                               cti_path="", 
+                                               save_physSensHistories=0,
+                                               fullParsedYamlFile=exp['simulation'].fullParsedYamlFile, 
+                                               save_timeHistories=0,
+                                               log_file=True,
+                                               log_name='log.txt',
+                                               timeshift=exp['simulation'].fullParsedYamlFile['time_shift'],
+                                               initialTime=exp['simulation'].fullParsedYamlFile['initialTime'],
+                                               finalTime=exp['simulation'].fullParsedYamlFile['finalTime'],
+                                               target=exp['simulation'].fullParsedYamlFile['target'],
+                                               target_type=exp['simulation'].fullParsedYamlFile['target_type'],
+                                               n_processors=2)
+            soln,temp=ig_delay.run()
+        elif 'volumeTraceCsv' in exp['simulation'].fullParsedYamlFile.keys():
+            if len(exp['simulation'].fullParsedYamlFile['temperatures'])>1:
+                tempmin=np.min(exp['simulation'].fullParsedYamlFile['temperatures'])
+                tempmax=np.max(exp['simulation'].fullParsedYamlFile['temperatures'])
+                total_range=tempmax-tempmin
+                tempmax=tempmax+0.1*total_range
+                tempmin=tempmin-0.1*total_range
+                temprange=np.linspace(tempmin,tempmax,n_of_data_points)
+                pressures=exp['simulation'].fullParsedYamlFile['pressures']
+                conds=exp['simulation'].fullParsedYamlFile['conditions_to_run']
+                volumeTrace = exp['simulation'].fullParsedYamlFile['volumeTraceCsv']
+                
+            elif len(exp['simulation'].fullParsedYamlFile['pressures'])>1:
+                pmin = exp['simulation'].fullParsedYamlFile['pressures']*0.9
+                pmax = exp['simulation'].fullParsedYamlFile['pressures']*1.1
+                total_range=pmax-pmin
+                pmax=pmax+0.1*total_range
+                pmin=pmin-0.1*total_range
+                pressures = np.linspace(pmin,pmax,n_of_data_points)
+                temprange = exp['simulation'].fullParsedYamlFile['temperatures']
+                conds = exp['simulation'].fullParsedYamlFile['conditions_to_run']
+                volumeTrace = exp['simulation'].fullParsedYamlFile['volumeTraceCsv']
+                
+            elif len(exp['simulation'].fullParsedYamlFile['conditions_to_run'])>1:
+                print('Plotting for conditions depedendent ignition delay not yet installed')
+                
+                
+                
             
-        elif len(exp['simulation'].fullParsedYamlFile['conditions_to_run'])>1:
-            print('Plotting for conditions depedendent ignition delay not yet installed')
-            
-            
-            
-        
-        ig_delay=ig.ignition_delay_wrapper(pressures=pressures,
-                                           temperatures=temprange,
-                                           observables=exp['simulation'].fullParsedYamlFile['observables'],
-                                           kineticSens=0,
-                                           physicalSens=0,
-                                           conditions=conds,
-                                           thermalBoundary=exp['simulation'].fullParsedYamlFile['thermalBoundary'],
-                                           mechanicalBoundary=exp['simulation'].fullParsedYamlFile['mechanicalBoundary'],
-                                           processor=p,
-                                           cti_path="", 
-                                           save_physSensHistories=0,
-                                           fullParsedYamlFile=exp['simulation'].fullParsedYamlFile, 
-                                           save_timeHistories=0,
-                                           log_file=True,
-                                           log_name='log.txt',
-                                           timeshift=exp['simulation'].fullParsedYamlFile['time_shift'],
-                                           initialTime=exp['simulation'].fullParsedYamlFile['initialTime'],
-                                           finalTime=exp['simulation'].fullParsedYamlFile['finalTime'],
-                                           target=exp['simulation'].fullParsedYamlFile['target'],
-                                           target_type=exp['simulation'].fullParsedYamlFile['target_type'],
-                                           n_processors=2)
-        soln,temp=ig_delay.run()
-        
+            ig_delay=ig.ignition_delay_wrapper(pressures=pressures,
+                                               temperatures=temprange,
+                                               observables=exp['simulation'].fullParsedYamlFile['observables'],
+                                               kineticSens=0,
+                                               physicalSens=0,
+                                               conditions=conds,
+                                               thermalBoundary=exp['simulation'].fullParsedYamlFile['thermalBoundary'],
+                                               mechanicalBoundary=exp['simulation'].fullParsedYamlFile['mechanicalBoundary'],
+                                               processor=p,
+                                               cti_path="", 
+                                               save_physSensHistories=0,
+                                               fullParsedYamlFile=exp['simulation'].fullParsedYamlFile, 
+                                               save_timeHistories=0,
+                                               log_file=True,
+                                               log_name='log.txt',
+                                               timeshift=exp['simulation'].fullParsedYamlFile['time_shift'],
+                                               initialTime=exp['simulation'].fullParsedYamlFile['initialTime'],
+                                               finalTime=exp['simulation'].fullParsedYamlFile['finalTime'],
+                                               target=exp['simulation'].fullParsedYamlFile['target'],
+                                               target_type=exp['simulation'].fullParsedYamlFile['target_type'],
+                                               n_processors=2,
+                                               volumeTrace=volumeTrace)
+            soln,temp=ig_delay.run()        
         
         #print(soln)
         return soln
@@ -440,7 +502,7 @@ class Plotting(object):
                     if re.match('[Ff]low [Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
                         plt.plot(exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
                         plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
-                        plt.plot(exp['experimental_data'][observable_counter]['Temperature'],exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data')
+                        #plt.plot(exp['experimental_data'][observable_counter]['Temperature'],exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data')
                         plt.xlabel('Temperature (K)')
                         plt.ylabel('ppm '+''+str(observable))
                         plt.title('Experiment_'+str(i+1))
@@ -451,13 +513,13 @@ class Plotting(object):
     
                         
                         if bool(sigmas_optimized) == True:
-                            
+                            #stub
                             high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
                             high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values*1e6)
                             low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
                             low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values*1e6)
-                            plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'b--')
-                            plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'b--')
+                            #plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'b--')
+                            #plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'b--')
                             
                             
                             
@@ -482,7 +544,7 @@ class Plotting(object):
                         #plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay'],'r',label= "$\it{A priori}$ model")
                         plt.semilogy(1000/exp['experimental_data'][observable_counter]['temperature'],exp['experimental_data'][observable_counter][observable+'_s'],'o',color='black',label='Experimental Data')
                         plt.xlabel('1000/T (1000/K)')
-                        plt.ylabel('Time (s)')
+                        plt.ylabel('Time (ms)')
                         plt.title('Experiment_'+str(i+1))
                         
                         if bool(sigmas_optimized) == True:

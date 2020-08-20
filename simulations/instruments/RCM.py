@@ -93,6 +93,8 @@ class RCM(sim.Simulation):
         conditions = self.settingRCMConditions()
         mechanicalBoundary = conditions[1]
         #same solution for both cp and cv sims
+        
+        
         if mechanicalBoundary == 'constant pressure':
 
             print('RCM is not a constant pressure simulation')
@@ -103,6 +105,7 @@ class RCM(sim.Simulation):
                 wall = ct.Wall(RCM, env, A=1.0, velocity=self.volume_trace_class)
                 sim = ct.ReactorNet([RCM])
                 sim.set_max_time_step(inp_time[1])
+                
             if self.exact_deriv_flag == True:
                 RCM = ct.IdealGasReactor(self.processor.solution)
                 env = ct.Reservoir(ct.Solution('air.xml'))
@@ -137,7 +140,7 @@ class RCM(sim.Simulation):
         #while t < self.finalTime and RCM.T < 2500:
         #should we have this temperature limiting factor?
         #while t < self.finalTime and RCM.T<2500:
-        while t < self.finalTime and RCM.T<2500:
+        while t < self.finalTime:
             t = sim.step()
             if mechanicalBoundary =='constant volume':
                 state = np.hstack([t,RCM.thermo.P,RCM.mass,RCM.volume,
@@ -175,6 +178,9 @@ class RCM(sim.Simulation):
             self.kineticSensitivities = np.dstack(numpyMatrixsksens)
             return self.timeHistory,self.kineticSensitivities
         else:
+            import matplotlib.pyplot as plt
+            #plt.figure()
+            #plt.plot(self.timeHistory['time'],self.timeHistory['pressure']/100000)
             return self.timeHistory , self.vol_sol
 
     #interpolate the most recent time history against the oldest by default
@@ -344,16 +350,16 @@ class VolumeProfileExactDerivative(object):
         self.time = self.time.to_numpy()
 
         self.velocity = deriv
-        import matplotlib.pyplot as plt
-        plt.figure()
-        plt.plot(self.time[:min_index],y_calculated1)
-        plt.plot(self.time[:min_index],self.volume[:min_index])
-        plt.figure()
-        plt.plot(self.time[min_index:],y_calculated2)
-        plt.plot(self.time[min_index:],self.volume[min_index:])
-        plt.figure()
-        plt.plot(self.time[:min_index],y_deriv_calculated)
-        plt.plot(self.time[min_index:],y_deriv_calculated2)
+        # import matplotlib.pyplot as plt
+        # plt.figure()
+        # plt.plot(self.time[:min_index],y_calculated1)
+        # plt.plot(self.time[:min_index],self.volume[:min_index])
+        # plt.figure()
+        # plt.plot(self.time[min_index:],y_calculated2)
+        # plt.plot(self.time[min_index:],self.volume[min_index:])
+        # plt.figure()
+        # plt.plot(self.time[:min_index],y_deriv_calculated)
+        # plt.plot(self.time[min_index:],y_deriv_calculated2)
         
 
 

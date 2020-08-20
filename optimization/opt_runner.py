@@ -123,6 +123,16 @@ class Optimization_Utility(object):
             exp_dict['flame_speed_observables']= [None]
             exp_dict['ignition_delay_observables'] = [None]
             
+        elif re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']) and re.match('[Rr][Cc][Mm]',simulation.fullParsedYamlFile['simulationType']):
+            exp_dict['time_shift'] = interpolated_time_shift_sens
+            exp_dict['uncertainty']= self.build_uncertainty_ignition_delay_dict(exp_dict['simulation'].fullParsedYamlFile)
+            exp_dict['flame_speed_observables']= [None]
+            exp_dict['concentration_observables'] = [None]
+            exp_dict['mole_fraction_observables'] = [None]
+            exp_dict['ignition_delay_observables'] = simulation.ignitionDelayObservables
+            exp_dict['conditions_dict_list'] = simulation.fullParsedYamlFile['conditions_dict_list']
+            exp_dict['conditions_to_run']=simulation.fullParsedYamlFile['conditions_to_run']  
+            
         if len(interpolated_absorbance) != 0:
             exp_dict['absorbance_model_data'] = interpolated_absorbance[0]
             exp_dict['absorbance_ksens']   = interpolated_absorbance[1]
@@ -134,7 +144,7 @@ class Optimization_Utility(object):
             exp_dict['absorbance_calculated_from_model'] = absorbance_calculated_from_model
             exp_dict['time_history_interpolated_against_abs'] = time_history_interpolated_against_absorbance_experiment
 
-            
+           
             
         return exp_dict
     

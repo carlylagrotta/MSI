@@ -126,6 +126,7 @@ exp_dict_list_original = MSI_st_instance_one.experiment_dictonaries
 X_one_itteration = MSI_st_instance_one.X
 experimental_dict_uncertainty_original = MSI_st_instance_one.experiment_dict_uncertainty_original
 Y_matrix_original = MSI_st_instance_one.Y_matrix
+Xdf = MSI_st_instance_one.X_data_frame
 #OH =  exp_dict_list_original[0]['simulation'].timeHistories[0]['OH']
 #time =  exp_dict_list_original[0]['simulation'].timeHistories[0]['time']
 
