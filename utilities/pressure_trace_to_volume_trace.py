@@ -2,7 +2,7 @@ import cantera as ct
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-pressure_trace = pd.read_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/RCM/pressure_trace_github.csv',
+pressure_trace = pd.read_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/variable_pressure_shock_tube/pressure_trace_2.csv',
                              float_precision='round_trip')
 Pressure_array=pressure_trace['Pressure'].to_numpy()
 plt.figure()
@@ -72,9 +72,12 @@ instance = VolumeFromPressure(Pressure_array,
                               time=pressure_trace['Time'])
 print(instance.volume)
 
+df = pd.DataFrame(columns=['Time','Volume'])
+df['Volume']=instance.volume
+df['Time']=pressure_trace['Time'].values
+df.to_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/variable_pressure_shock_tube/volume_trace_file_2.csv',index=False)
 
-
-cantera_calculated_volume_trace = pd.read_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/RCM/volume_trace_file.csv',float_precision='round_trip')
+cantera_calculated_volume_trace = pd.read_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/variable_pressure_shock_tube/volume_trace_file_2.csv',float_precision='round_trip')
 plt.figure()
 plt.plot(cantera_calculated_volume_trace['Time'],cantera_calculated_volume_trace['Volume'],label='Data Given On Github')
 plt.plot(pressure_trace['Time'],instance.volume,label='Calculated Here')

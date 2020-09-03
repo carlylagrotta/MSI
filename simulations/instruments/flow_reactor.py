@@ -68,7 +68,6 @@ class flow_reactor(sim.Simulation):
         self.setTPX()
         self.dk = 0.01
         self.solution=None
-
     
     
 
@@ -169,7 +168,7 @@ class flow_reactor(sim.Simulation):
             s = self.run_shocktube(ksens_marker=1,psens_marker=0)
             self.timehistory=copy.deepcopy(s.timeHistory)
             res_time_measurment=None
-            res_time_measurment,index = self.get_res_time_data(self.timehistory,self.finalTime)   
+            res_time_measurment,index,initial_temp = self.get_res_time_data(self.timehistory,self.finalTime)   
             
             #print(s.kineticSensitivities.shape)
             #ksens = s.kineticSensitivities[-1,:,:]
@@ -193,13 +192,13 @@ class flow_reactor(sim.Simulation):
             self.timehistory=copy.deepcopy(s.timeHistory)
             
             res_time_measurment=None
-            res_time_measurment,index = self.get_res_time_data(self.timehistory,self.finalTime)             
+            res_time_measurment,index,initial_temp = self.get_res_time_data(self.timehistory,self.finalTime)             
             
         else:
             s = self.run_shocktube(ksens_marker=0,psens_marker=0)
             self.timehistory=copy.deepcopy(s.timeHistory)
             res_time_measurment=None
-            res_time_measurment,index = self.get_res_time_data(self.timehistory,self.finalTime) 
+            res_time_measurment,index,initial_temp = self.get_res_time_data(self.timehistory,self.finalTime) 
             
 
         if self.kineticSens:  
@@ -250,20 +249,20 @@ class flow_reactor(sim.Simulation):
         
         #print(res_time)
         
-        #print(data.tail(1))
         #reset index
         df = copy.deepcopy(data)
-        
+        initial_temp=df.head(1)['temperature']
         df.loc[-1, 'time'] = float(res_time)
         df = df.sort_values('time').reset_index(drop=True)
         df = df.interpolate()
         
         res_time_data = df.iloc[(df['time']-res_time).abs().argsort()[:1]]
         res_time_data = res_time_data.reset_index(drop=True)
+        res_time_data['initial_temperature'] = initial_temp
         
         index = df.iloc[(df['time']-res_time).abs().argsort()[:1]].index.values[0]
         
-        return res_time_data,index
+        return res_time_data,index,initial_temp
 
     
     def sensitivityCalculation(self,originalValues,newValues,dk=.01):
@@ -369,6 +368,7 @@ class flow_reactor_wrapper(sim.Simulation):
             
             
             res_time_data,k_sens,fullTimeHistory,temp_array=temp_flow.run_single(ksens_marker=ksens_marker,psens_marker=psens_marker)
+            
             if self.kineticSens==1:
                 self.fullTimeHistories.append(fullTimeHistory)
                 self.temp_arrays.append(temp_array)
@@ -390,6 +390,7 @@ class flow_reactor_wrapper(sim.Simulation):
                 ksens=np.vstack([ksens,temp1])
                     #print(ksens)
         solution=pd.concat(solution)
+        
         #print(np.shape(ksens))
         #print(self.timeHistories)
         #print(solution)

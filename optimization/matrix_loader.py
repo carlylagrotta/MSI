@@ -43,8 +43,8 @@ class OptMatrix(object):
                 time_shift_uncertainties = [experiment_dict['uncertainty']['time_shift_uncertainty']]*len(parsed_yaml_file_list['timeShiftOriginal'])
             return time_shift_uncertainties
         def flow_reactor_temp_uncertainties(experiment_dict):
-            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns):
-                temp_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
+            if 'Temperature_Uncertainty' in list(experiment_dict['experimental_data'][0].columns):
+                temp_uncertainties=experiment_dict['experimental_data'][0]['Temperature_Uncertainty'].values
                 temp_uncertainties = list(temp_uncertainties)
             else:
                 temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['Temperature'].values))
@@ -101,64 +101,96 @@ class OptMatrix(object):
             elif len(experiment_dict['conditions_to_run'])>1:
                 press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']
                 press_uncertainties = list(press_uncertainties)
-            return press_uncertainties           
+            return press_uncertainties     
+        
+        def rcm_temp_uncertainties(experiment_dict):
+
+
+            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'temperature' in list(experiment_dict['experimental_data'][0].columns):
+                temp_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
+                temp_uncertainties = list(temp_uncertainties)                
+            elif 'temperature' in list(experiment_dict['experimental_data'][0].columns) and len(experiment_dict['simulation'].fullParsedYamlFile['temperatures'])==len(experiment_dict['simulation'].fullParsedYamlFile['pressures']):
+                temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['temperature'].values))
+                temp_uncertainties = list(temp_uncertainties)               
+            elif 'pressure' in list(experiment_dict['experimental_data'][0].columns):
+                temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']
+                temp_uncertainties = list(temp_uncertainties)
+            elif len(experiment_dict['conditions_to_run'])>1:
+                temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']
+                temp_uncertainties = list(temp_uncertainties)
+            return temp_uncertainties            
+            
+        def rcm_press_uncertainties(experiment_dict):
+            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'pressure' in list(experiment_dict['experimental_data'][0].columns):
+                press_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
+                press_uncertainties = list(press_uncertainties)
+            elif 'pressure' in list(experiment_dict['experimental_data'][0].columns) and len(experiment_dict['simulation'].fullParsedYamlFile['temperatures'])==len(experiment_dict['simulation'].fullParsedYamlFile['pressures']):
+                press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['pressure'].values))
+                press_uncertainties = list(press_uncertainties) 
+            elif 'temperature' in list(experiment_dict['experimental_data'][0].columns) and len(experiment_dict['simulation'].fullParsedYamlFile['temperatures'])==len(experiment_dict['simulation'].fullParsedYamlFile['pressures']):
+                press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['temperature'].values))
+                press_uncertainties = list(press_uncertainties)
+            elif len(experiment_dict['conditions_to_run'])>1:
+                press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']
+                press_uncertainties = list(press_uncertainties)
+            return press_uncertainties                 
+            
         
         
         
         #need to append to sigma
         def uncertainty_calc(relative_uncertainty,absolute_uncertainty,data,experimental_data):
             absolute_uncertainty=float(absolute_uncertainty)
-            if 'W' in list(experimental_data.columns):
-                weighting_factor = experimental_data['W'].values
-                if 'Relative_Uncertainty' in list(experimental_data.columns):
-                    x_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
-                    un_weighted_uncertainty = copy.deepcopy(x_dependent_uncertainty)
-                    total_uncertainty = x_dependent_uncertainty/weighting_factor
-                    
-                else:
-                    length_of_data = data.shape[0]
-                    relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty) 
-                    un_weighted_uncertainty = copy.deepcopy(relative_uncertainty_array)
-                    total_uncertainty = un_weighted_uncertainty/weighting_factor
-                
-            
-            
-            elif 'Relative_Uncertainty' in list(experimental_data.columns):  
+                       
+            length_of_data = data.shape[0]
+            if 'Relative_Uncertainty' in list(experimental_data.columns):  
                 
                 x_dependent_uncertainty = experimental_data['Relative_Uncertainty'].values
-                #do we need to take the natrual log of this?
-                x_dependent_uncertainty = np.log(x_dependent_uncertainty+1)
-                #do we need to take the natrual log of this?
-                length_of_data = data.shape[0]
-                un_weighted_uncertainty = copy.deepcopy(x_dependent_uncertainty)
-                total_uncertainty = np.divide(x_dependent_uncertainty,(1/length_of_data**.5) )
-#                
+                
+                relative_uncertainty_array = copy.deepcopy(x_dependent_uncertainty)
+                relative_uncertainty_array = relative_uncertainty_array.reshape((relative_uncertainty_array.shape[0],1))
 
-               
-            else:
-                length_of_data = data.shape[0]
+                
+            elif 'Relative_Uncertainty' not in list(experimental_data.columns):
+                
                 relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty)
-                
-                if absolute_uncertainty != 0:
-                #check if this weighting factor is applied in the correct place 
-                #also check if want these values to be the natural log values 
-                   # print(data,absolute_uncertainty)
-                    
-                    absolute_uncertainty_array = np.divide(data,absolute_uncertainty)
-                    total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array)))
-                    un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
-                     #weighting factor
-                    total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
-                
-                else:
-                    #total_uncertainty = np.log(1 + np.sqrt(np.square(relative_uncertainty_array)))
-                    total_uncertainty = relative_uncertainty_array
-                    #weighting factor
-                    
-                    un_weighted_uncertainty = copy.deepcopy(total_uncertainty)
-                    total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
+                relative_uncertainty_array = relative_uncertainty_array.reshape((relative_uncertainty_array.shape[0],1))
 
-            #make this return a tuple 
+            if 'Absolute_Uncertainty' in list(experimental_data.columns):
+                x_dependent_a_uncertainty = experimental_data['Absolute_Uncertainty'].values
+                
+                
+                absolute_uncertainty_array = copy.deepcopy(x_dependent_a_uncertainty)
+                absolute_uncertainty_array = np.divide(absolute_uncertainty_array,data)
+                absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
+                
+            elif 'Absolute_Uncertainty' not in list(experimental_data.columns):
+                
+                absolute_uncertainty_array = np.divide(absolute_uncertainty,data)
+                absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
+                
+                
+            total_uncertainty = np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array))
+            un_weighted_uncertainty = copy.deepcopy(total_uncertainty)                
+                
+            if 'W' not in list(experimental_data.columns):         
+                weighting_factor = (1/length_of_data**.5)
+                
+                total_uncertainty = np.divide(total_uncertainty,weighting_factor)
+                
+                total_uncertainty = total_uncertainty.reshape((total_uncertainty.shape[0],1))
+
+
+            
+            elif 'W' in list(experimental_data.columns):
+                weighting_factor = experimental_data['W'].values
+                weighting_factor = weighting_factor.reshape((weighting_factor.shape[0],1))
+
+                total_uncertainty = np.divide(total_uncertainty,weighting_factor)
+                #total_uncertainty = total_uncertainty/weighting_factor
+                
+                
+                
             return total_uncertainty,un_weighted_uncertainty
         #tab, start working here tomorrow with how we want to read in csv file     
         for i,exp_dic in enumerate(exp_dict_list):
@@ -564,7 +596,7 @@ class OptMatrix(object):
                     
                     experiment_physical_uncertainty = []
                     #Temperature Uncertainty 
-                    temp_uncertainties=igdelay_temp_uncertainties(exp_dic)
+                    temp_uncertainties=rcm_temp_uncertainties(exp_dic)
                     experiment_physical_uncertainty=experiment_physical_uncertainty+temp_uncertainties
                     
                     for index in range(len(temp_uncertainties)):
@@ -575,7 +607,7 @@ class OptMatrix(object):
                     #active_parameters=active_parameters+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
                     #Pressure Uncertainty
                     
-                    press_uncertainties = igdelay_press_uncertainties(exp_dic)
+                    press_uncertainties = rcm_press_uncertainties(exp_dic)
                     for index in range(len(press_uncertainties)):
                         Z_data_Frame.append('P'+str(index+1)+'_'+'experiment'+'_'+str(i))
                         active_parameters.append('P'+str(index+1)+'_'+'experiment'+'_'+str(i))
@@ -1487,7 +1519,23 @@ class OptMatrix(object):
 
 
                     elif re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']) and re.match('[Rr][Cc][Mm]',exp['simulation_type']):
-                        if len(exp['simulation'].temperatures)>1:
+                        if len(exp['simulation'].temperatures)>1 and len(exp['simulation'].pressures)>1:
+                            temperature_sensitivity=np.array(exp['temperature']['delay'])*np.identity(len(exp['simulation'].temperatures))
+                            pressure_sensitivity = np.array(exp['pressure']['delay'])*np.identity(len(exp['simulation'].pressures))
+
+                            species_sensitivty = []
+                            for df in exp['species']:
+                                single_species_sensitivty = df['delay'].dropna().values
+                                single_species_sensitivty = single_species_sensitivty.reshape((single_species_sensitivty.shape[0],1))
+                                species_sensitivty.append(single_species_sensitivty)
+                            
+                            species_sensitivty = np.hstack((species_sensitivty))
+                            time_shift_sensitivity = exp['time_shift']['delay'].dropna().values
+                            time_shift_sensitivity = time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))
+
+
+
+                        elif len(exp['simulation'].temperatures)>1:
                             temperature_sensitivity=np.array(exp['temperature']['delay'])*np.identity(len(exp['simulation'].temperatures))
                             pressure_sensitivity = exp['pressure']['delay'].dropna().values
                             pressure_sensitivity = pressure_sensitivity.reshape((pressure_sensitivity.shape[0], 1))

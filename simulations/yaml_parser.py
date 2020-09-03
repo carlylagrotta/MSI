@@ -468,7 +468,10 @@ class Parser(object):
         observables = [x for x in (ignition_delay_observables) if x is not None]
             
     
-        volume_trace_csv= loaded_exp['common-properties']['volume-trace']['csvfile']
+        volume_trace_csv_files= loaded_exp['common-properties']['volume-trace']['csvfile-list']
+
+        
+        
 
         ignition_delay_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['ignition-delay']]
         ignition_dealy_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['ignition-delay']]
@@ -581,7 +584,7 @@ class Parser(object):
                     'conditions_dict_list':conditions_dict_list,
                     'concentrationObservables': [None],
                     'moleFractionObservables': [None],
-                    'volumeTraceCsv':volume_trace_csv
+                    'volumeTraceCsvList':volume_trace_csv_files
                    }       
         else:
             print('We do not have absorbance installed for ignition delay')       
@@ -1089,7 +1092,7 @@ class Parser(object):
                     updated_mole_fraction_list = []
                     for specie in species_to_loop:
                         updated_mole_fraction_list.append(updated_mole_fractions[specie])
-                if re.match('[Ff]low[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
+                elif re.match('[Ff]low[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
                     updatedTemp=[]
                     for i,T in enumerate(temp):
                         updatedTemp.append(float(round(np.exp(physical_observables_updates_list[yaml_file]['T'+str(i+1)+'_experiment_'+str(yaml_file)]) * T,9)))

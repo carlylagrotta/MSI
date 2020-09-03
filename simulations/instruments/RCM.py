@@ -145,7 +145,7 @@ class RCM(sim.Simulation):
             if mechanicalBoundary =='constant volume':
                 state = np.hstack([t,RCM.thermo.P,RCM.mass,RCM.volume,
                                RCM.T, RCM.thermo.X])
-                vol_sol.append(time=sim.time, T=RCM.T, P=RCM.thermo.P, X=RCM.thermo.X, volume=RCM.volume)
+                #vol_sol.append(time=sim.time, T=RCM.T, P=RCM.thermo.P, X=RCM.thermo.X, volume=RCM.volume)
                 #t = sim.step()
             else:
                 print('RCM has variable volume')
@@ -181,7 +181,7 @@ class RCM(sim.Simulation):
             import matplotlib.pyplot as plt
             #plt.figure()
             #plt.plot(self.timeHistory['time'],self.timeHistory['pressure']/100000)
-            return self.timeHistory , self.vol_sol
+            return self.timeHistory
 
     #interpolate the most recent time history against the oldest by default
     #working_data used if have list not pandas frame
