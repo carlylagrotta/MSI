@@ -21,8 +21,8 @@ cti_file = 'chem.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
 
-files_to_include = [['ignition_delay_template_new.yaml']]
-working_directory = 'C:\\Users\\Skoron\\Desktop\\MSI\data\\igdelay_test_H2_O2'
+files_to_include = [['flow_reactor_template_2.yaml']]
+working_directory = 'MSI/data/flow_reactor'
 reaction_uncertainty_csv = 'h2o2_reaction_uncertainty.csv'
 master_reaction_equation_cti_name = 'master_reactions_h2o2.cti'
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
@@ -37,7 +37,7 @@ master_equation_reactions = ['2 OH <=> H2O + O',
 #master_index = [2,3,4,5,6,7]
 master_index = [5,19,20,25]
 
-master_equation_uncertainty_df = pd.read_csv(working_directory+'\\six_parameter_fit_uncertainty_df.csv')
+master_equation_uncertainty_df = pd.read_csv(working_directory+'/six_parameter_fit_uncertainty_df_1.csv')
 
 rate_constant_target_value_data_for_plotting = 'h2o2_target_reactions_1_plotting.csv'
 rate_constant_target_value_data = 'h2o2_target_reactions_1.csv'
@@ -126,6 +126,7 @@ exp_dict_list_original = MSI_st_instance_one.experiment_dictonaries
 X_one_itteration = MSI_st_instance_one.X
 experimental_dict_uncertainty_original = MSI_st_instance_one.experiment_dict_uncertainty_original
 Y_matrix_original = MSI_st_instance_one.Y_matrix
+Xdf = MSI_st_instance_one.X_data_frame
 #OH =  exp_dict_list_original[0]['simulation'].timeHistories[0]['OH']
 #time =  exp_dict_list_original[0]['simulation'].timeHistories[0]['time']
 
@@ -133,52 +134,52 @@ Sij_list = []
 Y_difference_list = []
 S_new_list= []
 S_percent_difference_list = []
-# print('_________________________perturbing______________________________')
+print('_________________________perturbing______________________________')
 
 
-# for row_in_X in range(np.shape(X_one_itteration)[0]):
-# # #for row_in_X in range(5):
-#     MSI_st_perturb_instance = perturbX.perturb_X_Shell(cti_file,
-#                                                           .01,
-#                                                             1,
-#                                                             1,
-#                                                             working_directory,
-#                                                             files_to_include,
-#                                                             reaction_uncertainty_csv,
-#                                                             rate_constant_target_value_data,
-#                                                             master_equation_reactions=master_equation_reactions,
-#                                                             molecular_parameter_sensitivities=molecular_parameter_sensitivities,
-#                                                             six_parameter_fit_sensitivities=six_parameter_fit_sensitivities,
-#                                                             master_reaction_equation_cti_name=master_reaction_equation_cti_name,
-#                                                             master_index=master_index,
-#                                                             master_equation_uncertainty_df=master_equation_uncertainty_df,
-#                                                             six_paramter_fit_nominal_parameters_dict=six_parameter_fit_nominal_parameters_dict,
-#                                                             shape_of_X = np.shape(X_one_itteration),
-#                                                             shape_of_X_counter= row_in_X,
-#                                                             S_matrix_original = S_matrix_original,
-#                                                             Y_matrix_original = Y_matrix_original,
-#                                                             experimental_dict_uncertainty_original = experimental_dict_uncertainty_original,
-#                                                             original_experimental_dicts = exp_dict_list_original)
-#     MSI_st_perturb_instance.multiple_runs(2)
+for row_in_X in range(np.shape(X_one_itteration)[0]):
+#for row_in_X in range(5):
+    MSI_st_perturb_instance = perturbX.perturb_X_Shell(cti_file,
+                                                          .01,
+                                                            1,
+                                                            1,
+                                                            working_directory,
+                                                            files_to_include,
+                                                            reaction_uncertainty_csv,
+                                                            rate_constant_target_value_data,
+                                                            master_equation_reactions=master_equation_reactions,
+                                                            molecular_parameter_sensitivities=molecular_parameter_sensitivities,
+                                                            six_parameter_fit_sensitivities=six_parameter_fit_sensitivities,
+                                                            master_reaction_equation_cti_name=master_reaction_equation_cti_name,
+                                                            master_index=master_index,
+                                                            master_equation_uncertainty_df=master_equation_uncertainty_df,
+                                                            six_paramter_fit_nominal_parameters_dict=six_parameter_fit_nominal_parameters_dict,
+                                                            shape_of_X = np.shape(X_one_itteration),
+                                                            shape_of_X_counter= row_in_X,
+                                                            S_matrix_original = S_matrix_original,
+                                                            Y_matrix_original = Y_matrix_original,
+                                                            experimental_dict_uncertainty_original = experimental_dict_uncertainty_original,
+                                                            original_experimental_dicts = exp_dict_list_original)
+    MSI_st_perturb_instance.multiple_runs(2)
     
-#     experimental_dict_perturbed = MSI_st_perturb_instance.experiment_dictonaries
-#     # plt.figure()
-#     #plt.title(str(row_in_X))
-#     #plt.plot(time,OH)
-#     #plt.plot(experimental_dict_perturbed[0]['simulation'].timeHistories[0]['time'], experimental_dict_perturbed[0]['simulation'].timeHistories[0]['OH'])
-#     y_new = MSI_st_perturb_instance.Y_matrix
-#     Sij_list.append(MSI_st_perturb_instance.Sij)
-#     Y_difference_list.append(MSI_st_perturb_instance.Y_difference)
-#     S_new_list.append(MSI_st_perturb_instance.S_new)
-#     S_percent_difference_list.append(MSI_st_perturb_instance.S_percent_difference)
+    experimental_dict_perturbed = MSI_st_perturb_instance.experiment_dictonaries
+    # plt.figure()
+    #plt.title(str(row_in_X))
+    #plt.plot(time,OH)
+    #plt.plot(experimental_dict_perturbed[0]['simulation'].timeHistories[0]['time'], experimental_dict_perturbed[0]['simulation'].timeHistories[0]['OH'])
+    y_new = MSI_st_perturb_instance.Y_matrix
+    Sij_list.append(MSI_st_perturb_instance.Sij)
+    Y_difference_list.append(MSI_st_perturb_instance.Y_difference)
+    S_new_list.append(MSI_st_perturb_instance.S_new)
+    S_percent_difference_list.append(MSI_st_perturb_instance.S_percent_difference)
                                                        
     
-# Sij = sum(Sij_list)
-# Y_difference = sum(Y_difference_list)
-# S_new = sum(S_new_list)
-# Percent_difference = sum(S_percent_difference_list)
-# S_residuals = S_new-S_matrix_original
-# S_residuals_rounded = np.around(S_residuals,decimals=3)
+Sij = sum(Sij_list)
+Y_difference = sum(Y_difference_list)
+S_new = sum(S_new_list)
+Percent_difference = sum(S_percent_difference_list)
+S_residuals = S_new-S_matrix_original
+S_residuals_rounded = np.around(S_residuals,decimals=3)
 
 
 

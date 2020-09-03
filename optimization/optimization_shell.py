@@ -299,6 +299,7 @@ class MSI_optimization(object):
                                                                                        self.experiment_dictonaries,
                                                                                        self.absorbance_coef_update_dict,
                                                                                        loop_counter = loop_counter)
+           
             
             
             
@@ -379,6 +380,8 @@ class MSI_optimization(object):
         if loop_counter == 0:
             original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
             self.original_experimental_conditions_local = original_experimental_conditions_local
+            
+
             #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
         
         
