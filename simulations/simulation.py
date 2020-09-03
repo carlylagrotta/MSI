@@ -36,7 +36,6 @@ class Simulation(object):
         '''
         Set solution object for a simulation
         '''
-        print('YO WTF')
         #set the temperature, pressure and species mole fractions for the simulation
         if temperature== -1:
             temperature = self.temperature

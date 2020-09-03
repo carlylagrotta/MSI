@@ -147,11 +147,13 @@ class Plotting(object):
                     test = sigma
                     sigma = np.sqrt(sigma)
                     temp.append(sigma)
+                    print(z)
                 temp = np.array(temp)            
                 sigmas[x].append(temp)
-        
+                    
                 
                 counter = counter + self.simulation_lengths_of_experimental_data[x][y]
+                
         
         return sigmas, test
     
@@ -211,7 +213,7 @@ class Plotting(object):
         
         #print(soln)
         return soln
-    def run_jsr(self,exp,cti,n_of_data_points=10):
+    def run_jsr(self,exp,cti,n_of_data_points=100):
         
         p=pr.Processor(cti)
         
@@ -255,7 +257,7 @@ class Plotting(object):
         #print(soln)
         return soln
     
-    def plotting_observables(self,sigmas_original=[],sigmas_optimized=[]):
+    def plotting_observables(self,sigmas_original=[],sigmas_optimized=[],file_identifier='',filetype='.jpg'):
         
         
         
@@ -316,7 +318,8 @@ class Plotting(object):
                         
                         if bool(sigmas_optimized) == True:
                             
-                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])
+                            print(high_error_optimized)
                             high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values)
                             low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
                             low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values)
@@ -325,7 +328,8 @@ class Plotting(object):
                                 plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'b--')
                                 plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'b--')
                             else:
-                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'bX')
+                                print(high_error_optimized,observable,exp['simulation'].timeHistories[0][observable].dropna().values)
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'rX')
                                 plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'bX')
                             
                             
@@ -338,7 +342,7 @@ class Plotting(object):
                            # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
                             #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
                         
-                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
+                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+file_identifier+filetype), bbox_inches='tight',dpi=1200)
                         observable_counter+=1
                 if observable in exp['concentration_observables']:
                     plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')

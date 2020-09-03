@@ -139,15 +139,15 @@ class OptMatrix(object):
                 absolute_uncertainty_array = copy.deepcopy(x_dependent_a_uncertainty)
                 absolute_uncertainty_array = np.divide(absolute_uncertainty_array,data)
                 absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
-                print(absolute_uncertainty_array ,'WE CARE HERE')
+                
             elif 'Absolute_Uncertainty' not in list(experimental_data.columns):
                 
                 absolute_uncertainty_array = np.divide(absolute_uncertainty,data)
                 absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
                 
-            print(absolute_uncertainty_array)
+            
             total_uncertainty = np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array))
-            print(total_uncertainty)
+            
             un_weighted_uncertainty = copy.deepcopy(total_uncertainty)                
                 
             if 'W' not in list(experimental_data.columns):              
@@ -567,8 +567,7 @@ class OptMatrix(object):
         
         def natural_log_difference(experiment,model):
             natural_log_diff = np.log(np.array(experiment)) - np.log(np.array(model))
-            print('This is the exp value:',experiment)
-            print('This is te model value:',model)
+            
             return natural_log_diff
         
         Y = []
@@ -1198,7 +1197,7 @@ class OptMatrix(object):
                             pressure_sensitivity = pressure_sensitivity.reshape((pressure_sensitivity.shape[0], 1))
 
                         #FIX THIS 
-                        print('FIXXXX')
+                        #print('FIXXXX')
                         species_sensitivty = []
                         for df in exp['species']:
                             single_species_sensitivty = df[observable].dropna().values
@@ -1898,7 +1897,7 @@ class Adding_Target_Values(meq.Master_Equation):
         
         Y_df_temp = pd.DataFrame({'value': Y_df_list,'ln_difference': Y_values.reshape((Y_values.shape[0],))}) 
         Y_data_Frame = Y_data_Frame.append(Y_df_temp, ignore_index=True)
-        print(k_targets_for_y.shape,'k targets for y')
+        #print(k_targets_for_y.shape,'k targets for y')
         
 
         
@@ -2045,7 +2044,7 @@ class Adding_Target_Values(meq.Master_Equation):
 
 
             S_target_values = np.vstack((S_target_values))
-            print(S_target_values.shape,'S Target values')
+            #print(S_target_values.shape,'S Target values')
             return S_target_values        
 
     
