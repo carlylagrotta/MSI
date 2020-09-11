@@ -6,23 +6,71 @@ import re
 
 # subpackage for reading yaml files that describe simulations and absorbance data
 class Parser(object):
+    """Class to read and write yaml input files for MSI for a variety of experiment types."""
     def __init__(self,original_experimental_conditions=None):
+        """Internal varibale 'Parser.original_experimenntal_conditions' stores original parsed yaml file from experiment."""
         self.original_experimental_conditions =  original_experimental_conditions
        
 
     #config is a dict containing the yaml information
     def load_to_obj(self, path:str = ''):
+        """
+        
+
+        Parameters
+        ----------
+        path : str, optional
+            DESCRIPTION. The default is ''.
+
+        Returns
+        -------
+        config : TYPE
+            DESCRIPTION.
+
+        """
         with open(path) as f:
             config = yaml.load(f,Loader=yaml.FullLoader)
             #print(config)
         return config
     
     def get_sim_type(self,loaded_exp:dict={}):
+        """
+        
+
+        Parameters
+        ----------
+        loaded_exp : dict, optional
+            DESCRIPTION. The default is {}.
+
+        Returns
+        -------
+        simtype : TYPE
+            DESCRIPTION.
+        experiment_type : TYPE
+            DESCRIPTION.
+
+        """
         simtype = loaded_exp['apparatus']['kind']
         experiment_type = loaded_exp['experiment-type']
         return simtype,experiment_type
     
     def parse_flame_speed_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+        """
+        
+
+        Parameters
+        ----------
+        loaded_exp : dict, optional
+            DESCRIPTION. The default is {}.
+        loaded_absorption : dict, optional
+            DESCRIPTION. The default is {}.
+
+        Returns
+        -------
+        dict
+            DESCRIPTION.
+
+        """
         simulation_type = loaded_exp['apparatus']['kind']
         experiment_type = loaded_exp['experiment-type']
         flame_width = loaded_exp['apparatus']['flame_width']['value']
