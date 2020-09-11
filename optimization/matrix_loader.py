@@ -1010,8 +1010,9 @@ class OptMatrix(object):
 
                             
                     elif re.match('[Ff]lame [Ss]peed',exp_dict_list[i]['simulation_type']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',exp_dict_list[i]['experimentType']):
-                        
+                        conditions = exp_dic['conditions_dict_list']
                         species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
+                        pressures_in_simulation = len(exp_dic['simulation'].pressures)
                         list_with_most_species_in_them = []
                         for specie in species_to_loop:
                             list_with_most_species_in_them.append(len(conditions[specie]))

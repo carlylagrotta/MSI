@@ -67,7 +67,7 @@ class VolumeFromPressure(object):
 
 
 instance = VolumeFromPressure(Pressure_array,
-                              1, 323,
+                              1, 1400,
                               chem_file ='/Users/carlylagrotta/Dropbox/Columbia/MSI/data/RCM/mech.cti',
                               time=pressure_trace['Time'])
 print(instance.volume)

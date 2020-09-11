@@ -609,8 +609,8 @@ class Plotting(object):
                     elif re.match('[Rr][Cc][Mm]',exp['simulation_type']):
                         if len(exp['simulation'].temperatures)>1:
                             
-                            plt.semilogy(1000/exp['simulation'].timeHistories[0]['ignition_temperature'],exp['simulation'].timeHistories[0]['delay'],'b',label='MSI')
-                            plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['ignition_temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay'],'r',label= "$\it{A priori}$ model")
+                            plt.semilogy(1000/exp['simulation'].timeHistories[0]['ignition_temperature'],exp['simulation'].timeHistories[0]['delay']-exp['simulation'].timeHistories[0]['end_of_compression_time'],'b',label='MSI')
+                            plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['ignition_temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay']-self.exp_dict_list_original[i]['simulation'].timeHistories[0]['end_of_compression_time'],'r',label= "$\it{A priori}$ model")
     
                             #plt.semilogy(1000/exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0]['delay'],'b',label='MSI')
                             #plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay'],'r',label= "$\it{A priori}$ model")
@@ -622,9 +622,9 @@ class Plotting(object):
                             if bool(sigmas_optimized) == True:
                                 
                                 high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
-                                high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
+                                high_error_optimized = np.multiply(high_error_optimized,(exp['simulation'].timeHistories[0]['delay']-exp['simulation'].timeHistories[0]['end_of_compression_time']).dropna().values)
                                 low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
-                                low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
+                                low_error_optimized = np.multiply(low_error_optimized,(exp['simulation'].timeHistories[0]['delay']-exp['simulation'].timeHistories[0]['end_of_compression_time']).dropna().values)
                                 #plt.figure()
                                 a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['ignition_temperature'],high_error_optimized)))
                                 plt.semilogy(a,b,'b--')
