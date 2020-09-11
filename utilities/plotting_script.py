@@ -457,31 +457,59 @@ class Plotting(object):
                     print(observable_counter)
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
                         
-                        plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
-                        plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
-                        plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data') 
-                        plt.xlabel('Time (ms)')
-                        plt.ylabel('ppm'+''+str(observable))
-                        plt.title('Experiment_'+str(i+1))
-                        
-                        if bool(sigmas_optimized)==True:
-                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
-                            high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
-                            low_error_optimized = np.exp(np.array(sigmas_optimized[i][observable_counter])*-1)
-                            low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                        if observable+'_ppm' in exp['experimental_data'][observable_counter].columns:
+                            print('poop')
+                            plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
+                            plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
+                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data') 
+                            plt.xlabel('Time (ms)')
+                            plt.ylabel('ppm'+''+str(observable))
+                            plt.title('Experiment_'+str(i+1))
                             
-                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
-                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--')                    
+                            if bool(sigmas_optimized)==True:
+                                high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                                high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                                low_error_optimized = np.exp(np.array(sigmas_optimized[i][observable_counter])*-1)
+                                low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                                
+                                plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
+                                plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--')                    
+                                
+            
+            
+                                #high_error_original = np.exp(sigmas_original[i][observable_counter])
+                                #high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                                #low_error_original = np.exp(np.array(sigmas_original[i][observable_counter])*-1)
+                                #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                                
+                                #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
+                                #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                        elif observable+'_mol/cm^3' in exp['experimental_data'][observable_counter].columns:
+                            concentration_optimized = np.true_divide(1,exp['simulation'].timeHistories[0]['temperature'].to_numpy())*exp['simulation'].timeHistories[0]['pressure'].to_numpy()
+                           
+                            concentration_optimized *= (1/(8.314e6))*exp['simulation'].timeHistories[0][observable].dropna().to_numpy()
+                            concentration_original = np.true_divide(1,self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'].to_numpy())*self.exp_dict_list_original[i]['simulation'].timeHistories[0]['pressure'].to_numpy()
+                           
+                            concentration_original *= (1/(8.314e6))*self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable].dropna().to_numpy()
                             
-        
-        
-                            #high_error_original = np.exp(sigmas_original[i][observable_counter])
-                            #high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
-                            #low_error_original = np.exp(np.array(sigmas_original[i][observable_counter])*-1)
-                            #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                            plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,concentration_optimized,'b',label='MSI')
+                            plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,concentration_original,'r',label= "$\it{A priori}$ model")
+                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable+'_mol/cm^3'],'o',color='black',label='Experimental Data') 
+                            plt.xlabel('Time (ms)')
+                            plt.ylabel(r'$\frac{mol}{cm^3}$'+''+str(observable))
+                            plt.title('Experiment_'+str(i+1))
                             
-                            #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
-                            #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                            if bool(sigmas_optimized)==True:
+                                concentration_sig = np.true_divide(1,exp['simulation'].pressureAndTemperatureToExperiment[i]['temperature'].to_numpy())*exp['simulation'].pressureAndTemperatureToExperiment[i]['pressure'].to_numpy()
+                           
+                                concentration_sig *= (1/(8.314e6))*exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().to_numpy()
+                                high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                                high_error_optimized = np.multiply(high_error_optimized,concentration_sig)
+                                low_error_optimized = np.exp(np.array(sigmas_optimized[i][observable_counter])*-1)
+                                low_error_optimized = np.multiply(low_error_optimized,concentration_sig)
+                                
+                                plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
+                                plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--') 
                         
                         plt.plot([],'w' ,label= 'T:'+ str(self.exp_dict_list_original[i]['simulation'].temperature))
                         plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressure))

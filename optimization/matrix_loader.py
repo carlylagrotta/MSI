@@ -813,7 +813,7 @@ class OptMatrix(object):
 
                         
                     elif 'mol/cm^3' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
-                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experimentType']):
+                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
                             
                             concentration = np.true_divide(1,exp_dic['simulation'].pressureAndTemperatureToExperiment[counter]['temperature'].to_numpy())*exp_dic['simulation'].pressureAndTemperatureToExperiment[counter]['pressure'].to_numpy()
                            
@@ -823,7 +823,7 @@ class OptMatrix(object):
                             
                             
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
-                        if re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experimentType']) and re.match('[Ff]low[ -][Rr]eactor',exp_dict_list[i]['simulationType']):
+                        if re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']) and re.match('[Ff]low[ -][Rr]eactor',exp_dict_list[i]['simulation_type']):
                                                         
                             concentration = np.true_divide(1,exp_dic['simulation'].timeHistories[0]['temperature'].to_numpy())*exp_dic['simulation'].timeHistories[0]['pressure'].to_numpy()
                            

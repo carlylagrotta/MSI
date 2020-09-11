@@ -335,7 +335,7 @@ class ignition_delay(sim.Simulation):
         nom_delay=self.ig_dTdt(temp_st.timeHistory)
         import matplotlib.pyplot as plt
         plt.plot(temp_st.timeHistory['time'],nom_soln,label='Nominal T')
-        print(sens[:,0,0])
+        #print(sens[:,0,0])
         ksens=np.zeros(temp_st.processor.solution.n_reactions)
         for i in range(temp_st.processor.solution.n_reactions):
             if i==0:
@@ -367,7 +367,7 @@ class ignition_delay(sim.Simulation):
                 plt.plot(tempdata['time'],np.array(tempdata['temperature'])-nom_soln)
                 plt.figure()
                 plt.plot(tempdata['time'],tempsen)
-                print('Oy '+str(ksens[i]))
+                #print('Oy '+str(ksens[i]))
         #print(ksens)
         return ksens
         #print(temp_st.kineticSensitivities)
