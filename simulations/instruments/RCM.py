@@ -142,6 +142,7 @@ class RCM(sim.Simulation):
         #while t < self.finalTime and RCM.T<2500:
         while t < self.finalTime:
             t = sim.step()
+            #print(t)
             if mechanicalBoundary =='constant volume':
                 state = np.hstack([t,RCM.thermo.P,RCM.mass,RCM.volume,
                                RCM.T, RCM.thermo.X])
@@ -162,6 +163,12 @@ class RCM(sim.Simulation):
                             pd.DataFrame(tempArray[self.observables.index(observable)])).transpose()),
                             ignore_index=True)
             counter+=1
+        
+        #temp_v = pd.DataFrame()
+        #temp_v['velocity'] = np.array(self.volume_trace_class.velocity_list_temp)
+        #temp_v['time']= self.timeHistory['time']
+        #temp_v.to_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/DME-Methanol_Blends_RCM/time_history_velocity_test/velocity_unrefined.csv',index=False)
+        
         
         
         if self.timeHistories != None:
@@ -253,6 +260,7 @@ class VolumeProfile(object):
         # self.time array.
         self.velocity = np.diff(self.volume)/np.diff(self.time)
         self.velocity = np.append(self.velocity, 0)
+        self.velocity_list_temp = []
 
     def __call__(self, t):
         """Return the velocity when called during a time step.
@@ -269,6 +277,8 @@ class VolumeProfile(object):
             # index is the index of the time array where
             # prev_time_point occurs
             index = np.where(self.time == prev_time_point)[0][0]
+            self.velocity_list_temp.append(self.velocity[index])
+            
             return self.velocity[index]
         else:
             return 0

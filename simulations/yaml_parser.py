@@ -15,62 +15,83 @@ class Parser(object):
     #config is a dict containing the yaml information
     def load_to_obj(self, path:str = ''):
         """
-        
+        Takes in a file path for a yaml file and returns a dictionary of 
+        simulation information.
 
         Parameters
         ----------
         path : str, optional
-            DESCRIPTION. The default is ''.
+            The path to where the yaml file is stored. The default is ''.
 
         Returns
         -------
-        config : TYPE
-            DESCRIPTION.
+        config : dictionary
+            An unorganized dictionary that contains information reguarding
+            the experiment the yaml input file was written for.
 
         """
         with open(path) as f:
             config = yaml.load(f,Loader=yaml.FullLoader)
-            #print(config)
         return config
     
     def get_sim_type(self,loaded_exp:dict={}):
         """
-        
+        Takes in an unorganized dictonary for a yaml file and returns the 
+        simulation type as well as the experiment type contained in the file. This function
+        is used as a helper function to determine which of the parser helper
+        functions the dictonary will be passed to. Since the structure of yaml
+        files and dictionaries varry based on experiment type.  
 
         Parameters
         ----------
         loaded_exp : dict, optional
-            DESCRIPTION. The default is {}.
+            An unorganized dictionary that contains information reguarding
+            the experiment the yaml input file was written for. The default is {}.
 
         Returns
         -------
-        simtype : TYPE
-            DESCRIPTION.
-        experiment_type : TYPE
-            DESCRIPTION.
+        simtype : str
+            The simulation type contained in the unorganized yaml file 
+            dictionary.
+        experiment_type : str
+            The experiment type contained in the unorganized yaml file 
+            dictionary.
 
         """
+        #parse into unorganized yaml dict (regardless of simulation)
+        #to determine the experiment and simultion type
         simtype = loaded_exp['apparatus']['kind']
         experiment_type = loaded_exp['experiment-type']
         return simtype,experiment_type
     
     def parse_flame_speed_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         """
-        
+        Takes in an unorganized dictonary for a yaml file containing 
+        experimental information relating to flame speeds and returns an
+        organized dictonary with the necessary information to run an MSI
+        flame speed optimization.
 
         Parameters
         ----------
         loaded_exp : dict, optional
-            DESCRIPTION. The default is {}.
+           Unorganized dictonary for a yaml file containing 
+           experimental information relating to flame speeds. The default is 
+           {}.
         loaded_absorption : dict, optional
-            DESCRIPTION. The default is {}.
+            Unorganized dictonary for a yaml file containing experimental 
+            information relating to absorption in a flame speed simulation. 
+            The default is {}.
 
         Returns
         -------
         dict
-            DESCRIPTION.
+            Organized dictonary with the necessary information to run an MSI
+            flame speed optimization.
 
         """
+        #begin defining importnat variables and parsing into unorganized
+        #yaml file to return information to run MSI simulations for
+        #flame speeds
         simulation_type = loaded_exp['apparatus']['kind']
         experiment_type = loaded_exp['experiment-type']
         flame_width = loaded_exp['apparatus']['flame_width']['value']
@@ -134,7 +155,7 @@ class Parser(object):
             overall_dict[group].update({'relative_uncertainty':relative_uncertainty_in_group_list[i][0]})
     
         if loaded_absorption == {}:
-      
+            #build dict and return information for flame speed simulation
             return {'simulationType':simulation_type,
                     'experimentType':experiment_type,
                     'flameWidth': flame_width,
@@ -162,6 +183,35 @@ class Parser(object):
             print('Placeholder: no Flame Speed absorption')
         
     def parse_jsr_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+        """
+        Takes in an unorganized dictonary for a yaml file containing 
+        experimental information relating to jet stirred reactors (JSR) and 
+        returns an organized dictonary with the necessary information 
+        to run an MSI JSR optimization.
+
+        Parameters
+        ----------
+        loaded_exp : dict, optional
+           Unorganized dictonary for a yaml file containing 
+           experimental information relating to JSR. The default is 
+           {}.
+        loaded_absorption : dict, optional
+            Unorganized dictonary for a yaml file containing experimental 
+            information relating to absorption in a JSRY. 
+            The default is {}.
+
+        Returns
+        -------
+        dict
+            Organized dictonary with the necessary information to run an MSI
+            JSR optimization.
+
+        """
+        #begin defining importnat variables and parsing into unorganized
+        #yaml file to return information to run MSI simulations for
+        #JSR       
+
+        
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
         experiment_type = loaded_exp['experiment-type']
@@ -196,6 +246,7 @@ class Parser(object):
         residence_time=loaded_exp['apparatus']['residence-time']['value']
         restime_relative_uncertainty=loaded_exp['apparatus']['residence-time']['relative-uncertainty']
         if loaded_absorption == {}:
+             #build dict and return information for flame speed simulation
             return{
                'pressure':pressure,
                'temperatures':temperatures,
