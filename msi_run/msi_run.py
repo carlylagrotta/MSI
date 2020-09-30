@@ -4,9 +4,19 @@ Created on Thu Sep 17 14:33:39 2020
 
 @author: Skoron
 """
-import sys
-import fire
 
+import sys, os
+sys.path.append('../../') #get rid of this at some point with central test script or when package is built
+#sys.path.append('C:\\Users\\Skoron\\Desktop')
+os.chdir('../../')
+#print(os.getcwd())
+#import sys
+import fire
+import MSI.optimization.optimization_shell as shell
+import MSI.utilities.plotting_script as plotter
+import re
+import pandas as pd
+import numpy as np
 
 class multiscale_informatics:
     
@@ -15,9 +25,150 @@ class multiscale_informatics:
         self.input_options=input_options
         self.get_parameters()
         
+        
+    def run_msi(self):
+        print(self.wdir)
+        os.chdir(self.wdir)
+        for m,mech in enumerate(self.models):
+            if self.run_individual_yaml:
+                #
+                for y,yamlfile in enumerate(self.yaml_files):
+                    if not self.master_equation_models:
+                        self.msi_no_master(m,yaml_input=[self.yaml_files[y]])
+                        self.plotting_no_master(m)
+                    
+                
+            elif not self.run_individual_yaml:
+                
+                if not self.master_equation_models:
+                    self.msi_no_master(m,yaml_input=self.yaml_files)
+                    self.plotting_no_master(m)
+                    
+                elif self.master_equation_models:
+                    pass
+    def write_convergence(self):
+        #print(type(self.X_list))
+        #print(len(self.X_list))
+        convergence=pd.DataFrame(columns=['Parameter'])
+        for i in range(len(self.X_list)):
+            #print(np.shape(self.X_list[i]))
+            convergence[str(i)]=np.array(self.X_list[i]).flatten()
+        print(self.Xdf['value'])
+        convergence['Parameter']=self.Xdf['value']
+        #print(self.Xdf.columns)
+        convergence.to_csv(self.wdir+'\\convergence_data.csv',index=False)
+        
+        
+        
+    def msi_no_master(self,iteration,yaml_input=[]):
+        MSI_instance_one=shell.MSI_optimization(self.models[iteration],
+                                                0.01,
+                                                1,
+                                                1,
+                                                self.wdir,
+                                                yaml_input,
+                                                self.reaction_uncertainties[iteration],
+                                                k_target_values_csv=self.targets[iteration])
+        MSI_instance_one.one_run_optimization()
+        self.S_matrix_original=MSI_instance_one.S_matrix
+        self.exp_dict_list_original=MSI_instance_one.experiment_dictonaries
+        self.original_covariance=MSI_instance_one.covarience
+        self.X_one_iteration=MSI_instance_one.X
+        self.z_df_original=MSI_instance_one.z_data_frame
+        
+        self.MSI_instance_two=shell.MSI_optimization(self.models[iteration],
+                                                0.01,
+                                                1,
+                                                1,
+                                                self.wdir,
+                                                yaml_input,
+                                                self.reaction_uncertainties[iteration],
+                                                k_target_values_csv=self.targets[iteration])
+        self.X_list=self.MSI_instance_two.multiple_runs(self.iterations)
+        
+        self.deltaXAsNsEas=self.MSI_instance_two.deltaXAsNsEas
+        self.physical_obervable_updates_list = self.MSI_instance_two.physical_obervable_updates_list
+        self.absorbance_observables_updates_list = self.MSI_instance_two.absorbance_coef_update_dict
+        self.Ydf = self.MSI_instance_two.Y_data_frame
+        self.Zdf = self.MSI_instance_two.z_data_frame
+        self.experimental_dicts = self.MSI_instance_two.experiment_dictonaries
+        self.z_matrix = self.MSI_instance_two.z_matrix
+        self.s_matrix = self.MSI_instance_two.s_matrix
+        self.y = self.MSI_instance_two.y_matrix
+        self.Y_matrix = self.MSI_instance_two.Y_matrix
+        self.S_matrix = self.MSI_instance_two.S_matrix
+        
+        self.X = self.MSI_instance_two.X
+        self.Xdf = self.MSI_instance_two.X_data_frame
+        self.covarience = self.MSI_instance_two.covarience
+        self.exp_dict_list_optimized = self.MSI_instance_two.experiment_dictonaries
+        self.parsed_yaml_list = self.MSI_instance_two.list_of_parsed_yamls
+        self.sigma = self.MSI_instance_two.sigma
+        self.X = self.MSI_instance_two.X
+        self.delta_X = self.MSI_instance_two.delta_X
+        #target_value_rate_constant_csv = 'MSI/data/test_data/FFCM1_custom_target_value_test.csv'
+        self.original_cti_file = self.MSI_instance_two.data_directory +'/'+ self.MSI_instance_two.cti_file_name
+        self.experiment_dict_uncertainty = self.MSI_instance_two.experiment_dict_uncertainty_original
+        self.target_value_csv = self.MSI_instance_two.data_directory +'/'+ self.MSI_instance_two.k_target_values_csv
+        
+        if self.targets[iteration]:
+            self.k_target_value_S_matrix = self.MSI_instance_two.k_target_values_for_s
+            self.run_with_k_target_values='On'
+        else:
+            self.k_target_value_S_matrix = None
+            self.run_with_k_target_values='Off'
+            
+    def plotting_no_master(self, iteration):
+        plotting_instance = plotter.Plotting(self.S_matrix,
+                                          self.s_matrix,
+                                          self.Y_matrix,
+                                          self.Y_matrix,
+                                          self.z_matrix,
+                                          self.X,
+                                          self.sigma,
+                                          self.covarience,
+                                          self.original_covariance,
+                                          self.S_matrix_original,
+                                          self.exp_dict_list_optimized,
+                                          self.exp_dict_list_original,
+                                          self.parsed_yaml_list,
+                                          self.Ydf,
+                                          target_value_rate_constant_csv= self.optional_targets[iteration],
+                                          k_target_value_S_matrix =self.k_target_value_S_matrix,
+                                          k_target_values=self.run_with_k_target_values,
+                                          working_directory=self.wdir,
+                                          shock_tube_instance = self.MSI_instance_two,
+                                          optimized_cti_file=self.MSI_instance_two.new_cti_file,
+                                          original_cti_file=self.original_cti_file)
+    
+        self.observable_counter_and_absorbance_wl,self.length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
+        self.sigmas_optimized,test = plotting_instance.calculating_sigmas(self.S_matrix,self.covarience)
+        self.sigmas_original,self.test2 = plotting_instance.calculating_sigmas(self.S_matrix_original,self.original_covariance)
+        plotting_instance.plotting_observables(sigmas_original = self.sigmas_original,sigmas_optimized= self.sigmas_optimized,
+                                               file_identifier=self.models[iteration].rstrip('.cti')+'_'+'all_yamls',
+                                               filetype='.pdf')
+        self.diag = plotting_instance.getting_matrix_diag(self.covarience)
+        
+        #plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
+        
+        
+        
+        plotting_instance.plotting_rate_constants(optimized_cti_file=self.MSI_instance_two.new_cti_file,
+                                        original_cti_file=self.original_cti_file,
+                                        initial_temperature=250,
+                                        final_temperature=2500)
+                                        
+        
+        
+        self.sensitivity, self.top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
+        self.obs = plotting_instance.plotting_uncertainty_weighted_sens()
+        
+        
+        
     def get_parameters(self):
         self.get_working_directory()
         self.get_iterations()
+        self.get_yaml_option()
         self.get_yaml_files()
         self.get_kinetic_models()
         self.get_reaction_uncertainties_list()
@@ -29,10 +180,18 @@ class multiscale_informatics:
         self.get_master_reactions()
         
     def get_working_directory(self):
-        self.wdir=self.input_options[0].split('=')[1]
+        self.wdir=self.input_options[0].split('=')[1].rstrip('\'').lstrip('\'')
     
     def get_iterations(self):
         self.iterations=int(self.input_options[1].split('=')[1])
+        
+    def get_yaml_option(self):
+        if re.match('[Ff][Aa][Ll][Ss][Ee]',self.input_options[2].split('=')[1]):
+            self.run_individual_yaml=False
+        elif re.match('[Tt][Rr][Uu][Ee]',self.input_options[2].split('=')[1]):
+            self.run_individual_yaml=True
+        else:
+            raise Exception('Please set run_individual_yaml=True/False in the input file to run.')
         
     def get_yaml_files(self):
         yaml_bool=False
@@ -109,6 +268,8 @@ class multiscale_informatics:
                 self.targets.append(string)
             if 'begin_rate_constant_targets' in string:
                 targets_bool=True
+        if not self.targets:
+            self.targets=['']*len(self.models)
         
     def get_optional_plotting_targets(self):
         targets_bool=False
@@ -120,6 +281,14 @@ class multiscale_informatics:
                 self.optional_targets.append(string)
             if 'begin_optional_plotting_targets' in string:
                 targets_bool=True
+        if not self.optional_targets and all('' == s or s.isspace() for s in self.targets):
+    
+            self.optional_targets=['']*len(self.models)
+        elif not self.optional_targets and not all('' == s or s.isspace() for s in self.targets):
+            self.optional_targets=self.targets
+                
+                
+                
     
     def get_master_equation_sens(self):
         sens_bool=False
@@ -194,8 +363,10 @@ def main(input_file=''):
     elif input_file !='':
         input_options=parser(input_file)
         simulation=multiscale_informatics(input_options)
+        simulation.run_msi()
+        simulation.write_convergence()
         
-    return simulation
+        return simulation
 
 if __name__ == '__main__':
     a=fire.Fire(main)

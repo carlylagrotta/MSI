@@ -162,6 +162,21 @@ class Parser(object):
             print('Placeholder: no Flame Speed absorption')
         
     def parse_jsr_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+        """
+        
+
+        Parameters
+        ----------
+        loaded_exp : dict, optional
+            DESCRIPTION. The default is {}.
+        loaded_absorption : dict, optional
+            DESCRIPTION. The default is {}.
+
+        Returns
+        -------
+        None.
+
+        """
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
         experiment_type = loaded_exp['experiment-type']

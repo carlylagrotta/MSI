@@ -22,7 +22,7 @@ class MSI_optimization(object):
                  kineticSens:int,physicalSens:int,
                  data_directory:str,yaml_file_list:list,
                  reaction_uncertainty_csv:str,
-                 k_target_values_csv:str,
+                 k_target_values_csv:str='',
                  master_equation_reactions:list=[],
                  molecular_parameter_sensitivities:dict={},
                  master_reaction_equation_cti_name:str = '',

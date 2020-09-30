@@ -845,7 +845,7 @@ class OptMatrix(object):
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
                     
                     elif 'cm/s'  in exp_dic['experimental_data'][counter].columns.tolist()[1]:
-                        if re.match('[Ff]lame [Ss]peed',exp_dict_list[i]['simulation_type']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',exp_dict_list[i]['experimentType']):
+                        if re.match('[Ff]lame [Ss]peed',exp_dict_list[i]['simulation_type']) and re.match('[Oo][Nn][Ee]|[1][ -][dD][ -][Ff]lame',exp_dict_list[i]['experiment_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_cm/s'].to_numpy(),
                                                                       exp_dic['simulation'].timeHistories[0][observable])
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
@@ -857,7 +857,7 @@ class OptMatrix(object):
                                                                       exp_dic['simulation'].timeHistories[0]['delay'])
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
                     else:
-                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experimentType']):
+                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable].values,
                                                                   exp_dic['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
@@ -866,7 +866,7 @@ class OptMatrix(object):
                                                                   exp_dic['simulation'].timeHistories[0][observable].values)
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
                             
-                        if re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experimentType']) and re.match('[Ff]low[ -][Rr]eactor',exp_dict_list[i]['simulationType']):
+                        if re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']) and re.match('[Ff]low[ -][Rr]eactor',exp_dict_list[i]['simulation_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable].values,
                                                                   exp_dic['simulation'].timeHistories[0][observable].values)
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
@@ -1900,6 +1900,7 @@ class OptMatrix(object):
 
         
         #return((S_ksens,S_psens,S_abs_coef))
+        print(np.shape(S_ksens),np.shape(S_psens),np.shape(S_abs_coef))
         S_matrix = np.hstack((S_ksens,S_psens,S_abs_coef))
         shape = np.shape(S_matrix)[1]
         #append identy matrix
