@@ -454,9 +454,9 @@ class Plotting(object):
                         
                         
                 if observable in exp['concentration_observables']:
-                    print(observable_counter)
+                    #print(observable_counter,'THIS IS OBSERVABLE COUNTER')
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
-                        
+                        #print(observable_counter)
                         if observable+'_ppm' in exp['experimental_data'][observable_counter].columns:
                             print('poop')
                             plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
@@ -500,8 +500,8 @@ class Plotting(object):
                             plt.title('Experiment_'+str(i+1))
                             
                             if bool(sigmas_optimized)==True:
-                                concentration_sig = np.true_divide(1,exp['simulation'].pressureAndTemperatureToExperiment[i]['temperature'].to_numpy())*exp['simulation'].pressureAndTemperatureToExperiment[i]['pressure'].to_numpy()
-                           
+                                concentration_sig = np.true_divide(1,exp['simulation'].pressureAndTemperatureToExperiment[observable_counter]['temperature'].to_numpy())*exp['simulation'].pressureAndTemperatureToExperiment[observable_counter]['pressure'].to_numpy()
+                        
                                 concentration_sig *= (1/(8.314e6))*exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().to_numpy()
                                 high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
                                 high_error_optimized = np.multiply(high_error_optimized,concentration_sig)
@@ -531,9 +531,9 @@ class Plotting(object):
                     
 
 
-                        observable_counter+=1
+                        #observable_counter+=1
                     
-                    if re.match('[Ff]low [Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
+                    elif re.match('[Ff]low [Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
                         plt.plot(exp['simulation'].timeHistories[0]['initial_temperature'],exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
                         plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['initial_temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
                         plt.plot(exp['experimental_data'][observable_counter]['Temperature'],exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data')

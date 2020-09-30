@@ -188,6 +188,7 @@ class Parser(object):
         experimental information relating to jet stirred reactors (JSR) and 
         returns an organized dictonary with the necessary information 
         to run an MSI JSR optimization.
+        
 
         Parameters
         ----------
@@ -211,7 +212,6 @@ class Parser(object):
         #yaml file to return information to run MSI simulations for
         #JSR       
 
-        
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
         experiment_type = loaded_exp['experiment-type']
