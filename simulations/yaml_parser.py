@@ -198,7 +198,7 @@ class Parser(object):
            {}.
         loaded_absorption : dict, optional
             Unorganized dictonary for a yaml file containing experimental 
-            information relating to absorption in a JSRY. 
+            information relating to absorption in a JSR. 
             The default is {}.
 
         Returns
@@ -275,6 +275,37 @@ class Parser(object):
             print('Placeholder: no JSR absorption')
             
     def parse_variable_pressure_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+        
+        """
+        Takes in an unorganized dictonary for a yaml file containing 
+        experimental information relating to a variable pressure shock tube and 
+        returns an organized dictonary with the necessary information 
+        to run an MSI variable pressure shock tube optimization.
+        
+
+        Parameters
+        ----------
+        loaded_exp : dict, optional
+           Unorganized dictonary for a yaml file containing 
+           experimental information relating to variable pressure shock tube. The default is 
+           {}.
+        loaded_absorption : dict, optional
+            Unorganized dictonary for a yaml file containing experimental 
+            information relating to absorption in a variable pressure shock tube. 
+            The default is {}.
+
+        Returns
+        -------
+        dict
+            Organized dictonary with the necessary information to run an MSI
+            variable pressure shock tube optimization.
+
+        """
+        #begin defining importnat variables and parsing into unorganized
+        #yaml file to return information to run MSI simulations for
+        #variable pressure shock tube         
+        
+        
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
         temperature = loaded_exp['common-properties']['temperature']['value']
