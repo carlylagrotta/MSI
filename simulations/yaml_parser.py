@@ -399,6 +399,42 @@ class Parser(object):
         else: 
             print('Placeholder: no JSR absorption')
     def parse_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+        
+        
+        """
+        Takes in an unorganized dictonary for a yaml file containing 
+        experimental information relating to a shock tube and 
+        returns an organized dictonary with the necessary information 
+        to run an MSI shock tube optimization.
+        
+
+        Parameters
+        ----------
+        loaded_exp : dict, optional
+           Unorganized dictonary for a yaml file containing 
+           experimental information relating to a shock tube. The default is 
+           {}.
+        loaded_absorption : dict, optional
+            Unorganized dictonary for a yaml file containing experimental 
+            information relating to absorption in a shock tube. 
+            The default is {}.
+
+        Returns
+        -------
+        dict
+            Organized dictonary with the necessary information to run an MSI
+            shock tube optimization.
+
+        """
+        #begin defining importnat variables and parsing into unorganized
+        #yaml file to return information to run MSI simulations for
+        #shock tube            
+        
+        
+        
+        
+        
+        
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
         temperature = loaded_exp['common-properties']['temperature']['value']
@@ -572,7 +608,35 @@ class Parser(object):
         
         
     def parse_RCM_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+        
+        """
+        Takes in an unorganized dictonary for a yaml file containing 
+        experimental information relating to a shock tube and 
+        returns an organized dictonary with the necessary information 
+        to run an MSI RCM optimization.
+        
 
+        Parameters
+        ----------
+        loaded_exp : dict, optional
+           Unorganized dictonary for a yaml file containing 
+           experimental information relating to an RCM. The default is 
+           {}.
+        loaded_absorption : dict, optional
+            Unorganized dictonary for a yaml file containing experimental 
+            information relating to absorption in an RCM. 
+            The default is {}.
+
+        Returns
+        -------
+        dict
+            Organized dictonary with the necessary information to run an RCM
+            optimization.
+
+        """
+        #begin defining importnat variables and parsing into unorganized
+        #yaml file to return information to run MSI simulations for
+        #RCM     
     
         simulation_type = loaded_exp['apparatus']['kind']
         pressure_list = loaded_exp['common-properties']['pressure']['value-list']
@@ -720,7 +784,34 @@ class Parser(object):
             print('We do not have absorbance installed for ignition delay')       
         
     def parse_ignition_delay_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+        """
+        Takes in an unorganized dictonary for a yaml file containing 
+        experimental information relating to a shock tube and 
+        returns an organized dictonary with the necessary information 
+        to run an MSI igntion dealy optimization.
+        
 
+        Parameters
+        ----------
+        loaded_exp : dict, optional
+           Unorganized dictonary for a yaml file containing 
+           experimental information relating to an RCM. The default is 
+           {}.
+        loaded_absorption : dict, optional
+            Unorganized dictonary for a yaml file containing experimental 
+            information relating to absorption in an igntion dealy. 
+            The default is {}.
+
+        Returns
+        -------
+        dict
+            Organized dictonary with the necessary information to run an
+            igntion dealy optimization.
+
+        """
+        #begin defining importnat variables and parsing into unorganized
+        #yaml file to return information to run MSI simulations for
+        #igntion dealy     
     
         simulation_type = loaded_exp['apparatus']['kind']
         pressure_list = loaded_exp['common-properties']['pressure']['value-list']
@@ -864,10 +955,38 @@ class Parser(object):
             print('We do not have absorbance installed for ignition delay')
             
     def parse_flow_reactor_obj(self, loaded_exp:dict={}, loaded_absorption:dict={}):
+        """
+        Takes in an unorganized dictonary for a yaml file containing 
+        experimental information relating to a shock tube and 
+        returns an organized dictonary with the necessary information 
+        to run an MSI flow reactor optimization.
+        
+
+        Parameters
+        ----------
+        loaded_exp : dict, optional
+           Unorganized dictonary for a yaml file containing 
+           experimental information relating to a flow reactor. The default is 
+           {}.
+        loaded_absorption : dict, optional
+            Unorganized dictonary for a yaml file containing experimental 
+            information relating to absorption in a flow reactor. 
+            The default is {}.
+
+        Returns
+        -------
+        dict
+            Organized dictonary with the necessary information to run a
+           flow reactor optimization.
+
+        """
+        #begin defining importnat variables and parsing into unorganized
+        #yaml file to return information to run MSI simulations for
+        #flow reactor          
+        
+
+        
         residence_time_list = loaded_exp['apparatus']['residence-time']['value-list']
-        
-        
-        
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
         temperature_list = loaded_exp['common-properties']['temperature']['value-list']
@@ -967,19 +1086,59 @@ class Parser(object):
     
     
     def load_yaml_list(self, yaml_list:list = []):
-        #print(yaml_list)
+        '''
+        Takes in a nested list of yaml file strings and returns a list of
+        unorganized dictonaries for all the yaml files passed in.
+
+        Parameters
+        ----------
+        yaml_list : list, optional
+            This is a nested list of tuples Where the yaml files pertaining
+            to a single experiment are in their own tuple. For example, 
+            [('Hong_0.yaml','Hong_0_abs.yaml'), ('Hong_1.yaml')] 
+            The default is [].
+
+        Returns
+        -------
+        list_of_yaml_objects: list
+        A nested list structured the same as the input,
+        of unorganized dictonaries for all the yaml files passed in.
+
+        '''
+        #make empty list to append objects to 
         list_of_yaml_objects = []
+        #iterate over nested list
         for tup in yaml_list:
+            #iterate over tuple
             temp = []
             for file in tup:
-                #print(file)
                 temp.append(self.load_to_obj(file))
             list_of_yaml_objects.append(temp) 
+            #load file
+            #change tuple to a list for further use
         list_of_yaml_objects = [tuple(lst) for lst in list_of_yaml_objects ] 
         #print(list_of_yaml_objects[0][0])              
         return list_of_yaml_objects
     
     def parsing_multiple_dictonaries(self,list_of_yaml_objects:list = [],loop_counter=0):
+        '''
+        
+
+        Parameters
+        ----------
+        list_of_yaml_objects : list, optional
+            DESCRIPTION. The default is [].
+        loop_counter : TYPE, optional
+            DESCRIPTION. The default is 0.
+
+        Returns
+        -------
+        experiment_dictonaries : TYPE
+            DESCRIPTION.
+
+        '''
+        
+        
         experiment_dictonaries = []
         counter=0
         for tup in list_of_yaml_objects:
