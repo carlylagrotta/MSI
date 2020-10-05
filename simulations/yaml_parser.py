@@ -1120,21 +1120,33 @@ class Parser(object):
         #print(list_of_yaml_objects[0][0])              
         return list_of_yaml_objects
     
-    def parsing_multiple_dictonaries(self,list_of_yaml_objects:list = [],loop_counter=0):
+    def parsing_multiple_dictonaries(self,list_of_yaml_objects:list = [],loop_counter:int=0):
         '''
-        
+        This function takes in a list of nested and unorganized yaml 
+        dictonaries and sorts them into the correct parser based on their
+        simulation and experiment type. It returns a nested list of organized
+        and parsed dictonaries which contain all the necessary variables to
+        run a simulation for the experiment as well as an optimization. 
 
         Parameters
         ----------
         list_of_yaml_objects : list, optional
-            DESCRIPTION. The default is [].
-        loop_counter : TYPE, optional
-            DESCRIPTION. The default is 0.
+            Nested list of unorganized yaml dictonaries which could be for a
+            variety of differnt experiments and simulation types. The default 
+            is [].
+            
+        loop_counter : int, optional
+             The loop counter keeps track of the current iteration number 
+             of the optimization. If it is zero this function saves the 
+             original set of parsed experimental dictonaries for use in other 
+             functions. The default is 0.
 
         Returns
         -------
-        experiment_dictonaries : TYPE
-            DESCRIPTION.
+        experiment_dictonaries : list
+            A nested list of organized and parsed dictonaries which contain
+            all the necessary variables to run a simulation for the experiment 
+            as well as an optimization. 
 
         '''
         
@@ -1214,6 +1226,26 @@ class Parser(object):
     def assemble_dicts_for_master_equation(self,experiment_dictonaries:list=[],
                                            master_equation_reactions:list=[],
                                            additional_parameters:dict={}):
+        '''
+        
+
+        Parameters
+        ----------
+        experiment_dictonaries : list, optional
+            DESCRIPTION. The default is [].
+        master_equation_reactions : list, optional
+            DESCRIPTION. The default is [].
+        additional_parameters : dict, optional
+            DESCRIPTION. The default is {}.
+
+        Returns
+        -------
+        master_equation_parameters : TYPE
+            DESCRIPTION.
+
+        '''
+        
+        
         temperatures = []
         pressures = []
         conditions = []
@@ -1238,7 +1270,23 @@ class Parser(object):
         return master_equation_parameters
     
     
-    def yaml_file_copy(self,fileName):
+    def yaml_file_copy(self,fileName:str):
+        '''
+        This function makes a copy of a yaml file and writes a new file using
+        that copy. The new files name is: original_file_name_updated.yaml.
+        The function returns a string of the new file name.
+
+        Parameters
+        ----------
+        fileName : str
+            Name of yaml file that a copy is being made of.
+
+        Returns
+        -------
+        NewName : str
+            Name of new yaml file.
+
+        '''
     
         tempName = fileName[0:(len(fileName)-5)]
         yamlExtention = fileName[(len(fileName)-5):]
@@ -1247,10 +1295,31 @@ class Parser(object):
     
         return NewName
     
-    def reorder_temps_from_dict(self,phys_updates, temperature_list, yaml_number):
-        '''Function takes the physical_observables_updates_list and ensures that it 
-           returns all the temperature updates in the correct order.  Called in the 
-           yaml_file_updates function'''
+    def reorder_temps_from_dict(self,phys_updates, 
+                                temperature_list, 
+                                yaml_number):
+        '''
+        Function takes the physical_observables_updates_list, temperature_list,
+        and yaml_number and ensures that it returns all the temperature 
+        updates in the correct order. 
+        NOTE:This function is not currently being used. It seems like it was
+        written and then we realized we didn't actually need it.
+
+        Parameters
+        ----------
+        phys_updates : list
+            List of physical updates.
+        temperature_list : list
+            List of temperatures.
+        yaml_number : int
+            Yaml file number.
+
+        Returns
+        -------
+        values : list
+            List of temperature updates.
+
+        '''
         values=[]
         strings=[]
         for i in temperature_list:
@@ -1264,6 +1333,42 @@ class Parser(object):
                           experiment_dict_list,
                           physical_observables_updates_list,
                           loop_counter=0):
+        '''
+        This function updates the physical model parameters (excluding absorption cofficents)
+        stored insdie the  yaml files after an iteration of the optimization 
+        is finished running.
+        
+        This function takes the list of yaml files names, the organized 
+        parsed yaml file dictonaries list, the experiment dictonaries list,
+        the physical observables updates list, and the loop counter as 
+        arguments and returns the file name list of updated files. 
+        
+        Parameters
+        ----------
+        file_name_list : list
+            Nested list of yaml file names to be updated.
+        parsed_yaml_list : list
+            Nested list (same order as the file name list) of organized
+            and parsed yaml file dictonaries.
+        experiment_dict_list : list
+            List of dictonaries pertaining to the simulations run in the 
+            optimization that contain relevent information. The list is in the
+            same order as the file name list.
+        physical_observables_updates_list : list
+            List of dictonaries that contain the updates (delta x) for each
+            experiment. The list is in the same order as file name list.
+        loop_counter : int, optional
+            Integer tht keeps track of what iteration the optimization is on.
+            If this value is zero copies of the original yaml files will
+            be made, and the copy will be updated instead of the original.
+            The default is 0.
+
+        Returns
+        -------
+        file_name_list: list
+            List of file names that have been updated.
+
+        '''
         
         #always pass in the updated file name list except for the first run of the code
         if loop_counter == 0:
@@ -1530,6 +1635,40 @@ class Parser(object):
                           experiment_dict_list,
                           absorption_observables_updates_dict,
                           loop_counter=0):
+        '''
+        This function updates the absorption physical model parameters stored
+        inside the absorption specific yaml files.
+        
+        This function takes the list of yaml files names, the organized 
+        parsed yaml file dictonaries list, the experiment dictonaries list,
+        the physical observables updates list, and the loop counter as 
+        arguments and returns the file name list of updated files.         
+
+        Parameters
+        ----------
+        file_name_list : list
+            Nested list of yaml file names to be updated..
+        parsed_yaml_list : list
+            Nested list (same order as the file name list) of organized
+            and parsed yaml file dictonaries.
+        experiment_dict_list : list
+            List of dictonaries pertaining to the simulations run in the 
+            optimization that contain relevent information. The list is in the
+            same order as the file name list.
+        absorption_observables_updates_dict : dictionary
+            A dictionary that contains the update (delta x) values for
+            absorption coefficients.
+        loop_counter : int, optional
+            Integer tht keeps track of what iteration the optimization is on.
+            If this value is zero copies of the original yaml files will
+            be made, and the copy will be updated instead of the original.
+            The default is 0.
+        Returns
+        -------
+        file_name_list: list
+            List of file names that have been updated.
+
+        '''
         
         
         
@@ -1600,10 +1739,3 @@ class Parser(object):
                 yaml.safe_dump(config3, f,default_flow_style=False)
         
         return file_name_list
-    
-    
-                
-                
-        
-        
-    
