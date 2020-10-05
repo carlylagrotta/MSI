@@ -43,7 +43,7 @@ files_to_include = [['Hong_0.yaml'],
 
 
                                                       
-numer_of_iterations = 5
+numer_of_iterations = 2
 cti_file = 'FFCM1_custom_cheb_extra_zeros_new.cti'
 #cti_file = 'FFCM1_custom_cheb_extra_zeros_new_1_colliders.cti'
 
