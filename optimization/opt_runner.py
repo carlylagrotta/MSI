@@ -50,6 +50,7 @@ class Optimization_Utility(object):
             exp_dict['pressure'] = None
             exp_dict['species'] = None
         else:
+            #print('I LIKE POTATOES')
             exp_dict['ksens']              = interpolated_kinetic_sens
             exp_dict['temperature']        = interpolated_tp_sens[0]
             exp_dict['pressure']           = interpolated_tp_sens[1]
@@ -772,6 +773,9 @@ class Optimization_Utility(object):
         time_shift_abs_senstivity = abs_instance.calculate_time_shift_sensitivity_abs(abs_data[0],
                                                                                        loaded_experimental_data_absorbance,
                                                                                        shock_tube,dk)
+        
+        
+                                
         experiment = self.build_single_exp_dict(exp_number,
                                                 shock_tube,
                                       None,

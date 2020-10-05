@@ -311,7 +311,8 @@ class MSI_shocktube_optimization_chebyshev(object):
             self.posterior_diag_df = posterior_diag_df
             self.sorted_posterior_diag = sorted_posterior_diag
             self.covariance_posterior_df = covariance_posterior_df
-            self.posterior_over_prior = pd.concat([self.prior_diag_df, self.posterior_diag_df], axis=1, join_axes=[self.prior_diag_df.index])
+            #self.posterior_over_prior = pd.concat([self.prior_diag_df, self.posterior_diag_df], axis=1, join_axes=[self.prior_diag_df.index])
+            self.posterior_over_prior = pd.concat([self.prior_diag_df, self.posterior_diag_df], axis=1, join='outer')
             self.posterior_over_prior['posterior/prior'] = (self.posterior_diag_df['value'] / self.prior_diag_df['value'])
             self.posterior_over_prior = self.posterior_over_prior.sort_values(by=['posterior/prior'])
             self.posterior_sigmas_df = posterior_sigmas_df
