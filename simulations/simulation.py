@@ -48,7 +48,7 @@ class Simulation(object):
         self.physicalSens = physicalSens
         self.conditions = conditions
         self.dk = []        
-    def setTPX(self,temperature:float=-1,pressure:float=-1,conditions_perturb:dict={},reset_value={}):
+    def setTPX(self,temperature:float=-1,pressure:float=-1,conditions_perturb:dict={}):
         '''
         Set solution object for a simulation
 
@@ -61,8 +61,6 @@ class Simulation(object):
         conditions_perturb : dict, optional
             Initial mole fractions for species in simulation. The default is 
             {}.
-        reset_value : TYPE, optional
-            Not used at the moment. The default is {}.
 
         Returns
         -------
