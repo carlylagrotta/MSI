@@ -16,23 +16,88 @@ class shockTube(sim.Simulation):
                  save_physSensHistories=0,moleFractionObservables:list=[],
                  absorbanceObservables:list=[],concentrationObservables:list=[],
                  fullParsedYamlFile:dict={},
-                 time_shift_value = 0, atol=1e-15, rtol=1e-9,rtol_sens=0.0001,
-                 atol_sens=1e-6):
+                 time_shift_value:float = 0, atol:float=1e-15, rtol:float=1e-9,
+                 rtol_sens:float=0.0001,
+                 atol_sens:float=1e-6):
+        '''
+        Child class pertaining to shock tube simulations. Inherits all 
+        attributes and methods from simulations class including __init__(). 
+        Also has its own internal init method due to additional data 
+        requirements.
+    
+
+        Parameters
+        ----------
+        pressure : float
+            Pressure in [atm].
+        temperature : float
+            Temperature in [K].
+        observables : list
+            Species which sensitivity analysis is performed for.
+        kineticSens : int
+            0 for off, 1 for on.
+        physicalSens : int
+            0 for off, 1 for on.
+        conditions : dict
+            Initial mole fractions for species in simulation.
+        initialTime : float
+            Time to begin simulation from (s).
+        finalTime : float
+            Time to end simulation (s).
+        thermalBoundary : str
+            Thermal boundary condition inside the reactor. Shock tubes can
+            either be adiabatic or isothermal.
+        mechanicalBoundary : TYPE
+            Mechanical bondary condition inside the reactor. Shock tubes can
+            either be constant pressure or constant volume.
+        processor : ctp.Processor, optional
+            Loaded cti file. The default is None.
+        cti_path : str, optional
+            Path of cti file for running. If processor is provided this is not 
+            needed. The default is "".
+        save_timeHistories : int, optional
+            Boolean variable describing if time histories for simulation runs
+            are saved. 0 for not saved, 1 for saved. The default is 0.
+        save_physSensHistories : TYPE, optional
+            Boolean variable describing if physical sensitivity time histories
+            are saved. 0 for not saved, 1 for saved. The default is 0.
+        moleFractionObservables : list, optional
+            Species for which experimental data in the form of mole fraction
+            time histories will be provided for optimization.
+            Kinetic sensitivities are calculated for all these species. 
+            The default is [].
+        absorbanceObservables : list, optional
+            Species for which experimental data in the form of summed
+            absorption time histories (from some or all of the species) will be
+            provided for optimization.
+            Kinetic sensitivities are calculated for all these species. 
+            The default is [].
+        concentrationObservables : list, optional
+            Species for which experimental data in the form of concentration
+            time histories will be provided for optimization.
+            Kinetic sensitivities are calculated for all these species. 
+            The default is [].
+        fullParsedYamlFile : dict, optional
+            Full dictionary from the parsed shock tube yaml file. 
+            The default is {}.
+        time_shift_value : float, optional
+            The numerical value by which the time vector of the simulation
+            is shifted in seconds. The default is 0.
+        atol : float, optional
+            Get the absolute error tolerance. The default is 1e-15.
+        rtol : float, optional
+            Get the relative error tolerance. The default is 1e-9.
+        rtol_sens : float, optional
+            Scalar relative error tolerance for sensitivity. The default is 0.0001.
+        atol_sens : float, optional
+            Scalar absolute error tolerance for sensitivity. The default is 1e-6.
+
+        Returns
+        -------
+        None.
 
         '''
-        Child class of shock Tubes. Inherits all attributes and
-        methods including __init__(). Also has its own internal
-        init method due to additional data requirements
-    
-        Input:
-            - initialTime = float, time the simulation will begin at in [s]
-            - finalTime = float, time the simulation will end at in [s]
-            - thermalBoundary = string, the boundary condtion for the shocktube.
-              For example, adiabatic, or isothermal
-            - mechanicalBoundary = string, the thermal boundary condition for
-              the shocktube. For example, constant pressure or constant volume
-            - histories: save the timehistories of all runs of the simulation
-        '''
+
         sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
                                 conditions,processor,cti_path)
         self.initialTime = initialTime
@@ -117,7 +182,7 @@ class shockTube(sim.Simulation):
     def settingShockTubeConditions(self):
         '''
         Determine the mechanical and thermal boundary conditions for a 
-        shock tube.
+        shock tube based on what was initialized.
         '''
         
         #assigning the thermal boundary variable
