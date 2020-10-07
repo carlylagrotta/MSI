@@ -49,6 +49,7 @@ class Simulation(object):
         self.conditions = conditions
         self.dk = []        
     def setTPX(self,temperature:float=-1,pressure:float=-1,conditions_perturb:dict={}):
+        #reset_value={}
         '''
         Set solution object for a simulation
 
