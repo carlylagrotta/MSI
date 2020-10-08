@@ -205,17 +205,30 @@ class shockTube(sim.Simulation):
     def sensitivity_adjustment(self,temp_del:float=0.0,
                                pres_del:float=0.0,
                                spec_pair:(str,float)=('',0.0)):
-        
         '''
         Appends the sensitivity adjustment to list, and calls sensitivity adjustment
         function from the simulations class, to adjust P,T,X for the sensitivity
-        calculation
-        
-        Keyword arguments:
-        temp_del -- the decimal value of the percent by which temperature is perturbed (default 0.0)
-        pres_del -- the decimal value of the percent by which pressure is perturbed (default 0.0)
-        spec_pair -- the string of a species and the decimal value of the percent by which that species is perturbed (defaul '', 0.0)        
+        calculation       
+
+        Parameters
+        ----------
+        temp_del : float, optional
+            The decimal value of the percent by which temperature is perturbed.
+            The default is 0.0.
+        pres_del : float, optional
+            The decimal value of the percent by which pressure is perturbed. 
+            The default is 0.0.
+        spec_pair : (str,float), optional
+             The string of a species and the decimal value of the percent by 
+             which that species is perturbed . The default is ('',0.0).
+
+        Returns
+        -------
+        data : Pandas Data Frame
+            Time history of the perturbed simulation.
+
         '''
+
         if temp_del != 0.0:
             self.dk.append(temp_del)
         if pres_del != 0.0:       
@@ -233,10 +246,25 @@ class shockTube(sim.Simulation):
     def run(self,initialTime:float=-1.0, finalTime:float=-1.0):
         '''
         Run the shock tube simulation
-        Keyword arguments:
-        initialTime -- the time at which the reactor simulation begins, in seconds (default -1.0)
-        finalTime -- the time at which the reactor simulation ends, in seconds (default -1.0)
+
+
+        Parameters
+        ----------
+        initialTime : float, optional
+            The time at which the reactor simulation begins, in seconds. The default is -1.0.
+        finalTime : float, optional
+            The time at which the reactor simulation ends, in seconds. The default is -1.0.
+
+        Returns
+        -------
+        timeHistory: Pandas DataFrame
+            Time history of simulation containing temperature, pressurea and
+            species results.
+        kineticSensitivities: numpy array
+            three dimensional numpy array: (time x reaction x observable).
+
         '''
+
         if initialTime == -1.0:
             initialTime = self.initialTime 
         if finalTime == -1.0:
@@ -318,16 +346,29 @@ class shockTube(sim.Simulation):
     #return more data about what was interpolated in a tuple?
     def interpolate_time(self,index:int=None,time_history=None):
         '''
-        This function interpolates and returns the most recent time history against the oldest 
-        by default. Unless a specific time history index or time history is passed in. If an index
-        is passed in then an interpolated time history associated with 
-        that index in the list is returned. If a specific time_history is passed in then an interpolated
-        version of that time history is returned. 
-        
-        Keyword arguments:
-        index -- the index value of the specific time history to be interpolated (default None)
-        time_history -- pandas dataframe containing the time history from a simulation (default None )
+        This function interpolates and returns the most recent time history 
+        against the original time history by default, unless a specific time 
+        history index  or time history is passed in. If an index is passed in 
+        then an interpolated time history associated with that index in the
+        list is returned. If a specific time_history is passed in then an
+        interpolated version of that time history is returned.         
+
+        Parameters
+        ----------
+        index : int, optional
+            The index value of the specific time history to be interpolated. 
+            The default is None.
+        time_history : Pandas Data Frame, optional
+            Pandas dataframe containing the time history from a simulation.
+            The default is None.
+
+        Returns
+        -------
+        interpolatedTimeHistory: Pandas Data Frame
+            Interpolated time history.
+
         '''
+
         if self.timeHistories == None:
             print("Error: this simulation is not saving time histories, reinitialize with flag")
             return -1
@@ -374,10 +415,26 @@ class shockTube(sim.Simulation):
         return interpolated_sens
 
     #interpolate a range of time histories agains the original
-    #possibly add experimental flag to do range with exp data
+    #possibly add experimental flag to do range with exp data                  
     #end is exclusive
     #start here tomorrow
     def interpolate_range(self,begin:int,end:int):
+        '''
+        Function that defines a time range for interpolation.
+
+        Parameters
+        ----------
+        begin : int
+            Time to begin interpolation.
+        end : int
+            Time to end interpolation.
+
+        Returns
+        -------
+        interpolated_data : Pandas Data Frame
+            Interpolated time history.
+
+        '''
         if begin<0 or end>len(self.timeHistories):
             print("Error: invalid indices")
         if self.timeHistories == None:
@@ -389,15 +446,29 @@ class shockTube(sim.Simulation):
         return interpolated_data
         
     #interpolates agains the original time history
-    def interpolate_physical_sensitivities(self, index:int=-1, time_history=None):
+    def interpolate_physical_sensitivities(self, index:int=-1,
+                                           time_history=None):
         '''
         This function interpolates the time history of a physical sensitivity, 
         excluding species, against the original time history and returns a 
-        numpy array.
-        Keyword arguments:
-        index -- the index value of the specific time history to be interpolated (default None)
-        time_history -- pandas dataframe containing the time history from a simulation (default None )
-        '''             
+        numpy array.        
+
+        Parameters
+        ----------
+        index : int, optional
+            The index value of the specific time history to be interpolated. 
+            The default is -1.
+        time_history : Pandas Data Frame, optional
+            Pandas dataframe containing the time history from a simulation.
+            The default is None.
+
+        Returns
+        -------
+        sensitivity: Pandas Data Frame.
+        Physical sensitivity Data Frame.
+
+        '''
+          
         interpolated_time = self.interpolate_time(index) if time_history is None else time_history
         #print(interpolated_time)
         #calculate which dk
@@ -412,6 +483,23 @@ class shockTube(sim.Simulation):
     
     #returns a 3D array of interpolated time histories corrosponding to physical sensitivities
     def interpolate_experimental_kinetic(self, pre_interpolated = []):
+        '''
+        This function interpolates kinetic sensitivities to experimental data.
+
+        Parameters
+        ----------
+        pre_interpolated : list, optional
+            List of kinetic sensitivties to be interpolated. If not provided
+            the function will look for kinetic sensitivities that were saved
+            as an attribute.
+            The default is [].
+
+        Returns
+        -------
+        flipped: numpy array
+            Interpolated 3d array containing sensitivities.
+
+        '''
            
         if self.experimentalData == None:
             print("Error: experimental data must be loaded")
@@ -453,10 +541,21 @@ class shockTube(sim.Simulation):
         This function maps kinetic sensitivity calculations returned from cantera
         to kineitcs parameters A,n and Ea, as well as interpolates them to the 
         corresponding experimental data. It returns a dictonary containing the 
-        interpolated kinetic senstivities.
-        Keyword Arguments:
-        time_history -- the original time history is required for obtaining temperature values (default None)
-        '''          
+        interpolated kinetic senstivities.        
+
+        Parameters
+        ----------
+        time_history : Pandas Data Frame, optional
+            The original time history is required for obtaining temperature 
+            values in order to do the mapping. The default is None.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the mapping for kinetic sensitivities.
+
+        '''
+        
         A = self.kineticSensitivities
         N = np.zeros(A.shape)
         Ea = np.zeros(A.shape)
@@ -481,12 +580,26 @@ class shockTube(sim.Simulation):
     def interpolate_experimental(self,pre_interpolated = [], single = None):
         '''
         This function interpolates the time history of a physical sensitivity 
-        against the corresponding experimental data and returns a pandas dataframe.
-        Keyword arguments:
-        pre_interpolated -- has been interpolated against the original time history,
-        assumes pre_interpolated is a list of dataframes where each dataframe is a time history (default [])
-        single -- single dataframe representing one time history/run of the simulation (default None)
-        '''           
+        against the corresponding experimental data and returns a pandas 
+        dataframe.        
+
+        Parameters
+        ----------
+        pre_interpolated : list, optional
+            has been interpolated against the original time history,
+        assumes pre_interpolated is a list of dataframes where each dataframe 
+        is a time history. The default is [].
+        single : Pandas Data Frame, optional
+            Single Pandas Data Frame to be interpolated against experimental
+            data. The default is None.
+
+        Returns
+        -------
+        int_exp: Pandas Data Frame
+            Interpolated data frame.
+
+        '''
+         
         if self.timeHistories == None:
             print("Error: can't interpolate without time histories")
             return -1
@@ -586,15 +699,26 @@ class shockTube(sim.Simulation):
                 return int_exp
 
     def interpolation(self,originalValues,newValues, thingBeingInterpolated):   
-        #interpolating time histories to original time history 
         '''
         This function is the base interpolation function, interpolating one set 
-        of data to another on a per time basis and returns a pandas dataframe. 
-        Arguments:
-        originalValues -- original dataframe of time history
-        newValues -- new dataframe of time history 
-        thingBeingInterpolated -- list of observable names
-        '''           
+        of data to another on a per time basis and returns a pandas dataframe.         
+
+        Parameters
+        ----------
+        originalValues : Pandas Data Frame
+            Original dataframe of time history.
+        newValues : Pandas Data Frame
+            New dataframe of time history.
+        thingBeingInterpolated : list
+            List of observable names.
+
+        Returns
+        -------
+        interpolatedData: Pandas Data Frame
+            Interpolated Data Frame.
+
+        '''
+        #interpolating time histories to original time history      
         
         if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
             tempDfForInterpolation = newValues[thingBeingInterpolated]
@@ -612,15 +736,28 @@ class shockTube(sim.Simulation):
 
     def sensitivityCalculation(self,originalValues,newValues,thingToFindSensitivtyOf,dk=.01):
         '''
-        This function calculates log/log sensitivity and returns a pandas dataframe.
-        Arguments:
-        originalValues -- original dataframe of time history
-        newValues -- new dataframe of time history 
-        thingToFindSensitivtyOf -- list of observable names   
-        Keyword Arguments:
-        dk -- the decimal value of the percentage by which the original value 
-        was perturbed (default .01 or 1%)
-        '''      
+         This function calculates log/log sensitivity and returns a
+         pandas dataframe.
+
+        Parameters
+        ----------
+        originalValues : Pandas Data Frame
+            Original dataframe of time history.
+        newValues : Pandas Data Frame
+             New dataframe of time history.
+        thingToFindSensitivtyOf : list
+            List of observable names.
+        dk : float, optional
+            The decimal value of the percentage by which the original value 
+            was perturbed. The default is .01.
+
+        Returns
+        -------
+        sensitivity: Pandas Data Frame
+            Sensitivity of observables.
+
+        '''
+     
         if isinstance(originalValues,pd.DataFrame) and isinstance(newValues,pd.DataFrame):
             newValues.columns = thingToFindSensitivtyOf
             newValues = newValues.applymap(np.log)
@@ -637,10 +774,21 @@ class shockTube(sim.Simulation):
     def importExperimentalData(self,csvFileList):
         '''
         This function imports experimental data in csv format and returns a 
-        list of pandas dataframes.
-        Arguments:
-        csvFileList -- list of csv file directories        
-        '''              
+        list of pandas dataframes.        
+
+        Parameters
+        ----------
+        csvFileList : list
+            List of csv file directories.
+
+        Returns
+        -------
+        experimentalData : list
+            Experimental data from csv files as pandas data frames 
+            stored in a list.
+
+        '''
+           
         print('Importing shock tube data the following csv files...') 
         print(csvFileList)
         experimentalData = [pd.read_csv(csv) for csv in csvFileList]
@@ -654,20 +802,41 @@ class shockTube(sim.Simulation):
     def savingInterpTimeHistoryAgainstExp(self,timeHistory):
         '''
         This function writes the time history which is interpolated against 
-        experimetnal data as a class object.
-        Arguments:
-        timeHistory -- time history interpolated against experimental data        
-        '''  
+        experimetnal data as a class object.        
+
+        Parameters
+        ----------
+        timeHistory : Pandas Data Frame
+            Time history interpolated against experimental data .
+
+        Returns
+        -------
+        timeHistoryInterpToExperiment: Pandas Data Frame
+            Time history that is being saved.
+
+        '''
+
         self.timeHistoryInterpToExperiment = timeHistory
         
     def interpolatePressureandTempToExperiment(self,simulation,experimental_data):
         '''
         This function interpolates the pressure and temperature time history 
-        from a simulation against the corresponding experimental data.
-        Arguments:
-        simulation -- the simulation assoicated with the time history to be interpolated
-        experimental_data -- list of corresponding experimental data dataframtes        
-        '''          
+        from a simulation against the corresponding experimental data.        
+
+        Parameters
+        ----------
+        simulation : class variable
+             The simulation assoicated with the time history to be 
+             interpolated.
+        experimental_data : list
+            List of corresponding experimental data dataframtes .
+
+        Returns
+        -------
+        list_of_df : list
+            List of interpolated data frames for pressure and temperature.
+
+        '''
         
         p_and_t = ['pressure','temperature']
         list_of_df = []
@@ -685,19 +854,35 @@ class shockTube(sim.Simulation):
             
         return list_of_df
     
-    def calculate_time_shift_sensitivity(self,simulation,experimental_data,dk):
+    def calculate_time_shift_sensitivity(self,simulation,experimental_data,dk=1e-8):
         '''
         This function interpolates the pressure and temperature time history 
-        from a simulation against the corresponding experimental data.
-        Arguments:
-        simulation -- the simulation assoicated with the time history to be interpolated
-        experimental_data -- list of corresponding experimental data dataframtes        
-        '''           
+        from a simulation against the corresponding experimental data.        
+
+        Parameters
+        ----------
+        simulation : class variable
+            The simulation assoicated with the time history to 
+            be interpolated.
+        experimental_data : list
+             List of corresponding experimental data dataframtes .
+        dk : float, optional
+            Decimal percentage by which time values are perturbed. Default is 
+            1e-8.
+
+        Returns
+        -------
+        time_shift_sensitivity : Pandas Data Frame
+            List of Pandas Data Frames containing time shift sensitivity 
+            values.
+
+        '''
+         
         lst_obs = simulation.moleFractionObservables + simulation.concentrationObservables
         lst_obs = [i for i in lst_obs if i] 
-        mean_times_of_experiments = []
+
             
-        one_percent_of_average = 1e-8
+        one_percent_of_average = dk
                         
         
         original_time = simulation.timeHistories[0]['time']
