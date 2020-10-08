@@ -21,8 +21,73 @@ class flow_reactor(sim.Simulation):
                  save_physSensHistories=0,moleFractionObservables:list=[],
                  concentrationObservables:list=[],
                  fullParsedYamlFile:dict={}, save_timeHistories:int=0,
-                 log_file=True,log_name='log.txt',timeshift:float=0.0,initialTime:float=0.0,
+                 log_file=False,log_name='log.txt',timeshift:float=0.0,initialTime:float=0.0,
                  residenceTime:float=1.0):
+        '''
+        
+
+        Parameters
+        ----------
+        pressure : float
+            Pressure in [atm].
+        temperature : float
+            Temperature in [K].
+        observables : list
+            Species which sensitivity analysis is performed for.
+        kineticSens : int
+            0 for off, 1 for on.
+        physicalSens : int
+            0 for off, 1 for on.
+        conditions : dict
+            Initial mole fractions for species in simulation.
+        thermalBoundary : str
+            Thermal boundary condition inside the reactor. Shock tubes can
+            either be adiabatic or isothermal.
+        mechanicalBoundary : str
+            Mechanical bondary condition inside the reactor. Shock tubes can
+            either be constant pressure or constant volume.
+        processor : ctp.Processor, optional
+            Loaded cti file. The default is None. The default is None.
+        cti_path : TYPE, optional
+           Path of cti file for running. If processor is provided this is not 
+            needed. The default is "".
+        save_physSensHistories : TYPE, optional
+             Boolean variable describing if physical sensitivity time histories
+            are saved. 0 for not saved, 1 for saved. The default is 0.
+        moleFractionObservables : list, optional
+           Species for which experimental data in the form of mole fraction
+            time histories will be provided for optimization.
+            Kinetic sensitivities are calculated for all these species. 
+            The default is [].
+        concentrationObservables : list, optional
+            Species for which experimental data in the form of concentration
+            time histories will be provided for optimization.
+            Kinetic sensitivities are calculated for all these species. 
+            The default is [].
+        fullParsedYamlFile : dict, optional
+            Full dictionary from the parsed shock tube yaml file. 
+            The default is {}.
+        save_timeHistories : int, optional
+            Boolean variable describing if time histories for simulation runs
+            are saved. 0 for not saved, 1 for saved. The default is 0.
+        log_file : bool, optional
+            If True the simulation will write out a log file for sensitivity.
+            The default is False.
+        log_name : str, optional
+            Log file name. The default is 'log.txt'.
+        timeshift : float, optional
+            The numerical value by which the time vector of the simulation
+            is shifted in seconds. The default is 0.
+        initialTime : float, optional
+            Time to begin simulation from (s).
+        residenceTime : float, optional
+            The time which the reactor will be run until. The default is 1.0.
+
+        Returns
+        -------
+        None.
+
+        '''
         
         
         if processor!=None and cti_path!="":
@@ -72,7 +137,27 @@ class flow_reactor(sim.Simulation):
     
 
     
-    def run_shocktube(self,ksens_marker=1 ,psens_marker=1):
+    def run_shocktube(self,ksens_marker:int=1 ,psens_marker:int=1):
+        '''
+        Function calls and runs a shock tube simulation with the appropriate 
+        ksens_marker and psens_marker depending on the situation. 
+
+        Parameters
+        ----------
+        ksens_marker : int, optional
+            If 1 kinetic sensitivity on, if 0 off. 
+            The default is 1.
+        psens_marker : TYPE, optional
+            If 1 physical sensitivity on, if 0 off. 
+            The default is 1.
+
+        Returns
+        -------
+        shock_tube : shock_tube_object
+            Shock tube simulation and all variables, functions and
+            object it contains.
+
+        '''
         if ksens_marker ==0 and psens_marker==0:
             shock_tube = st.shockTube(pressure =self.pressure,
                           temperature = self.temperature,
@@ -159,7 +244,33 @@ class flow_reactor(sim.Simulation):
             shock_tube.run()
             return shock_tube
     
-    def run_single(self,ksens_marker=1,psens_marker=1):
+    def run_single(self,ksens_marker:int=1,psens_marker:int=1):
+        '''
+        Runs either a single temperature, pressure or species set for a flow
+        reactor.
+
+        Parameters
+        ----------
+        ksens_marker : int, optional
+            If 1 kinetic sensitivity on, if 0 off. The default is 1.
+        psens_marker : int, optional
+            If 1 physical sensitivity on, if 0 off.. The default is 1.
+
+        Returns
+        -------
+        res_time_measurment : Pandas Data Frame
+            Pandas Data Frame for either a single pressure, temperature,
+            or species set containing reactor results. 
+        kineticSensitivities: numpy array
+            Array containing kinetic sensitivities for either a single
+            pressure, temperature or species set.
+        timehistory: Pandas Data Frame
+            Pandas data frame containing data for full time history of either 
+            a single pressure, temperature, or species set. 
+        temp_arrays
+            Variable for testing.
+
+        '''
         
                
                
@@ -210,6 +321,29 @@ class flow_reactor(sim.Simulation):
         
         
     def get_ksens_at_res_time(self,ksens,time_array,res_time):
+        '''
+        Helper function that takes the full time history of kinetic 
+        sensitivities and returns the data at the time step for which
+        the residence time occurs. Using linear interpolation if needed.
+
+        Parameters
+        ----------
+        ksens : numpy array
+            Three dimensional numpy array that contains kinetic sensitivities.
+        time_array : pandas series
+            Time column of time history pandas data frame.
+        res_time : float
+            Residence time value.
+
+        Returns
+        -------
+        ksens_array : numpy array
+            kinetic sensitivity array where all times but the residence time
+            have been removed.
+        temp_arrays : numpy array
+            Variable for testing.
+
+        '''
         ksens_array = []
         temp_arrays = []
         for sheet in range(ksens.shape[2]):
@@ -243,7 +377,29 @@ class flow_reactor(sim.Simulation):
 
            
         
-    def get_res_time_data(self,data,res_time):        
+    def get_res_time_data(self,data,res_time): 
+        '''
+        Helper function that takes the full time history of species, pressure 
+        and temperature data and returns the data at the time step for which 
+        the residence time occurs. Using linear interpolation if needed.        
+
+        Parameters
+        ----------
+        data : Pandas Data Frame
+            Pandas Data Frame containing the time history for the reactor.
+        res_time : float
+            Residence time.
+
+        Returns
+        -------
+        res_time_data : Pandas Data Frame
+            Time history data at the residence time.
+        index : int
+            index at which the residence time is occuring.
+        initial_temp : float
+            Initial temperature the simulation starts at.
+
+        '''
         #res_time_data = data.tail(1)
         #res_time_data = res_time_data.reset_index(drop=True)
         
@@ -266,6 +422,27 @@ class flow_reactor(sim.Simulation):
 
     
     def sensitivityCalculation(self,originalValues,newValues,dk=.01):
+        '''
+        
+        Function to calculate the log log sensitivity of two pandas 
+        data frames.
+        
+        Parameters
+        ----------
+        originalValues : numpy array
+            Original results of variable sensitivity is being calculated for.
+        newValues : TYPE
+            Perturbed results of variable sensitivity is being calculated for.
+        dk : float, optional
+            Percent as a decimal by which the new values were perturbed.
+            The default is .01.
+
+        Returns
+        -------
+        sensitivity : numpy array
+            Calculated sensitivity.
+
+        '''
 
         sensitivity=(np.log(newValues)-np.log(originalValues))/dk
                            
@@ -406,7 +583,11 @@ class flow_reactor_wrapper(sim.Simulation):
                                pres_del:float=0.0,
                                spec_pair:(str,float)=('',0.0),
                                res_del:float=0.0):
-        
+        '''
+        Passes the Perturbed observable to the setTPX function. Temperature and pressure 
+        are passed and set directly species need to go through an additional step in the 
+        setTPX function. 
+        '''
         #this is where we would make the dk fix
         if temp_del != 0.0:
             self.dk.append(temp_del)
@@ -420,11 +601,7 @@ class flow_reactor_wrapper(sim.Simulation):
         tempcond=copy.deepcopy(self.conditions)
         kin_temp = self.kineticSens
         self.kineticSens = 0
-        '''
-          Passes the Perturbed observable to the setTPX function. Temperature and pressure 
-        are passed and set directly species need to go through an additional step in the 
-        setTPX function. 
-        '''
+
         if spec_pair[0] != '':
             self.temperatures=np.array(self.temperatures)+temp_del*np.array(self.temperatures)
             #self.pressures=np.array(self.pressures)+pres_del*np.array(self.pressures)
