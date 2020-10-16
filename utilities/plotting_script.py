@@ -27,32 +27,32 @@ import MSI.simulations.instruments.jsr_steadystate as jsr
 
 class Plotting(object):
     def __init__(self,S_matrix,
-                 s_matrix,
-                 Y_matrix,
-                 y_matrix,
-                 z_matrix,
-                 X,
-                 sigma,
-                 covarience,
-                 original_covariance,
-                 S_matrix_original,
-                 exp_dict_list_optimized,
-                 exp_dict_list_original,
-                 parsed_yaml_list,
-                 Ydf,
-                 target_value_rate_constant_csv='',
-                 target_value_rate_constant_csv_extra_values = '',
-                 k_target_value_S_matrix = None,
-                 k_target_values='Off',
-                 working_directory='',
-                 sigma_uncertainty_weighted_sensitivity_csv='',
-                 simulation_run=None,
-                 shock_tube_instance = None,
-                 cheby_sensitivity_dict = None,
-                 mapped_to_alpha_full_simulation=None,
-                 optimized_cti_file='',
-                 original_cti_file='',
-                 sigma_ones=False):
+                  s_matrix,
+                  Y_matrix,
+                  y_matrix,
+                  z_matrix,
+                  X,
+                  sigma,
+                  covarience,
+                  original_covariance,
+                  S_matrix_original,
+                  exp_dict_list_optimized,
+                  exp_dict_list_original,
+                  parsed_yaml_list,
+                  Ydf,
+                  target_value_rate_constant_csv='',
+                  target_value_rate_constant_csv_extra_values = '',
+                  k_target_value_S_matrix = None,
+                  k_target_values='Off',
+                  working_directory='',
+                  sigma_uncertainty_weighted_sensitivity_csv='',
+                  simulation_run=None,
+                  shock_tube_instance = None,
+                  cheby_sensitivity_dict = None,
+                  mapped_to_alpha_full_simulation=None,
+                  optimized_cti_file='',
+                  original_cti_file='',
+                  sigma_ones=False):
         self.S_matrix = S_matrix
         self.s_matrix = s_matrix
         self.Y_matrix = Y_matrix
@@ -82,9 +82,11 @@ class Plotting(object):
         self.new_cti=optimized_cti_file
         self.nominal_cti=original_cti_file
         self.sigma_ones = sigma_ones
-        
- #fix all the indexing to have a captial or lowercase time situation or add the module that lets you do either to all the scripts  
 
+        
+        
+        
+        
     def lengths_of_experimental_data(self):
         simulation_lengths_of_experimental_data = []
         for i,exp in enumerate(self.exp_dict_list_optimized):

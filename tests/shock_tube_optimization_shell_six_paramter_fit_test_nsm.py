@@ -32,7 +32,7 @@ files_to_include = [['Hong_0.yaml'],
 
 
 
-#files_to_include = [['Hong_0_time_shift_test.yaml']]
+files_to_include = [['Hong_0.yaml']]
 numer_of_iterations = 2
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
@@ -248,6 +248,11 @@ else:
 #csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_FFCM1.csv'
 #csv_file_sigma =  MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_glarborg.csv'
 csv_file_sigma = ''
+
+
+
+
+
 plotting_instance = plotter.Plotting(S_matrix,
                                       s_matrix,
                                       Y_matrix,
@@ -276,15 +281,15 @@ plotting_instance.plotting_observables(sigmas_original = sigmas_original,sigmas_
 diag = plotting_instance.getting_matrix_diag(covarience)
 
 
-#plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
+# #plotting_instance.Y_matrix_plotter(Y_matrix,exp_dict_list_optimized,y,sigma)
 
 
 
                                 
 
 
-sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
-obs = plotting_instance.plotting_uncertainty_weighted_sens()
+# sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
+# obs = plotting_instance.plotting_uncertainty_weighted_sens()
 
 plotting_instance.plotting_rate_constants_six_paramter_fit(optimized_cti_file=MSI_st_instance_two.new_cti_file,
                                 original_cti_file=original_cti_file,
