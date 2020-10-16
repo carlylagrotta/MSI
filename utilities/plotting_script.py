@@ -123,7 +123,6 @@ class Plotting(object):
             for y in range(len(self.simulation_lengths_of_experimental_data[x])):
                 temp=[]
                 for z in np.arange(counter,(self.simulation_lengths_of_experimental_data[x][y]+counter)):     
-                    print(z)
                     SC = np.dot(S_matrix[z,:],covarience)
                     sigma = np.dot(SC,np.transpose(S_matrix[z,:]))
                     test = sigma
@@ -1186,8 +1185,8 @@ class Plotting(object):
                     else:
                         pressure = target_press[i]
                         
-                    #gas.TPX = target_temp[i],pressure*101325,{'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237}
-                    gas.TPX = target_temp[i],pressure*101325,{'H2O2(15)':0.003094,'O2(7)':0.000556,'H2O(13)':0.001113,'Ar':0.995237}
+                    gas.TPX = target_temp[i],pressure*101325,{'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237}
+                    #gas.TPX = target_temp[i],pressure*101325,{'H2O2(15)':0.003094,'O2(7)':0.000556,'H2O(13)':0.001113,'Ar':0.995237}
 
                     
                     reaction_number_in_cti = reactions_in_cti_file.index(reaction)
@@ -1270,7 +1269,7 @@ class Plotting(object):
                                                                   initial_temperature=250,
                                                                   final_temperature=2500,
                                                                   pressure=1.635,
-                                                                  conditions={'H2O2(15)':0.003094,'O2(7)':0.000556,'H2O(13)':0.001113,'Ar':0.995237},
+                                                                  conditions={'H2O':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237},
                                                                   dictonary = six_parameter_fit_dict_optimized,
                                                                   master_equation_reactions = master_equation_reactions)
                 
@@ -1302,7 +1301,7 @@ class Plotting(object):
                                                                   initial_temperature=250,
                                                                   final_temperature=2500,
                                                                   pressure=1.635,
-                                                                  conditions={'H2O2(15)':0.003094,'O2(7)':0.000556,'H2O(13)':0.001113,'Ar':0.995237},
+                                                                  conditions={'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237},
                                                                   dictonary = six_parameter_fit_dict_nominal,
                                                                   master_equation_reactions = master_equation_reactions)
                 
@@ -2733,8 +2732,6 @@ class Plotting(object):
                     indecies = np.argwhere(z_values > 100)
                     new_y_test = copy.deepcopy(Y_values)
                     new_y_test = np.delete(new_y_test,indecies)
-                    print(indecies.shape)
-                    print(indecies)
                     if bool(experiments_want_to_plot_data_from_2) and bool(empty_nested_observable_list_y_2[i]):
                         
                         Y_values_2 = np.vstack((empty_nested_observable_list_Y_2[i]))
@@ -3354,7 +3351,6 @@ class Plotting(object):
             length_of_2nd_list = len(empty_nested_observable_list_Y_2[x])
             if bool(observable):
 
-                print(x)
                 if x ==0:
                     if bool(csv):
                         df = pd.read_csv(csv)
@@ -4861,7 +4857,6 @@ class Plotting(object):
             length_of_2nd_list = len(empty_nested_observable_list_Y_2[x])
             if bool(observable):
 
-                print(x)
                 if x ==0:
                     if bool(csv):
                         df = pd.read_csv(csv)
