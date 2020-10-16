@@ -201,12 +201,26 @@ class ignition_delay(sim.Simulation):
                     delay,ignition_temperature,ignition_pressure,end_of_compression_time=self.ig_dPdt(self.timehistory,return_ignition_temp_and_pressure=True)
                 else:
                     delay=self.ig_dPdt(self.timehistory)
-                    
-                
-                
+                                    
             elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target):
-                
                 delay=self.ig_dXdt(self.timehistory,self.target)
+                
+                
+        elif re.match('[Mm]aximum', self.target_type):
+            if re.match('[Tt]emperature',self.target):
+                 delay=self.ig_Tmax(self.timehistory)
+            elif re.match('[Pp]ressure',self.target):
+                 delay=self.ig_Pmax(self.timehistory)
+            elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target):
+                 delay=self.ig_Xmax(self.timehistory,self.target)
+        elif re.match('[Ss]pecific[ -][Vv]alue',self.target_type):
+            if re.match('[Tt]emperature',self.target):
+                print('Not installed yet')
+            elif re.match('[Pp]ressure',self.target):
+                print('Not installed yet')
+            elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target):
+                print('Not installed yet')
+                
                 
         sens=[]        
         #self.direct_ksens('a',dk=self.dk)
@@ -318,12 +332,39 @@ class ignition_delay(sim.Simulation):
         delay=tt[np.argmax(dXdt)]
         return delay
     
+    def ig_Xmax(self,data,target):
+        delay=[]
+        tt=data['time'].values
+        XX=data[target].values
+        max_value = np.max(XX)
+        delay=tt[max_value]
+        
+        return delay
+    
+    def ig_Tmax(self,data):
+        delay=[]
+        tt=data['time'].values
+        XX=data['temperature'].values
+        max_value = np.max(XX)
+        delay=tt[max_value]
+        
+        return delay
+
+    def ig_Pmax(self,data):
+        delay=[]
+        tt=data['time'].values
+        XX=data['pressure'].values
+        max_value = np.max(XX)
+        delay=tt[max_value]
+        
+        return delay
+
     def sensitivityCalculation(self,originalValues,newValues,dk=.01):
         sensitivity=(np.log(newValues)-np.log(originalValues))/dk
                            
         return sensitivity
     
-    
+
     def direct_ksens(self,nominal,dk=0.01,observable=['temperature']):
         
         temp_st=self.run_shocktube_ksens(observables=observable)

@@ -24,7 +24,7 @@ class flow_reactor(sim.Simulation):
                  log_file=False,log_name='log.txt',timeshift:float=0.0,initialTime:float=0.0,
                  residenceTime:float=1.0):
         '''
-        
+        Contains methods and objects to run a single flow reactor.
 
         Parameters
         ----------
@@ -47,15 +47,15 @@ class flow_reactor(sim.Simulation):
             Mechanical bondary condition inside the reactor. Shock tubes can
             either be constant pressure or constant volume.
         processor : ctp.Processor, optional
-            Loaded cti file. The default is None. The default is None.
+            Loaded cti file. The default is None. 
         cti_path : TYPE, optional
            Path of cti file for running. If processor is provided this is not 
             needed. The default is "".
-        save_physSensHistories : TYPE, optional
+        save_physSensHistories : Bool, optional
              Boolean variable describing if physical sensitivity time histories
             are saved. 0 for not saved, 1 for saved. The default is 0.
         moleFractionObservables : list, optional
-           Species for which experimental data in the form of mole fraction
+            Species for which experimental data in the form of mole fraction
             time histories will be provided for optimization.
             Kinetic sensitivities are calculated for all these species. 
             The default is [].
@@ -431,7 +431,7 @@ class flow_reactor(sim.Simulation):
         ----------
         originalValues : numpy array
             Original results of variable sensitivity is being calculated for.
-        newValues : TYPE
+        newValues : numpy array
             Perturbed results of variable sensitivity is being calculated for.
         dk : float, optional
             Percent as a decimal by which the new values were perturbed.
@@ -452,7 +452,7 @@ class flow_reactor(sim.Simulation):
         
 class flow_reactor_wrapper(sim.Simulation):
     
-    def __init__(self,pressure:float,temperatures:float,observables:list,
+    def __init__(self,pressure:float,temperatures:list,observables:list,
                  kineticSens:int,physicalSens:int,conditions:dict,thermalBoundary,
                  mechanicalBoundary,
                  processor:ctp.Processor=None,cti_path="", 
@@ -461,6 +461,67 @@ class flow_reactor_wrapper(sim.Simulation):
                  fullParsedYamlFile:dict={}, save_timeHistories:int=0,
                  timeshifts:list=[],initialTime:float=0.0,
                  residenceTimes:list=1.0):
+        '''
+        Contains methods and objects to run a flow reactor for various
+        temperatures.
+
+        Parameters
+        ----------
+        pressure : float
+            Pressure in [atm].
+        temperatures : list
+            Temperature in [K].
+        observables : list
+            Species which sensitivity analysis is performed for.
+        kineticSens : int
+            0 for off, 1 for on.
+        physicalSens : int
+            0 for off, 1 for on.
+        conditions : dict
+             Initial mole fractions for species in simulation.
+        thermalBoundary : str
+            Thermal boundary condition inside the reactor. Shock tubes can
+            either be adiabatic or isothermal.
+        mechanicalBoundary : str
+            Mechanical bondary condition inside the reactor. Shock tubes can
+            either be constant pressure or constant volume.
+        processor : ctp.Processor, optional
+             Loaded cti file. The default is None.
+        cti_path : str, optional
+           Path of cti file for running. If processor is provided this is not 
+            needed. The default is "".
+        save_physSensHistories : bool, optional
+             Boolean variable describing if physical sensitivity time histories
+            are saved. 0 for not saved, 1 for saved. The default is 0.
+        moleFractionObservables : list, optional
+            Species for which experimental data in the form of mole fraction
+            time histories will be provided for optimization.
+            Kinetic sensitivities are calculated for all these species. 
+            The default is [].
+        concentrationObservables : list, optional
+            Species for which experimental data in the form of concentration
+            time histories will be provided for optimization.
+            Kinetic sensitivities are calculated for all these species. 
+            The default is [].
+        fullParsedYamlFile : dict, optional
+            Full dictionary from the parsed shock tube yaml file. 
+            The default is {}.
+        save_timeHistories : int, optional
+            Boolean variable describing if time histories for simulation runs
+            are saved. 0 for not saved, 1 for saved. The default is 0.
+        timeshift : list, optional
+            The numerical value by which the time vector of the simulation
+            is shifted in seconds. The default is 0.
+        initialTime : float, optional
+            Time to begin simulation from (s).
+        residenceTime : float, optional
+            The time which the reactor will be run until. The default is 1.0.
+
+        Returns
+        -------
+        None.
+
+        '''
         
         
         
@@ -514,6 +575,25 @@ class flow_reactor_wrapper(sim.Simulation):
         
         
     def run(self,ksens_marker=1,psens_marker=1):
+        '''
+        Function to run a flow reactor simulation looping over multiple 
+        temperatures.
+
+        Parameters
+        ----------
+        ksens_marker : int, optional
+            If 1 kinetic sensitivity on, if 0 off. The default is 1.
+        psens_marker : int, optional
+            If 1 physical sensitivity on, if 0 off.. The default is 1.
+
+        Returns
+        -------
+        solution : Pandas Data Frame
+            Data frame that contains a temperature history of the reactor.
+        ksens : numpy array
+            Numpy array that contains kinetic sensitivities.
+
+        '''
         
         
         
