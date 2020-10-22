@@ -217,6 +217,7 @@ class ignition_delay(sim.Simulation):
         
         elif re.match('[Ss]pecific[ -][Vv]alue',self.target_type):
             split_item = self.target.split(' ')
+            
             if len(split_item) ==2:
                 split_item.append('')
             
@@ -225,7 +226,7 @@ class ignition_delay(sim.Simulation):
             elif re.match('[Pp]ressure',split_item[0]):
                 delay = self.ig_P_specific_value(self.timehistory, float(split_item[1]), split_item[2])
             elif not re.match('[Tt]emperature',split_item[0]) and not re.match('[Pp]ressure',split_item[0]):
-                delay = self.ig_X_specific_value(self.timehistory, self.target, float(split_item[1]),unit = split_item[2])
+                delay = self.ig_X_specific_value(self.timehistory, split_item[0], float(split_item[1]),unit = split_item[2])
        
         
        
