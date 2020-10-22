@@ -189,7 +189,7 @@ class ignition_delay(sim.Simulation):
         
         self.timehistory=copy.deepcopy(s.timeHistory)
         delay=None
-        if re.match('[Mm]ax [Dd]erivative',self.target_type):
+        if re.match('[Mm]ax[ -][Dd]erivative',self.target_type):
             
             if re.match('[Tt]emperature',self.target):
                 
@@ -206,21 +206,36 @@ class ignition_delay(sim.Simulation):
                 delay=self.ig_dXdt(self.timehistory,self.target)
                 
                 
-        elif re.match('[Mm]aximum', self.target_type):
+        elif re.match('[Mm]ax[ -][Vv]alue', self.target_type):
             if re.match('[Tt]emperature',self.target):
                  delay=self.ig_Tmax(self.timehistory)
             elif re.match('[Pp]ressure',self.target):
                  delay=self.ig_Pmax(self.timehistory)
             elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target):
                  delay=self.ig_Xmax(self.timehistory,self.target)
+        
+        
         elif re.match('[Ss]pecific[ -][Vv]alue',self.target_type):
+            split_item = self.target.split(' ')
+            if len(split_item) ==2:
+                split_item.append('')
+            
+            if re.match('[Tt]emperature',split_item[0]):
+                delay = self.ig_T_specific_value(self.timehistory, float(split_item[1]), split_item[2])
+            elif re.match('[Pp]ressure',split_item[0]):
+                delay = self.ig_P_specific_value(self.timehistory, float(split_item[1]), split_item[2])
+            elif not re.match('[Tt]emperature',split_item[0]) and not re.match('[Pp]ressure',split_item[0]):
+                delay = self.ig_X_specific_value(self.timehistory, self.target, float(split_item[1]),unit = split_item[2])
+       
+        
+       
+        elif re.match('[Mm]ax[ -][Dd]erivative[ -][Tt]angent[ -][Ii]ntercept',self.target_type):
             if re.match('[Tt]emperature',self.target):
-                print('Not installed yet')
+                delay = self.ig_dTdt_int(self.timehistory)
             elif re.match('[Pp]ressure',self.target):
-                print('Not installed yet')
+                delay =self.ig_dPdt_int(self.timehistory)
             elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target):
-                print('Not installed yet')
-                
+                delay = self.ig_dXdt_int(self.timehistory,self.target)                
                 
         sens=[]        
         #self.direct_ksens('a',dk=self.dk)
@@ -336,8 +351,7 @@ class ignition_delay(sim.Simulation):
         delay=[]
         tt=data['time'].values
         XX=data[target].values
-        max_value = np.max(XX)
-        delay=tt[max_value]
+        delay=tt[np.argmax(XX)]
         
         return delay
     
@@ -345,8 +359,7 @@ class ignition_delay(sim.Simulation):
         delay=[]
         tt=data['time'].values
         XX=data['temperature'].values
-        max_value = np.max(XX)
-        delay=tt[max_value]
+        delay=tt[np.argmax(XX)]
         
         return delay
 
@@ -354,10 +367,128 @@ class ignition_delay(sim.Simulation):
         delay=[]
         tt=data['time'].values
         XX=data['pressure'].values
-        max_value = np.max(XX)
-        delay=tt[max_value]
+        delay=tt[np.argmax(XX)]
         
         return delay
+
+
+    def ig_dTdt_int(self,data):
+        delay=[]
+        #print(type(data))
+        tt=data['time'].values
+        TT=data['temperature'].values
+        #PP=data['pressure'].values
+        dTdt=np.zeros(np.array(tt).shape,np.float)
+        dTdt[0:-1]=np.diff(TT)/np.diff(tt)
+        dTdt[-1]=(TT[-1] - TT[-2])/(tt[-1] - tt[-2])
+        slope = np.max(dTdt)
+        y2 = TT[np.argmax(dTdt)]
+        x2 = tt[np.argmax(dTdt)]
+        b = y2 - slope*x2
+        delay = -b/slope
+        #delay=tt[np.argmax(dTdt)]
+        return delay
+
+        
+    def ig_dPdt_int(self,data):
+        
+        delay=[]        
+        tt=data['time'].values
+        PP=data['pressure'].values
+        dPdt=np.zeros(np.array(tt).shape,np.float)
+        dPdt[0:-1]=np.diff(PP)/np.diff(tt)
+        dPdt[-1]=(PP[-1] - PP[-2])/(tt[-1] - tt[-2])
+        slope = np.max(dPdt)
+        y2 = PP[np.argmax(dPdt)]
+        x2 = tt[np.argmax(dPdt)]
+        b = y2 - slope*x2
+        delay = -b/slope
+        
+        
+        #if return_ignition_temp_and_pressure==False:           
+        return delay
+        # elif return_ignition_temp_and_pressure==True:
+        #     value_to_filter_below= delay-.01
+        #     filtered_df = copy.deepcopy(data)
+        #     filtered_df[['time']] = filtered_df[filtered_df[['time']] < value_to_filter_below][['time']]
+        #     filtered_df=filtered_df.dropna()
+        #     pressure_max_index = filtered_df['pressure'].idxmax()
+            
+            
+        #     igntion_temp = filtered_df['temperature'][pressure_max_index]
+        #     ignition_pressure = filtered_df['pressure'][pressure_max_index] 
+        #     end_of_compression_time = filtered_df['time'][pressure_max_index]                                
+        #     return delay,igntion_temp,ignition_pressure,end_of_compression_time
+        
+    def ig_dXdt_int(self,data,target):
+        
+        delay=[]
+        tt=data['time'].values
+        XX=data[target].values
+        dXdt=np.zeros(np.array(tt).shape,np.float)
+        dXdt[0:-1]=np.diff(XX)/np.diff(tt)
+        dXdt[-1]=(XX[-1] - XX[-2])/(tt[-1] - tt[-2])
+        slope = np.max(dXdt)
+        y2 = XX[np.argmax(dXdt)]
+        x2 = tt[np.argmax(dXdt)]
+        b = y2 - slope*x2
+        delay = -b/slope
+        return delay
+
+
+    def ig_X_specific_value(self,data,target,value,unit=''):
+        tt=data['time'].values
+        XX=data[target].values
+        if re.match('',unit):
+            value = value
+        elif re.match('[Pp][Pp][Mm]',unit) or re.match('[Pp]arts[ -][Pp]er[ -][Mm]illion',unit):
+            value = value/1e6
+        elif re.match('mol/cm^3',unit):
+            XX = np.multiply(data['pressure']/(data['temperature']*(ct.gas_constant/1000)).values, XX)
+                                                 
+                                                      
+            
+        
+        
+        delay=[]
+
+        delay = np.interp(value,XX,tt)
+        
+        return delay
+    
+    def ig_T_specific_value(self,data,value,unit):
+        if re.match('K',unit):
+            value = value
+        elif re.match('C',unit):
+            value = value +273.15         
+            
+            
+        delay=[]
+        tt=data['time'].values
+        XX=data['temperature'].values
+        
+        
+        delay = np.interp(value,XX,tt)
+
+        
+        return delay
+
+    def ig_P_specific_value(self,data,value,unit):
+        if re.match('atm',unit):
+            value = value*ct.one_atm
+        elif re.match('[Pp][a]',unit) or re.match('[Pp]ascal',unit):
+            value = value
+        elif re.match('[Pp][Ss][Ii]',unit):
+            value = 6894.76*value
+        elif re.match('[Tt]orr',unit):
+            value = 133.322*value
+        
+        delay=[]
+        tt=data['time'].values
+        XX=data['pressure'].values
+        delay = np.interp(value,XX,tt)        
+        return delay
+
 
     def sensitivityCalculation(self,originalValues,newValues,dk=.01):
         sensitivity=(np.log(newValues)-np.log(originalValues))/dk
@@ -460,6 +591,138 @@ class ignition_delay(sim.Simulation):
                     sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
                     #print(nominal,delay,sens[i])
                     self.processor.solution.set_multiplier(1.0,i)
+         elif re.match('[Mm]ax[ -][Vv]alue',self.target_type):
+            if re.match('[Tt]emperature',self.target):
+                
+                for i in range(self.processor.solution.n_reactions):
+                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    self.processor.solution.set_multiplier(1+self.dk,i)
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)
+
+                    delay=self.ig_Tmax(temp_history)
+                    sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    self.processor.solution.set_multiplier(1.0,i)
+                    
+            elif re.match('[Pp]ressure',self.target):
+                
+                for i in range(self.processor.solution.n_reactions):
+                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    self.processor.solution.set_multiplier(1+self.dk,i)
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)                    
+                    delay=self.ig_Pmax(temp_history)
+                    sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    self.processor.solution.set_multiplier(1.0,i)
+                    
+            elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target):
+                
+                for i in range(self.processor.solution.n_reactions):
+                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    self.processor.solution.set_multiplier(1+self.dk,i)
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)                    
+                    delay=self.ig_Xmax(temp_history,self.target)
+                    sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    #print(nominal,delay,sens[i])
+                    self.processor.solution.set_multiplier(1.0,i)             
+         elif re.match('[Mm]ax[ -][Dd]erivative[- ][Tt]angent[ -][Ii]ntercept',self.target_type):
+            if re.match('[Tt]emperature',self.target):
+                
+                for i in range(self.processor.solution.n_reactions):
+                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    self.processor.solution.set_multiplier(1+self.dk,i)
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)
+
+                    delay=self.ig_dTdt_int(temp_history)
+                    sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    self.processor.solution.set_multiplier(1.0,i)
+                    
+            elif re.match('[Pp]ressure',self.target):
+                
+                for i in range(self.processor.solution.n_reactions):
+                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    self.processor.solution.set_multiplier(1+self.dk,i)
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)                    
+                    delay=self.ig_dPdt_int(temp_history)
+                    sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    self.processor.solution.set_multiplier(1.0,i)
+                    
+            elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target):
+                
+                for i in range(self.processor.solution.n_reactions):
+                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    self.processor.solution.set_multiplier(1+self.dk,i)
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)                    
+                    delay=self.ig_dXdt_int(temp_history,self.target)
+                    sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    #print(nominal,delay,sens[i])
+                    self.processor.solution.set_multiplier(1.0,i)   
+         elif re.match('[Ss]pecific[ -][Vv]alue',self.target_type):
+            split_item = self.target.split(' ')
+            if len(split_item) ==2:
+                split_item.append('')
+                
+            if re.match('[Tt]emperature',split_item[0]):
+                
+                for i in range(self.processor.solution.n_reactions):
+                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    self.processor.solution.set_multiplier(1+self.dk,i)
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)
+
+                    delay=self.ig_T_specific_value(temp_history, split_item[1], split_item[2])
+                    sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    self.processor.solution.set_multiplier(1.0,i)
+                    
+            elif re.match('[Pp]ressure',split_item[0]):
+                
+                for i in range(self.processor.solution.n_reactions):
+                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    self.processor.solution.set_multiplier(1+self.dk,i)
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)                    
+                    delay=self.ig_P_specific_value(temp_history, split_item[1], split_item[2])
+                    sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    self.processor.solution.set_multiplier(1.0,i)
+                    
+            elif not re.match('[Tt]emperature',split_item[0]) and not re.match('[Pp]ressure',split_item[0]):
+                
+                for i in range(self.processor.solution.n_reactions):
+                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    self.processor.solution.set_multiplier(1+self.dk,i)
+                    if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
+                    elif re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
+                        temp_history=copy.deepcopy(self.run_RCM().timeHistory)    
+                    delay = self.ig_X_specific_value(temp_history, split_item[0], split_item[1],unit=split_item[2])
+                    
+                    sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
+                    #print(nominal,delay,sens[i])
+                    self.processor.solution.set_multiplier(1.0,i)   
+                                        
+                    
+                    
+                    
          return sens
      
         
