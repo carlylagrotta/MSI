@@ -22,7 +22,7 @@ class MSI_optimization(object):
                  kineticSens:int,physicalSens:int,
                  data_directory:str,yaml_file_list:list,
                  reaction_uncertainty_csv:str,
-                 k_target_values_csv:str,
+                 k_target_values_csv:str='',
                  master_equation_reactions:list=[],
                  molecular_parameter_sensitivities:dict={},
                  master_reaction_equation_cti_name:str = '',
@@ -299,6 +299,7 @@ class MSI_optimization(object):
                                                                                        self.experiment_dictonaries,
                                                                                        self.absorbance_coef_update_dict,
                                                                                        loop_counter = loop_counter)
+           
             
             
             
@@ -379,6 +380,8 @@ class MSI_optimization(object):
         if loop_counter == 0:
             original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
             self.original_experimental_conditions_local = original_experimental_conditions_local
+            
+
             #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
         
         

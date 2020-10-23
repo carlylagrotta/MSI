@@ -99,6 +99,7 @@ class Master_Equation(object):
                  exp_dict_list:list,
                  parsed_yaml_file_list,
                  master_equation_reactions:list):
+        
     
         nested_list = []
         def slicing_out_reactions(reaction_string,array):
@@ -110,9 +111,11 @@ class Master_Equation(object):
             return column_of_array
         mapped_to_alpha_full_simulation = []
         for i, exp in enumerate(exp_dict_list):
+            #print(exp)
             simulation = []
             single_experiment = []
-            if parsed_yaml_file_list[i]['moleFractionObservables'][0] != None or parsed_yaml_file_list[i]['concentrationObservables'][0] != None or parsed_yaml_file_list[i]['ignitionDelayObservables'] !=None:
+            #print(parsed_yaml_file_list[i]['moleFractionObservables'][0],parsed_yaml_file_list[i]['concentrationObservables'][0],parsed_yaml_file_list[i]['ignitionDelayObservables'])
+            if parsed_yaml_file_list[i]['moleFractionObservables'][0] != None or parsed_yaml_file_list[i]['concentrationObservables'][0] != None or parsed_yaml_file_list[i]['ignitionDelayObservables'][0] !=None:
                 As = exp['ksens']['A']
                 for xx,observable in enumerate(As):
                     temp = []
