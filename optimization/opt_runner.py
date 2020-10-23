@@ -375,7 +375,7 @@ class Optimization_Utility(object):
             time_shift_sens.append(flow_reactor.calculate_time_shift_sensitivity(flow_reactor,timehist,1e-8))
             
         time_shift_sens_df = pd.concat(time_shift_sens,ignore_index=True)    
-        print(time_shift_sens_df)
+        
             
         csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
         #print(csv_paths)

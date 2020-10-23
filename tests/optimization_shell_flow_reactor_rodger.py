@@ -15,7 +15,107 @@ import cantera as ct
 import MSI.utilities.plotting_script as plotter
 
 
-files_to_include = [['YAML_flow_reactor_Glar28_100ppm.yaml']] 
+files_to_include = [['YAML_ignition_delay_Mathieu_Tab1.yaml']]
+                    # ['YAML_batch_reactor_Mueller_Fig2.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig4a.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig5a.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig5b.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig5c.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_1.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_3.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_5.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_65.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_8.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_10.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig12_025equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig12_05equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig12_1equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13a_025equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13a_05equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13a_1equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13b_025equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13b_05equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13b_1equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_12ppmNO.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_24ppmNO.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_52ppmNO.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_205ppmNO.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_313ppmNO.yaml']]
+                    # ['YAML_batch_reactor_Mueller_Fig15.yaml']]
+    
+                    # ['YAML_flow_reactor_Glar_Fig34_N2O_O2_01.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig34_N2O_O2_04.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig34_N2O_O2_10.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig34_N2O_O2_20.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig34_N2O_O2_50.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig34_NO2_O2_20.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig34_NO2_O2_50.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig34_NO2_O2_01.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig34_NO2_O2_04.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig34_NO2_O2_10.yaml'],
+    
+                    # ['YAML_batch_reactor_Yetter_Fig8.yaml'],
+                    # ['YAML_batch_reactor_Yetter_Fig10_1atm.yaml'],
+                    # ['YAML_batch_reactor_Yetter_Fig10_3atm.yaml'],
+                    # ['YAML_batch_reactor_Yetter_Fig10_6atm.yaml'],
+                    # ['YAML_batch_reactor_Yetter_Fig10_9atm.yaml'],
+                    
+                    # ['YAML_batch_reactor_Mueller_Fig2.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig4a.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig5a.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig5b.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig5c.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_1.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_3.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_5.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_65.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_8.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig8_10.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig12_025equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig12_05equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig12_1equ.yaml']]
+                    # ['YAML_batch_reactor_Mueller_Fig13a_025equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13a_05equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13a_1equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13b_025equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13b_05equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig13b_1equ.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_12ppmNO.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_24ppmNO.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_52ppmNO.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_205ppmNO.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig14_313ppmNO.yaml'],
+                    # ['YAML_batch_reactor_Mueller_Fig15.yaml']]
+
+                    # ['YAML_flow_reactor_Glar_Fig28_25ppm.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig28_50ppm.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig28_100ppm.yaml'],
+                    
+                    # ['YAML_flow_reactor_Glar_Fig30_NO_H2O_00.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig30_NO_H2O_10.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig30_NO_H2O_28.yaml'],
+                    
+                    # ['YAML_flow_reactor_Glar_Fig33_NO_O2_01.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig33_NO_O2_04.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig33_NO_O2_10.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig33_NO_O2_20.yaml'],
+                    # ['YAML_flow_reactor_Glar_Fig33_NO_O2_50.yaml'],
+                    
+                    # ['YAML_flow_reactor_Zhang_S1_1_H2.yaml'],
+                    # ['YAML_flow_reactor_Zhang_S1_1_O2.yaml'],
+                    # ['YAML_flow_reactor_Zhang_S1_2_H2.yaml'],
+                    # ['YAML_flow_reactor_Zhang_S1_2_O2.yaml'],
+                    # ['YAML_flow_reactor_Zhang_S1_3_H2.yaml'],
+                    # ['YAML_flow_reactor_Zhang_S1_4_H2.yaml']]
+
+
+# Currently not being used for optimization...
+#['YAML_flow_reactor_Zhang_S2_NO_8_O2.yaml'],
+#['YAML_flow_reactor_Zhang_S2_NO_18_O2.yaml'],
+#['YAML_flow_reactor_Zhang_S2_NO_209_O2.yaml'],
+#['YAML_flow_reactor_Zhang_S2_NO_045_O2_short.yaml'],
+                   
+
 #files_to_include = [['Masten_0.yaml'],
 #                    ['Masten_1.yaml'],
 #                    ['Masten_2.yaml'],
@@ -26,10 +126,16 @@ files_to_include = [['YAML_flow_reactor_Glar28_100ppm.yaml']]
 #                    ['Masten_7.yaml'],
 #                    ['Masten_8.yaml'],
 #                    ['Masten_9.yaml']]
-numer_of_iterations = 2                   
-working_directory = 'MSI/data/flow_reactor'                     
-cti_file = 'chem_glarborg_markdrive_RECplogedit.cti'
-reaction_uncertainty_csv = 'chem_glarborg_REC_reaction_uncertanties.csv'
+#------------------------------------------------------------------
+# Reactions of Importance
+#------------------------------------------------------------------
+#
+#------------------------------------------------------------------
+numer_of_iterations = 2           
+working_directory = 'MSI\All_Optimization_Data\EnergeticMaterials'
+cti_file = 'Glarborg_HNO.cti'
+            # 'Glarborg_HNO.cti'
+reaction_uncertainty_csv = 'Glarborg_HNO_uncertanties.csv'
 
 #rate_constant_target_value_data = 'burke_target_value_single_reactions.csv'
 #rate_constant_target_value_data = 'target_reactions_test.csv'

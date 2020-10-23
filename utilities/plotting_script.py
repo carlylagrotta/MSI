@@ -51,7 +51,8 @@ class Plotting(object):
                  cheby_sensitivity_dict = None,
                  mapped_to_alpha_full_simulation=None,
                  optimized_cti_file='',
-                 original_cti_file=''):
+                 original_cti_file='',
+                 sigma_ones=False):
         self.S_matrix = S_matrix
         self.s_matrix = s_matrix
         self.Y_matrix = Y_matrix
@@ -80,12 +81,14 @@ class Plotting(object):
         self.mapped_to_alpha_full_simulation = mapped_to_alpha_full_simulation,
         self.new_cti=optimized_cti_file
         self.nominal_cti=original_cti_file
+        self.sigma_ones = sigma_ones
         
  #fix all the indexing to have a captial or lowercase time situation or add the module that lets you do either to all the scripts  
 
     def lengths_of_experimental_data(self):
         simulation_lengths_of_experimental_data = []
         for i,exp in enumerate(self.exp_dict_list_optimized):
+           
             length_of_experimental_data=[]
             observable_counter=0
             for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables'] + exp['ignition_delay_observables']):
@@ -115,6 +118,16 @@ class Plotting(object):
                         observable_counter+=1                         
                 if observable in exp['ignition_delay_observables']:
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[iI]gnition[- ][Dd]elay',exp['experiment_type']):
+                        if 'temperature' in list(exp['experimental_data'][observable_counter].columns):
+                            length_of_experimental_data.append(exp['experimental_data'][observable_counter]['temperature'].shape[0])
+                            observable_counter+=1
+                        elif 'pressure' in list(exp['experimental_data'][observable_counter].columns):
+                            length_of_experimental_data.append(exp['experimental_data'][observable_counter]['pressure'].shape[0])
+                            observable_counter+=1
+                        else:
+                            length_of_experimental_data.append(exp['experimental_data'][observable_counter].shape[0])
+                            observable_counter+=1
+                    elif re.match('[Rr][Cc][Mm]',exp['simulation_type']) and re.match('[iI]gnition[- ][Dd]elay',exp['experiment_type']):
                         if 'temperature' in list(exp['experimental_data'][observable_counter].columns):
                             length_of_experimental_data.append(exp['experimental_data'][observable_counter]['temperature'].shape[0])
                             observable_counter+=1
@@ -156,71 +169,124 @@ class Plotting(object):
                     test = sigma
                     sigma = np.sqrt(sigma)
                     temp.append(sigma)
+                    #print(z)
                 temp = np.array(temp)            
                 sigmas[x].append(temp)
-        
+                    
                 
                 counter = counter + self.simulation_lengths_of_experimental_data[x][y]
+                
         
         return sigmas, test
     
     def run_ignition_delay(self,exp,cti,n_of_data_points=10):
         
         p=pr.Processor(cti)
-        
-        if len(exp['simulation'].fullParsedYamlFile['temperatures'])>1:
-            tempmin=np.min(exp['simulation'].fullParsedYamlFile['temperatures'])
-            tempmax=np.max(exp['simulation'].fullParsedYamlFile['temperatures'])
-            total_range=tempmax-tempmin
-            tempmax=tempmax+0.1*total_range
-            tempmin=tempmin-0.1*total_range
-            temprange=np.linspace(tempmin,tempmax,n_of_data_points)
-            pressures=exp['simulation'].fullParsedYamlFile['pressures']
-            conds=exp['simulation'].fullParsedYamlFile['conditions_to_run']
+        if 'volumeTraceCsv' not in exp['simulation'].fullParsedYamlFile.keys():
+            if len(exp['simulation'].fullParsedYamlFile['temperatures'])>1:
+                tempmin=np.min(exp['simulation'].fullParsedYamlFile['temperatures'])
+                tempmax=np.max(exp['simulation'].fullParsedYamlFile['temperatures'])
+                total_range=tempmax-tempmin
+                tempmax=tempmax+0.1*total_range
+                tempmin=tempmin-0.1*total_range
+                temprange=np.linspace(tempmin,tempmax,n_of_data_points)
+                pressures=exp['simulation'].fullParsedYamlFile['pressures']
+                conds=exp['simulation'].fullParsedYamlFile['conditions_to_run']
+                
+            elif len(exp['simulation'].fullParsedYamlFile['pressures'])>1:
+                pmin = exp['simulation'].fullParsedYamlFile['pressures']*0.9
+                pmax = exp['simulation'].fullParsedYamlFile['pressures']*1.1
+                total_range=pmax-pmin
+                pmax=pmax+0.1*total_range
+                pmin=pmin-0.1*total_range
+                pressures = np.linspace(pmin,pmax,n_of_data_points)
+                temprange = exp['simulation'].fullParsedYamlFile['temperatures']
+                conds = exp['simulation'].fullParsedYamlFile['conditions_to_run']
+                
+            elif len(exp['simulation'].fullParsedYamlFile['conditions_to_run'])>1:
+                print('Plotting for conditions depedendent ignition delay not yet installed')
+                
+                
+                
             
-        elif len(exp['simulation'].fullParsedYamlFile['pressures'])>1:
-            pmin = exp['simulation'].fullParsedYamlFile['pressures']*0.9
-            pmax = exp['simulation'].fullParsedYamlFile['pressures']*1.1
-            total_range=pmax-pmin
-            pmax=pmax+0.1*total_range
-            pmin=pmin-0.1*total_range
-            pressures = np.linspace(pmin,pmax,n_of_data_points)
-            temprange = exp['simulation'].fullParsedYamlFile['temperatures']
-            conds = exp['simulation'].fullParsedYamlFile['conditions_to_run']
+            ig_delay=ig.ignition_delay_wrapper(pressures=pressures,
+                                               temperatures=temprange,
+                                               observables=exp['simulation'].fullParsedYamlFile['observables'],
+                                               kineticSens=0,
+                                               physicalSens=0,
+                                               conditions=conds,
+                                               thermalBoundary=exp['simulation'].fullParsedYamlFile['thermalBoundary'],
+                                               mechanicalBoundary=exp['simulation'].fullParsedYamlFile['mechanicalBoundary'],
+                                               processor=p,
+                                               cti_path="", 
+                                               save_physSensHistories=0,
+                                               fullParsedYamlFile=exp['simulation'].fullParsedYamlFile, 
+                                               save_timeHistories=0,
+                                               log_file=True,
+                                               log_name='log.txt',
+                                               timeshift=exp['simulation'].fullParsedYamlFile['time_shift'],
+                                               initialTime=exp['simulation'].fullParsedYamlFile['initialTime'],
+                                               finalTime=exp['simulation'].fullParsedYamlFile['finalTime'],
+                                               target=exp['simulation'].fullParsedYamlFile['target'],
+                                               target_type=exp['simulation'].fullParsedYamlFile['target_type'],
+                                               n_processors=2)
+            soln,temp=ig_delay.run()
+        elif 'volumeTraceCsv' in exp['simulation'].fullParsedYamlFile.keys():
+            if len(exp['simulation'].fullParsedYamlFile['temperatures'])>1:
+                tempmin=np.min(exp['simulation'].fullParsedYamlFile['temperatures'])
+                tempmax=np.max(exp['simulation'].fullParsedYamlFile['temperatures'])
+                total_range=tempmax-tempmin
+                tempmax=tempmax+0.1*total_range
+                tempmin=tempmin-0.1*total_range
+                temprange=np.linspace(tempmin,tempmax,n_of_data_points)
+                pressures=exp['simulation'].fullParsedYamlFile['pressures']
+                conds=exp['simulation'].fullParsedYamlFile['conditions_to_run']
+                volumeTrace = exp['simulation'].fullParsedYamlFile['volumeTraceCsv']
+                
+            elif len(exp['simulation'].fullParsedYamlFile['pressures'])>1:
+                pmin = exp['simulation'].fullParsedYamlFile['pressures']*0.9
+                pmax = exp['simulation'].fullParsedYamlFile['pressures']*1.1
+                total_range=pmax-pmin
+                pmax=pmax+0.1*total_range
+                pmin=pmin-0.1*total_range
+                pressures = np.linspace(pmin,pmax,n_of_data_points)
+                temprange = exp['simulation'].fullParsedYamlFile['temperatures']
+                conds = exp['simulation'].fullParsedYamlFile['conditions_to_run']
+                volumeTrace = exp['simulation'].fullParsedYamlFile['volumeTraceCsv']
+                
+            elif len(exp['simulation'].fullParsedYamlFile['conditions_to_run'])>1:
+                print('Plotting for conditions depedendent ignition delay not yet installed')
+                
+                
+                
             
-        elif len(exp['simulation'].fullParsedYamlFile['conditions_to_run'])>1:
-            print('Plotting for conditions depedendent ignition delay not yet installed')
-            
-            
-            
-        
-        ig_delay=ig.ignition_delay_wrapper(pressures=pressures,
-                                           temperatures=temprange,
-                                           observables=exp['simulation'].fullParsedYamlFile['observables'],
-                                           kineticSens=0,
-                                           physicalSens=0,
-                                           conditions=conds,
-                                           thermalBoundary=exp['simulation'].fullParsedYamlFile['thermalBoundary'],
-                                           mechanicalBoundary=exp['simulation'].fullParsedYamlFile['mechanicalBoundary'],
-                                           processor=p,
-                                           cti_path="", 
-                                           save_physSensHistories=0,
-                                           fullParsedYamlFile=exp['simulation'].fullParsedYamlFile, 
-                                           save_timeHistories=0,
-                                           log_file=True,
-                                           log_name='log.txt',
-                                           timeshift=exp['simulation'].fullParsedYamlFile['time_shift'],
-                                           initialTime=exp['simulation'].fullParsedYamlFile['initialTime'],
-                                           finalTime=exp['simulation'].fullParsedYamlFile['finalTime'],
-                                           target=exp['simulation'].fullParsedYamlFile['target'],
-                                           target_type=exp['simulation'].fullParsedYamlFile['target_type'],
-                                           n_processors=2)
-        soln,temp=ig_delay.run()
-        
+            ig_delay=ig.ignition_delay_wrapper(pressures=pressures,
+                                               temperatures=temprange,
+                                               observables=exp['simulation'].fullParsedYamlFile['observables'],
+                                               kineticSens=0,
+                                               physicalSens=0,
+                                               conditions=conds,
+                                               thermalBoundary=exp['simulation'].fullParsedYamlFile['thermalBoundary'],
+                                               mechanicalBoundary=exp['simulation'].fullParsedYamlFile['mechanicalBoundary'],
+                                               processor=p,
+                                               cti_path="", 
+                                               save_physSensHistories=0,
+                                               fullParsedYamlFile=exp['simulation'].fullParsedYamlFile, 
+                                               save_timeHistories=0,
+                                               log_file=True,
+                                               log_name='log.txt',
+                                               timeshift=exp['simulation'].fullParsedYamlFile['time_shift'],
+                                               initialTime=exp['simulation'].fullParsedYamlFile['initialTime'],
+                                               finalTime=exp['simulation'].fullParsedYamlFile['finalTime'],
+                                               target=exp['simulation'].fullParsedYamlFile['target'],
+                                               target_type=exp['simulation'].fullParsedYamlFile['target_type'],
+                                               n_processors=2,
+                                               volumeTrace=volumeTrace)
+            soln,temp=ig_delay.run()        
         
         #print(soln)
         return soln
-    def run_jsr(self,exp,cti,n_of_data_points=10):
+    def run_jsr(self,exp,cti,n_of_data_points=100):
         
         p=pr.Processor(cti)
         
@@ -264,7 +330,7 @@ class Plotting(object):
         #print(soln)
         return soln
     
-    def plotting_observables(self,sigmas_original=[],sigmas_optimized=[]):
+    def plotting_observables(self,sigmas_original=[],sigmas_optimized=[],file_identifier='',filetype='.jpg'):
         
         
         
@@ -326,7 +392,8 @@ class Plotting(object):
                         
                         if bool(sigmas_optimized) == True:
                             
-                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])
+                            print(high_error_optimized)
                             high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values)
                             low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
                             low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values)
@@ -335,7 +402,8 @@ class Plotting(object):
                                 plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'b--')
                                 plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'b--')
                             else:
-                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'bX')
+                                print(high_error_optimized,observable,exp['simulation'].timeHistories[0][observable].dropna().values)
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'rX')
                                 plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'bX')
                             
                             
@@ -348,7 +416,7 @@ class Plotting(object):
                            # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
                             #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
                         
-                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
+                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+file_identifier+filetype), bbox_inches='tight',dpi=1200)
                         observable_counter+=1
                     elif re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']) and re.match('[Ff]low[ -][Rr]eactor',exp['simulation_type']):
                         plt.plot(exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0][observable],'b',label='MSI')
@@ -386,34 +454,78 @@ class Plotting(object):
                         
                         
                 if observable in exp['concentration_observables']:
-                    print(observable_counter)
+                    #print(observable_counter,'THIS IS OBSERVABLE COUNTER')
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
+                        #print(observable_counter)
+                        if observable+'_ppm' in exp['experimental_data'][observable_counter].columns:
+                            plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
+                            plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
+                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data') 
+                            plt.xlabel('Time (ms)')
+                            plt.ylabel('ppm'+''+str(observable))
+                            plt.title('Experiment_'+str(i+1))
+                           
+
+                           
+                            if bool(sigmas_optimized)==True:
+                                high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                                high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                                low_error_optimized = np.exp(np.array(sigmas_optimized[i][observable_counter])*-1)
+                                low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                                
+                                plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
+                                plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--')                    
+                                
+                                # Rodger/Carly Error Bar Chop-off
+                                #---------------------------------------------- 
+                                max_ebar = np.max(high_error_optimized)
+                                max_experimental_obs_value = exp['experimental_data'][observable_counter][observable+'_ppm'].max()
+                                max_original_obs_value = (self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6).max()
+                                max_optimized_obs_value = (exp['simulation'].timeHistories[0][observable]*1e6).max()
+                                max_obs = max([max_experimental_obs_value,max_original_obs_value,max_optimized_obs_value])*1.25
+                            
+                                # min_experimental_obs_value = exp['experimental_data'][observable_counter][observable+'_ppm'].min()
+                                # min_original_obs_value = (self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6).min()
+                                # min_optimized_obs_value = (exp['simulation'].timeHistories[0][observable]*1e6).min()
+                                # min_obs = min([min_experimental_obs_value,min_original_obs_value,min_optimized_obs_value])*0.90
+                                
+                                if max_ebar > 10*max_obs:
+                                    plt.ylim(top=max_obs)
+                                #---------------------------------------------- 
+            
+                                #high_error_original = np.exp(sigmas_original[i][observable_counter])
+                                #high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                                #low_error_original = np.exp(np.array(sigmas_original[i][observable_counter])*-1)
+                                #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
+                                
+                                #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
+                                #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                        elif observable+'_mol/cm^3' in exp['experimental_data'][observable_counter].columns:
+                            concentration_optimized = np.true_divide(1,exp['simulation'].timeHistories[0]['temperature'].to_numpy())*exp['simulation'].timeHistories[0]['pressure'].to_numpy()
+                           
+                            concentration_optimized *= (1/(8.314e6))*exp['simulation'].timeHistories[0][observable].dropna().to_numpy()
+                            concentration_original = np.true_divide(1,self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'].to_numpy())*self.exp_dict_list_original[i]['simulation'].timeHistories[0]['pressure'].to_numpy()
+                           
+                            concentration_original *= (1/(8.314e6))*self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable].dropna().to_numpy()
+                            
+                            plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,concentration_optimized,'b',label='MSI')
+                            plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,concentration_original,'r',label= "$\it{A priori}$ model")
+                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable+'_mol/cm^3'],'o',color='black',label='Experimental Data') 
+                            plt.xlabel('Time (ms)')
+                            plt.ylabel(r'$\frac{mol}{cm^3}$'+''+str(observable))
+                            plt.title('Experiment_'+str(i+1))
+                            
+                            if bool(sigmas_optimized)==True:
+                                concentration_sig = np.true_divide(1,exp['simulation'].pressureAndTemperatureToExperiment[observable_counter]['temperature'].to_numpy())*exp['simulation'].pressureAndTemperatureToExperiment[observable_counter]['pressure'].to_numpy()
                         
-                        plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
-                        plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
-                        plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data') 
-                        plt.xlabel('Time (ms)')
-                        plt.ylabel('ppm'+''+str(observable))
-                        plt.title('Experiment_'+str(i+1))
-                        
-                        if bool(sigmas_optimized)==True:
-                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
-                            high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
-                            low_error_optimized = np.exp(np.array(sigmas_optimized[i][observable_counter])*-1)
-                            low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
-                            
-                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
-                            plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--')                    
-                            
-        
-        
-                            #high_error_original = np.exp(sigmas_original[i][observable_counter])
-                            #high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
-                            #low_error_original = np.exp(np.array(sigmas_original[i][observable_counter])*-1)
-                            #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values*1e6)
-                            
-                            #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
-                            #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                                concentration_sig *= (1/(8.314e6))*exp['simulation'].timeHistoryInterpToExperiment[observable].dropna().to_numpy()
+                                high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                                high_error_optimized = np.multiply(high_error_optimized,concentration_sig)
+                                low_error_optimized = np.exp(np.array(sigmas_optimized[i][observable_counter])*-1)
+                                low_error_optimized = np.multiply(low_error_optimized,concentration_sig)
+                                
+                                plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_optimized,'b--')
+                                plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--') 
                         
                         plt.plot([],'w' ,label= 'T:'+ str(self.exp_dict_list_original[i]['simulation'].temperature))
                         plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressure))
@@ -435,23 +547,38 @@ class Plotting(object):
                     
 
 
-                        observable_counter+=1
+                        #observable_counter+=1
                     
-                    if re.match('[Ff]low [Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
-                        plt.plot(exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
+                    elif re.match('[Ff]low [Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
+                        #plt.plot(exp['simulation'].timeHistories[0]['initial_temperature'],exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
+                        plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
+                        #plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['initial_temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
                         plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
                         plt.plot(exp['experimental_data'][observable_counter]['Temperature'],exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data')
                         plt.xlabel('Temperature (K)')
                         plt.ylabel('ppm '+''+str(observable))
                         plt.title('Experiment_'+str(i+1))
                         
+                        # Rodger/Carly Error Bar Chop-off
+                        #---------------------------------------------- 
+                        max_ebar = np.max(high_error_optimized)
+                        max_experimental_obs_value = exp['experimental_data'][observable_counter][observable+'_ppm'].max()
+                        max_original_obs_value = (self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6).max()
+                        max_optimized_obs_value = (exp['simulation'].timeHistories[0][observable]*1e6).max()
+                        max_obs = max([max_experimental_obs_value,max_original_obs_value,max_optimized_obs_value])*1.25
+                    
+                        # min_experimental_obs_value = exp['experimental_data'][observable_counter][observable+'_ppm'].min()
+                        # min_original_obs_value = (self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6).min()
+                        # min_optimized_obs_value = (exp['simulation'].timeHistories[0][observable]*1e6).min()
+                        # min_obs = min([min_experimental_obs_value,min_original_obs_value,min_optimized_obs_value])*0.90
                         
-                        
-                        
+                        if max_ebar > 10*max_obs:
+                            plt.ylim(top=max_obs)
+                        #---------------------------------------------- 
     
                         
                         if bool(sigmas_optimized) == True:
-                            
+                            #stub
                             high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
                             high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values*1e6)
                             low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
@@ -459,7 +586,19 @@ class Plotting(object):
                             plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'b--')
                             plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'b--')
                             
+                        #plt.plot([],'w' ,label= 'T:'+ str(self.exp_dict_list_original[i]['simulation'].temperature))
+                        plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressure))
+                        key_list = []
+                        for key in self.exp_dict_list_original[i]['simulation'].conditions.keys():
                             
+                            plt.plot([],'w',label= key+': '+str(self.exp_dict_list_original[i]['simulation'].conditions[key]))
+                            key_list.append(key)
+                       
+                        #plt.legend(handlelength=3)
+                        plt.legend(ncol=2)
+                        sp = '_'.join(key_list)
+                        #print(sp)
+                        #plt.savefig(self.working_directory+'/'+'Experiment_'+str(i+1)+'_'+str(observable)+'_'+str(self.exp_dict_list_original[i]['simulation'].temperature)+'K'+'_'+str(self.exp_dict_list_original[i]['simulation'].pressure)+'_'+sp+'_'+'.pdf', bbox_inches='tight')
                             
                             #high_error_original = np.exp(sigmas_original[i][observable_counter])
                             #high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable].dropna().values)
@@ -472,43 +611,81 @@ class Plotting(object):
                         #plt.savefig(self.working_directory+'/'+'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf', bbox_inches='tight',dpi=1000)                     
                     observable_counter+=1                        
                 if observable in exp['ignition_delay_observables']:
-                    if len(exp['simulation'].temperatures)>1:
-                        nominal=self.run_ignition_delay(self.exp_dict_list_original[i], self.nominal_cti)
-                        MSI_model=self.run_ignition_delay(exp, self.new_cti)
-                        plt.semilogy(1000/MSI_model['temperature'],MSI_model['delay'],'b',label='MSI')
-                        plt.semilogy(1000/nominal['temperature'],nominal['delay'],'r',label= "$\it{A priori}$ model")
-
-                        #plt.semilogy(1000/exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0]['delay'],'b',label='MSI')
-                        #plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay'],'r',label= "$\it{A priori}$ model")
-                        plt.semilogy(1000/exp['experimental_data'][observable_counter]['temperature'],exp['experimental_data'][observable_counter][observable+'_s'],'o',color='black',label='Experimental Data')
-                        plt.xlabel('1000/T (1000/K)')
-                        plt.ylabel('Time (s)')
-                        plt.title('Experiment_'+str(i+1))
-                        
-                        if bool(sigmas_optimized) == True:
+                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                        if len(exp['simulation'].temperatures)>1:
+                            nominal=self.run_ignition_delay(self.exp_dict_list_original[i], self.nominal_cti)
+                            MSI_model=self.run_ignition_delay(exp, self.new_cti)
+                            plt.semilogy(1000/MSI_model['temperature'],MSI_model['delay'],'b',label='MSI')
+                            plt.semilogy(1000/nominal['temperature'],nominal['delay'],'r',label= "$\it{A priori}$ model")
+    
+                            #plt.semilogy(1000/exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0]['delay'],'b',label='MSI')
+                            #plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay'],'r',label= "$\it{A priori}$ model")
+                            plt.semilogy(1000/exp['experimental_data'][observable_counter]['temperature'],exp['experimental_data'][observable_counter][observable+'_s'],'o',color='black',label='Experimental Data')
+                            plt.xlabel('1000/T (1000/K)')
+                            plt.ylabel('Time (ms)')
+                            plt.title('Experiment_'+str(i+1))
                             
-                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
-                            high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
-                            low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
-                            low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
-                            #plt.figure()
-                            a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['temperature'],high_error_optimized)))
-                            plt.semilogy(a,b,'b--')
-                            #plt.plot(1000/exp['experimental_data'][observable_counter]['temperature'],low_error_optimized,'b--')
-                            a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['temperature'],low_error_optimized)))
-                            plt.semilogy(a,b,'b--')                           
+                            if bool(sigmas_optimized) == True:
+                                
+                                high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                                high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
+                                low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
+                                low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
+                                #plt.figure()
+                                a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['temperature'],high_error_optimized)))
+                                plt.semilogy(a,b,'b--')
+                                #plt.plot(1000/exp['experimental_data'][observable_counter]['temperature'],low_error_optimized,'b--')
+                                a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['temperature'],low_error_optimized)))
+                                plt.semilogy(a,b,'b--')                           
+                                
+                                
+                                #high_error_original = np.exp(sigmas_original[i][observable_counter])
+                               # high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                                #low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
+                                #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                                #plt.figure()
+                               # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
+                                #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
                             
+                            plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
+                            observable_counter+=1
+                    elif re.match('[Rr][Cc][Mm]',exp['simulation_type']):
+                        if len(exp['simulation'].temperatures)>1:
                             
-                            #high_error_original = np.exp(sigmas_original[i][observable_counter])
-                           # high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
-                            #low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
-                            #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
-                            #plt.figure()
-                           # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
-                            #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
-                        
-                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
-                        observable_counter+=1
+                            plt.semilogy(1000/exp['simulation'].timeHistories[0]['ignition_temperature'],exp['simulation'].timeHistories[0]['delay'],'b',label='MSI')
+                            plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['ignition_temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay'],'r',label= "$\it{A priori}$ model")
+    
+                            #plt.semilogy(1000/exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0]['delay'],'b',label='MSI')
+                            #plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay'],'r',label= "$\it{A priori}$ model")
+                            plt.semilogy(1000/exp['experimental_data'][observable_counter]['temperature'],exp['experimental_data'][observable_counter][observable+'_s'],'o',color='black',label='Experimental Data')
+                            plt.xlabel('1000/T (1000/K)')
+                            plt.ylabel('Time (ms)')
+                            plt.title('Experiment_'+str(i+1))
+                            
+                            if bool(sigmas_optimized) == True:
+                                
+                                high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
+                                high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
+                                low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
+                                low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
+                                #plt.figure()
+                                a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['ignition_temperature'],high_error_optimized)))
+                                plt.semilogy(a,b,'b--')
+                                #plt.plot(1000/exp['experimental_data'][observable_counter]['temperature'],low_error_optimized,'b--')
+                                a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['ignition_temperature'],low_error_optimized)))
+                                plt.semilogy(a,b,'b--')                           
+                                
+                                
+                                #high_error_original = np.exp(sigmas_original[i][observable_counter])
+                               # high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                                #low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
+                                #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                                #plt.figure()
+                               # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
+                                #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                            
+                            plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
+                            observable_counter+=1                            
                         
                     
 
@@ -1077,6 +1254,10 @@ class Plotting(object):
             df = pd.read_csv(sigma_csv)
             Sig = np.array(df['Sigma'])
             Sig = Sig.reshape((Sig.shape[0],1))
+        elif self.sigma_ones==True:
+            shape = len(self.short_sigma)
+            Sig = np.ones((shape,1))
+                       
             
         else:
             Sig = self.short_sigma
@@ -1125,6 +1306,10 @@ class Plotting(object):
                         time_profiles[i].append(exp['experimental_data'][observable_counter]['Temperature'])
                         observables[i].append(observable)
                         observable_counter+=1
+                    elif re.match('[Ff]low[ -][Rr][eactor]',exp['simulation_type']):
+                        time_profiles[i].append(exp['experimental_data'][observable_counter]['Temperature'])
+                        observables[i].append(observable)
+                        observable_counter+=1                        
                 if observable in exp['concentration_observables']:
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
                         time_profiles[i].append(exp['experimental_data'][observable_counter]['Time']*1e3)        
@@ -1134,6 +1319,11 @@ class Plotting(object):
                         time_profiles[i].append(exp['experimental_data'][observable_counter]['Temperature'])        
                         observables[i].append(observable)                                
                         observable_counter+=1
+                    elif re.match('[Ff]low[ -][Rr][eactor]',exp['simulation_type']):
+                        time_profiles[i].append(exp['experimental_data'][observable_counter]['Temperature'])
+                        observables[i].append(observable)
+                        observable_counter+=1                                                
+                        
             if 'perturbed_coef' in exp.keys():
                 wavelengths = self.parsed_yaml_list[i]['absorbanceCsvWavelengths']
                 for k,wl in enumerate(wavelengths):
@@ -1189,7 +1379,7 @@ class Plotting(object):
         def subplot_function(number_of_observables_in_simulation,time_profiles,sensitivities,top_sensitivity_single_exp,observables_list,list_of_experiment_observables,experiment_number):
             #plt.figure(figsize=(2,6))
             #stub
-            plt.figure()
+            plt.figure(figsize=(6,18))
             for plot_number in range(number_of_observables_in_simulation):
                 for c,top_columns in enumerate(top_sensitivity_single_exp[plot_number]):
                     plt.subplot(number_of_observables_in_simulation,1,plot_number+1)
@@ -1943,10 +2133,10 @@ class Plotting(object):
                 plt.xlabel(additional_dictionary[couple[0]]['reaction'])
                 plt.ylabel(additional_dictionary[couple[1]]['reaction'])
                 x_error = (additional_dictionary[couple[0]]['hong_value'])*(error_dictonary[couple[0]]['hong_value'])
-                print(x_error,'this is the x error')
+                #print(x_error,'this is the x error')
 
                 y_error = (additional_dictionary[couple[1]]['hong_value'])*(error_dictonary[couple[1]]['hong_value'])
-                print(y_error,'this is the y error')
+                #print(y_error,'this is the y error')
                 plt.errorbar(additional_dictionary[couple[0]]['hong_value'],additional_dictionary[couple[1]]['hong_value'],xerr=x_error,yerr=y_error)
                 
                 plt.scatter(additional_dictionary[couple[0]]['hong_value'],additional_dictionary[couple[1]]['hong_value'],zorder=4,label='Hong Values From Table')
@@ -2522,7 +2712,7 @@ class Plotting(object):
 
         
         if bool(experiments_want_to_plot_data_from):
-            print('inside here')
+            #print('inside here')
             y_values = []
             Y_values = []
             start = 0
@@ -2701,7 +2891,7 @@ class Plotting(object):
         empty_nested_observable_list_Z_2 = [[] for x in range(len(observables_unique))]
 
         if bool(experiments_want_to_plot_data_from):
-            print('inside here')
+            #print('inside here')
             y_values = []
             Y_values = []
             start = 0
@@ -2732,8 +2922,8 @@ class Plotting(object):
                     current_observable = observables_tottal[x][y]
                     stop = self.simulation_lengths_of_experimental_data[x][y] + start
                     if x in experiments_want_to_plot_data_from_2:
-                        print(x)
-                        print(current_observable,'this is current')
+                        #print(x)
+                        #print(current_observable,'this is current')
 
                         temp = self.Y_matrix[start:stop,:]
                         empty_nested_observable_list_Y_2[observables_unique.index(current_observable)].append(temp)
@@ -2847,8 +3037,8 @@ class Plotting(object):
 
                 #plt.ylabel('normalized')
                     if bool(experiments_want_to_plot_data_from_2):
-                        print('inside here')
-                        print(experiments_want_to_plot_data_from_2)
+                        #print('inside here')
+                        #print(experiments_want_to_plot_data_from_2)
                    # plt.hist(Y_values_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
                         ax3.hist(new_Y_test_2,bins=bins ,align='mid',density=True,alpha=0.5,label='Extra Experiments')
                         
@@ -2918,7 +3108,7 @@ class Plotting(object):
         empty_nested_observable_list_Z_2 = [[] for x in range(len(observables_unique))]
 
         if bool(experiments_want_to_plot_data_from):
-            print('inside here')
+            #print('inside here')
             y_values = []
             Y_values = []
             start = 0
@@ -2972,8 +3162,8 @@ class Plotting(object):
                     indecies = np.argwhere(z_values > 100)
                     new_y_test = copy.deepcopy(Y_values)
                     new_y_test = np.delete(new_y_test,indecies)
-                    print(indecies.shape)
-                    print(indecies)
+                    #print(indecies.shape)
+                    #print(indecies)
                     if bool(experiments_want_to_plot_data_from_2) and bool(empty_nested_observable_list_y_2[i]):
                         
                         Y_values_2 = np.vstack((empty_nested_observable_list_Y_2[i]))
@@ -3593,7 +3783,7 @@ class Plotting(object):
             length_of_2nd_list = len(empty_nested_observable_list_Y_2[x])
             if bool(observable):
 
-                print(x)
+                #print(x)
                 if x ==0:
                     if bool(csv):
                         df = pd.read_csv(csv)
@@ -4712,7 +4902,7 @@ class Plotting(object):
         empty_nested_observable_list_Z_2 = [[] for x in range(len(observables_unique))]
 
         if bool(experiments_want_to_plot_data_from):
-            print('inside here')
+            #print('inside here')
             y_values = []
             Y_values = []
             start = 0
@@ -5100,7 +5290,7 @@ class Plotting(object):
             length_of_2nd_list = len(empty_nested_observable_list_Y_2[x])
             if bool(observable):
 
-                print(x)
+                #print(x)
                 if x ==0:
                     if bool(csv):
                         df = pd.read_csv(csv)
