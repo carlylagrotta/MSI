@@ -15,7 +15,9 @@ import cantera as ct
 import MSI.utilities.plotting_script as plotter
 
 
-files_to_include = [['YAML_ignition_delay_Mathieu_Tab1.yaml']]
+files_to_include = [['YAML_ignition_delay_Mathieu_Tab6.yaml']]
+                    
+
                     # ['YAML_batch_reactor_Mueller_Fig2.yaml'],
                     # ['YAML_batch_reactor_Mueller_Fig4a.yaml'],
                     # ['YAML_batch_reactor_Mueller_Fig5a.yaml'],
@@ -242,7 +244,9 @@ plotting_instance = plotter.Plotting(S_matrix,
                                       k_target_value_S_matrix =k_target_value_S_matrix,
                                       k_target_values=run_with_k_target_values,
                                       working_directory=working_directory,
-                                      shock_tube_instance = MSI_st_instance_two)
+                                      shock_tube_instance = MSI_st_instance_two,
+                                      optimized_cti_file=MSI_st_instance_two.new_cti_file,
+                                      original_cti_file=original_cti_file)
 
 observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
 sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)

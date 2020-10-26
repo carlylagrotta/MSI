@@ -630,7 +630,8 @@ class Plotting(object):
                         if len(exp['simulation'].temperatures)>1:
                             nominal=self.run_ignition_delay(self.exp_dict_list_original[i], self.nominal_cti)
                             MSI_model=self.run_ignition_delay(exp, self.new_cti)
-                            plt.semilogy(1000/MSI_model['temperature'],MSI_model['delay'],'b',label='MSI')
+                            #plt.semilogy(1000/MSI_model['temperature'],MSI_model['delay'],'b',label='MSI')
+                            plt.semilogy(1000/nominal['temperature'],MSI_model['delay'],'b',label='MSI')
                             plt.semilogy(1000/nominal['temperature'],nominal['delay'],'r',label= "$\it{A priori}$ model")
     
                             #plt.semilogy(1000/exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0]['delay'],'b',label='MSI')
