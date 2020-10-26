@@ -662,6 +662,17 @@ class Plotting(object):
                                 #plt.figure()
                                # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
                                 #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                            plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressures))
+                            key_list = []
+                            for key in self.exp_dict_list_original[i]['simulation'].fullParsedYamlFile['conditions_to_run'][0].keys():
+                               # ['simulation'].fullParsedYamlFile['conditions_to_run']
+                                plt.plot([],'w',label= key+': '+str(self.exp_dict_list_original[i]['simulation'].fullParsedYamlFile['conditions_to_run'][0][key]))
+                                key_list.append(key)
+                       
+                            #plt.legend(handlelength=3)
+                            plt.legend(ncol=2)
+                            sp = '_'.join(key_list)
+
                             plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
                             plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.svg'), bbox_inches='tight',dpi=1000)
 
