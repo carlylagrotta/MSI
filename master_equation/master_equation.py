@@ -233,7 +233,7 @@ class Master_Equation(object):
        
         
         S_matrix_mapped_MP = np.hstack((temp_list_2))
-        print(S_matrix_mapped_MP.shape)
+        #print(S_matrix_mapped_MP.shape)
         return S_matrix_mapped_MP, new_sens_dict,broken_up_by_reaction,tottal_array,tester
     
     
@@ -247,6 +247,7 @@ class Master_Equation(object):
                                                    exp_dict_list):
         
         #this function is not working correctly
+        #print(delta_x_molecular_params_by_reaction_dict)
         reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
         number_of_reactions = len(reactions_in_cti_file)
         
@@ -258,6 +259,8 @@ class Master_Equation(object):
                 temp_array.append(sensativity_array*delta_x_MP)
                 #if reaction=='H2O2 + OH <=> H2O + HO2':
                     #print(sensativity_array*delta_x_MP)
+                
+            #print(temp_array)
             summation = sum(temp_array)
             #if reaction=='H2O2 + OH <=> H2O + HO2':
                 #print(summation)
