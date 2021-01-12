@@ -196,9 +196,8 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
     if MP!={}:   
         print('insdie the MP if statment')        
 
-        
+        #print(MP)
         for j in np.arange(original_rxn_count,NewModel.n_reactions):
-               
                
            
                try:
@@ -247,12 +246,16 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
                            NewModel.reaction(j)[number][1] = ct.Arrhenius(A*np.exp(MP['r'+str(j)]['A']),n+MP['r'+str(j)]['n'],Ea+MP['r'+str(j)]['Ea']*E)                      
                        NewModel.reaction(j).rates=NewModel.reaction(j).rates                      
                    elif 'ChebyshevReaction' in str(type(NewModel.reaction(j))):
+
                        converted = MP['r'+str(j)]/np.log(10)
-                       test = NewModel.reaction(j).coeffs +converted 
+                       test = NewModel.reaction(j).coeffs +converted                                                                    
                        NewModel.reaction(j).set_parameters(NewModel.reaction(j).Tmin,NewModel.reaction(j).Tmax,NewModel.reaction(j).Pmin,NewModel.reaction(j).Pmax,(test))
                        
                except:
                    print ('we are in the except statment in marks code',j)
+                   
+                   
+                   
                    if 'ThreeBodyReaction' in str(type(NewModel.reaction(j))):
                        NewModel.reaction(j).rate=NewModel.reaction(j).rate
                    elif 'ElementaryReaction' in str(type(NewModel.reaction(j))):

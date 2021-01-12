@@ -29,7 +29,11 @@ class MSI_shocktube_optimization_chebyshev(object):
                  master_reaction_equation_cti_name:str = '',
                  master_index = [],
                  master_equation_uncertainty_df = None,
-                 chebyshev_fit_nominal_parameters_dict = None):
+                 chebyshev_fit_nominal_parameters_dict = None,
+                 T_min=200,
+                 T_max=3000,
+                 P_min=1013.25,
+                 P_max=1.013e+6):
         
         
         
@@ -49,6 +53,10 @@ class MSI_shocktube_optimization_chebyshev(object):
         self.k_target_values_csv = k_target_values_csv
         self.master_equation_reactions = master_equation_reactions
         self.MP_for_S_matrix = np.array(())
+        self.T_min = T_min
+        self.T_max = T_max
+        self.P_min = P_min
+        self.P_max = P_max
         
         if bool(self.master_equation_reactions):
             self.master_equation_flag = True
@@ -159,7 +167,7 @@ class MSI_shocktube_optimization_chebyshev(object):
         #maybe save this and just pass it in 
         return
     def master_equation_s_matrix_building(self,loop_counter=0):
-        master_equation_cheby_instance = mecheb.Master_Equation()
+        master_equation_cheby_instance = mecheb.Master_Equation(T_min=self.T_min,T_max=self.T_max,P_min=self.P_min,P_max=self.P_max)
         self.master_equation_cheby_instance = master_equation_cheby_instance
         
         

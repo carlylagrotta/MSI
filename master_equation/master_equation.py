@@ -11,8 +11,14 @@ import pandas as pd
 import re
 
 class Master_Equation(object):
-    def __init__(self):
+    def __init__(self,T_min=200,T_max=3000,P_min=1013.25,P_max=1.013e+6):
         self.matrix = None
+        self.T_min = T_min
+        self.T_max = T_max
+        self.P_min = P_min
+        self.P_max = P_max
+        
+
 
     def multiply_by_sensitivites(self,array1,array_of_sensitivities,pressure_and_temp_array):
         sensitivity_multiplied_array = np.zeros((array_of_sensitivities.shape[0],array_of_sensitivities.shape[1],pressure_and_temp_array.shape[0]))
@@ -80,15 +86,15 @@ class Master_Equation(object):
                                            tensor = False)  
         return x-y
         
-    def calc_reduced_T(self,T,T_min=200,T_max=2400):
-        numerator = (2*(T**-1))-((T_min)**-1) - ((T_max)**-1)
-        denominator = ((T_max)**-1) - ((T_min)**-1)
+    def calc_reduced_T(self,T):
+        numerator = (2*(T**-1))-((self.T_min)**-1) - ((self.T_max)**-1)
+        denominator = ((self.T_max)**-1) - ((self.T_min)**-1)
         T_reduced = np.divide(numerator,denominator)
         return T_reduced
         
-    def calc_reduced_P(self,P,P_min=1013.25,P_max=1.013e+6):
-        numerator = 2*np.log10(P) - np.log10(P_min) - np.log10(P_max)
-        denominator = np.log10(P_max) - np.log10(P_min)
+    def calc_reduced_P(self,P):
+        numerator = 2*np.log10(P) - np.log10(self.P_min) - np.log10(self.P_max)
+        denominator = np.log10(self.P_max) - np.log10(self.P_min)
         P_reduced = np.divide(numerator,denominator)
         return P_reduced
 
@@ -233,7 +239,7 @@ class Master_Equation(object):
        
         
         S_matrix_mapped_MP = np.hstack((temp_list_2))
-        print(S_matrix_mapped_MP.shape)
+        #print(S_matrix_mapped_MP.shape)
         return S_matrix_mapped_MP, new_sens_dict,broken_up_by_reaction,tottal_array,tester
     
     
@@ -247,6 +253,7 @@ class Master_Equation(object):
                                                    exp_dict_list):
         
         #this function is not working correctly
+        #print(delta_x_molecular_params_by_reaction_dict)
         reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
         number_of_reactions = len(reactions_in_cti_file)
         
@@ -258,6 +265,8 @@ class Master_Equation(object):
                 temp_array.append(sensativity_array*delta_x_MP)
                 #if reaction=='H2O2 + OH <=> H2O + HO2':
                     #print(sensativity_array*delta_x_MP)
+                
+            #print(temp_array)
             summation = sum(temp_array)
             #if reaction=='H2O2 + OH <=> H2O + HO2':
                 #print(summation)

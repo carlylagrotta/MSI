@@ -98,29 +98,61 @@ class OptMatrix(object):
             return press_uncertainties            
 
         def igdelay_temp_uncertainties(experiment_dict):
-            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'temperature' in list(experiment_dict['experimental_data'][0].columns):
+
+            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'pressure' in list(experiment_dict['experimental_data'][0].columns) and len(experiment_dict['simulation'].temperatures) == len(experiment_dict['simulation'].pressures) and len(experiment_dict['simulation'].temperatures)>1 and len(experiment_dict['simulation'].pressures)>1:
+                temp_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
+                temp_uncertainties = list(temp_uncertainties)*len(experiment_dict['simulation'].temperatures) 
+
+            elif 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'temperature' in list(experiment_dict['experimental_data'][0].columns):
                 temp_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
                 temp_uncertainties = list(temp_uncertainties)
+
             elif 'temperature' in list(experiment_dict['experimental_data'][0].columns):
                 temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['temperature'].values))
                 temp_uncertainties = list(temp_uncertainties) 
-            elif 'pressure' in list(experiment_dict['experimental_data'][0].columns):
+                #stub this is where we are editing
+            elif 'pressure' in list(experiment_dict['experimental_data'][0].columns) and len(experiment_dict['simulation'].temperatures) == len(experiment_dict['simulation'].pressures) and len(experiment_dict['simulation'].temperatures)>1 and len(experiment_dict['simulation'].pressures)>1 :
+                temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['pressure'].values))
+                temp_uncertainties = list(temp_uncertainties)* len(experiment_dict['simulation'].temperatures)
+                
+            elif 'pressure' in list(experiment_dict['experimental_data'][0].columns) and len(experiment_dict['simulation'].temperatures) != len(experiment_dict['simulation'].pressures):
                 temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']
-                temp_uncertainties = list(temp_uncertainties)
+                temp_uncertainties = list(temp_uncertainties) 
+
+            elif len(experiment_dict['conditions_to_run'])>1 and len(experiment_dict['simulation'].temperatures)>1 and len(experiment_dict['simulation'].pressures)>1 and len(experiment_dict['simulation'].temperatures) == len(experiment_dict['simulation'].pressures):
+                temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']
+                temp_uncertainties = list(temp_uncertainties)  * len(experiment_dict['simulation'].temperatures)    
+
+
             elif len(experiment_dict['conditions_to_run'])>1:
                 temp_uncertainties=experiment_dict['uncertainty']['temperature_relative_uncertainty']
                 temp_uncertainties = list(temp_uncertainties)
             return temp_uncertainties
         def igdelay_press_uncertainties(experiment_dict):
-            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'pressure' in list(experiment_dict['experimental_data'][0].columns):
+            if 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'temperature' in list(experiment_dict['experimental_data'][0].columns) and len(experiment_dict['simulation'].temperatures) == len(experiment_dict['simulation'].pressures) and len(experiment_dict['simulation'].temperatures)>1 and len(experiment_dict['simulation'].pressures)>1:
+                press_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
+                press_uncertainties = list(press_uncertainties)*len(experiment_dict['simulation'].temperatures) 
+
+            elif 'Relative_Uncertainty' in list(experiment_dict['experimental_data'][0].columns) and 'pressure' in list(experiment_dict['experimental_data'][0].columns):
                 press_uncertainties=experiment_dict['experimental_data'][0]['Relative_Uncertainty'].values
                 press_uncertainties = list(press_uncertainties)
+
+
             elif 'pressure' in list(experiment_dict['experimental_data'][0].columns):
                 press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']*np.ones(np.shape(experiment_dict['experimental_data'][0]['pressure'].values))
                 press_uncertainties = list(press_uncertainties) 
-            elif 'temperature' in list(experiment_dict['experimental_data'][0].columns):
+            elif 'temperature' in list(experiment_dict['experimental_data'][0].columns) and len(experiment_dict['simulation'].temperatures) == len(experiment_dict['simulation'].pressures) and len(experiment_dict['simulation'].temperatures)>1 and len(experiment_dict['simulation'].pressures)>1:
+                press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']
+                press_uncertainties = list(press_uncertainties) * len(experiment_dict['simulation'].temperatures)               
+             #stub this is where editing is happening                   
+            elif 'temperature' in list(experiment_dict['experimental_data'][0].columns) and len(experiment_dict['simulation'].temperatures) != len(experiment_dict['simulation'].pressures):
                 press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']
                 press_uncertainties = list(press_uncertainties)
+            elif len(experiment_dict['conditions_to_run'])>1 and len(experiment_dict['simulation'].temperatures)>1 and len(experiment_dict['simulation'].pressures)>1 and len(experiment_dict['simulation'].temperatures) == len(experiment_dict['simulation'].pressures):
+                press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']
+                press_uncertainties = list(press_uncertainties)* len(experiment_dict['simulation'].temperatures)
+
+
             elif len(experiment_dict['conditions_to_run'])>1:
                 press_uncertainties=experiment_dict['uncertainty']['pressure_relative_uncertainty']
                 press_uncertainties = list(press_uncertainties)
@@ -173,39 +205,7 @@ class OptMatrix(object):
                 relative_uncertainty_array = copy.deepcopy(x_dependent_uncertainty)
                 relative_uncertainty_array = relative_uncertainty_array.reshape((relative_uncertainty_array.shape[0],1))
 
-# <<<<<<< HEAD
-                
-#             elif 'Relative_Uncertainty' not in list(experimental_data.columns):
-                
-#                 relative_uncertainty_array = np.full((length_of_data,1),relative_uncertainty)
-#                 relative_uncertainty_array = relative_uncertainty_array.reshape((relative_uncertainty_array.shape[0],1))
 
-#             if 'Absolute_Uncertainty' in list(experimental_data.columns):
-#                 x_dependent_a_uncertainty = experimental_data['Absolute_Uncertainty'].values
-                
-                
-#                 absolute_uncertainty_array = copy.deepcopy(x_dependent_a_uncertainty)
-#                 absolute_uncertainty_array = np.divide(absolute_uncertainty_array,data)
-#                 absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
-                
-#             elif 'Absolute_Uncertainty' not in list(experimental_data.columns):
-                
-#                 absolute_uncertainty_array = np.divide(absolute_uncertainty,data)
-#                 absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
-                
-            
-#             total_uncertainty = np.sqrt(np.square(relative_uncertainty_array) + np.square(absolute_uncertainty_array))
-            
-#             un_weighted_uncertainty = copy.deepcopy(total_uncertainty)                
-                
-#             if 'W' not in list(experimental_data.columns):              
-                
-#                 total_uncertainty = np.divide(total_uncertainty,(1/length_of_data**.5) )
-                
-#             elif 'W' in list(experimental_data.columns):
-#                 weighting_factor = experimental_data['W'].values
-#                 total_uncertainty = total_uncertainty/weighting_factor
-# =======
                 
             elif 'Relative_Uncertainty' not in list(experimental_data.columns):
                 
@@ -577,74 +577,139 @@ class OptMatrix(object):
                
                elif re.match('[Ss]hock[- ][Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
                 #for i,exp_dic in enumerate(exp_dict_list):
-                    
-                    experiment_physical_uncertainty = []
-                    #Temperature Uncertainty 
-                    temp_uncertainties=igdelay_temp_uncertainties(exp_dic)
-                    experiment_physical_uncertainty=experiment_physical_uncertainty+temp_uncertainties
-                    
-                    for index in range(len(temp_uncertainties)):
-                        Z_data_Frame.append('T'+str(index+1)+'_'+'experiment'+'_'+str(i))
-                        active_parameters.append('T'+str(index+1)+'_'+'experiment'+'_'+str(i))
-                    #Z_data_Frame=Z_data_Frame+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+
+                    if len(exp_dic['simulation'].temperatures) == len(exp_dic['simulation'].pressures) and len(exp_dic['simulation'].temperatures) >1 and len(exp_dic['simulation'].pressures) >1:
+                       # print('inside z matrix')
+                        experiment_physical_uncertainty = []
+                        #Temperature Uncertainty 
+                        temp_uncertainties=igdelay_temp_uncertainties(exp_dic)
+                        experiment_physical_uncertainty=experiment_physical_uncertainty+temp_uncertainties
                         
-                    #active_parameters=active_parameters+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
-                    #Pressure Uncertainty
-                    
-                    press_uncertainties = igdelay_press_uncertainties(exp_dic)
-                    for index in range(len(press_uncertainties)):
-                        Z_data_Frame.append('P'+str(index+1)+'_'+'experiment'+'_'+str(i))
-                        active_parameters.append('P'+str(index+1)+'_'+'experiment'+'_'+str(i))
-                    
-                    #Z_data_Frame=Z_data_Frame+['P'+'_'+'experiment'+'_'+str(i)]*len(press_uncertainties)
-                    #active_parameters=active_parameters+['P'+'_'+'experiment'+'_'+str(i)]*len(press_uncertainties)
-                    experiment_physical_uncertainty=experiment_physical_uncertainty+press_uncertainties
-                    #print(len(press_uncertainties))
-                    #Species Uncertainty
-                    conditions = exp_dic['conditions_dict_list']
-                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
-                    species_to_loop =  list(exp_dic['conditions_dict_list'].keys())
-                    
-                    list_with_most_species_in_them = []
-                    for specie in species_to_loop:
-                        list_with_most_species_in_them.append(len(conditions[specie]))
-                    max_species = max(list_with_most_species_in_them)
-                    
+                        for index in range(len(temp_uncertainties)):
+                            Z_data_Frame.append('T'+str(index+1)+'_'+'experiment'+'_'+str(i))
+                            active_parameters.append('T'+str(index+1)+'_'+'experiment'+'_'+str(i))
+                        #Z_data_Frame=Z_data_Frame+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+                            
+                        #active_parameters=active_parameters+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+                        #Pressure Uncertainty
                         
+                        press_uncertainties = igdelay_press_uncertainties(exp_dic)
+                        for index in range(len(press_uncertainties)):
+                            Z_data_Frame.append('P'+str(index+1)+'_'+'experiment'+'_'+str(i))
+                            active_parameters.append('P'+str(index+1)+'_'+'experiment'+'_'+str(i))
                         
+                        #Z_data_Frame=Z_data_Frame+['P'+'_'+'experiment'+'_'+str(i)]*len(press_uncertainties)
+                        #active_parameters=active_parameters+['P'+'_'+'experiment'+'_'+str(i)]*len(press_uncertainties)
+                        experiment_physical_uncertainty=experiment_physical_uncertainty+press_uncertainties
+                        #print(len(press_uncertainties))
+                        #Species Uncertainty
+                        conditions = exp_dic['conditions_dict_list']
+                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                        species_to_loop =  list(exp_dic['conditions_dict_list'].keys())
                         
+                        list_with_most_species_in_them = []
+                        for specie in species_to_loop:
+                            list_with_most_species_in_them.append(len(conditions[specie]))
+                        max_species = max(list_with_most_species_in_them)
+                        diluent=[]   
+                        if 'Diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
+                            diluent = exp_dic['uncertainty']['species_relative_uncertainty']['type_dict']['diluent']
                         
-                    diluent=[]   
-                    if 'Diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
-                        diluent = exp_dic['uncertainty']['species_relative_uncertainty']['type_dict']['diluent']
-                    
-                    singular_species=[]
-                    for species in list(exp_dic['simulation'].fullParsedYamlFile['conditions'].keys()):
+                        singular_species=[]
+                        for species in list(exp_dic['simulation'].fullParsedYamlFile['conditions'].keys()):
+                            
+                            if len(exp_dic['simulation'].fullParsedYamlFile['conditions'][species])==1 and species not in diluent:
+                                singular_species.append(species)
                         
-                        if len(exp_dic['simulation'].fullParsedYamlFile['conditions'][species])==1 and species not in diluent:
-                            singular_species.append(species)
-                    
-                    for x,species in enumerate(exp_dic['simulation'].fullParsedYamlFile['speciesNames']):
-                        if species in singular_species and species not in diluent:
-                            Z_data_Frame.append('X'+str(x+1)+'_'+species+'_experiment_'+str(i))
-                            experiment_physical_uncertainty.append(species_uncertainties[specie])
-                            active_parameters.append('X'+str(x+1)+'_'+species+'_'+'experiment'+'_'+str(i))
-                        elif species not in singular_species and species not in diluent:
-                            for j in range(len(exp_dic['simulation'].fullParsedYamlFile['conditions_to_run'])):
+                        for x,species in enumerate(exp_dic['simulation'].fullParsedYamlFile['speciesNames']):
+                            if species in singular_species and species not in diluent:
                                 Z_data_Frame.append('X'+str(x+1)+'_'+species+'_experiment_'+str(i))
                                 experiment_physical_uncertainty.append(species_uncertainties[specie])
-                                active_parameters.append('X'+str(x+1)+'_'+species+'_'+'experiment'+'_'+str(i))                    
-                       
-                    
-
-                    experiment_physical_uncertainty.append(exp_dic['uncertainty']['time_shift_absolute_uncertainty'])
-                    Z_data_Frame.append('Time_shift'+'_'+'experiment'+'_'+str(i))
-                    active_parameters.append('Time_shift'+'_'+'experiment'+'_'+str(i))
-                    experiment_physical_uncertainty = np.array(experiment_physical_uncertainty)
-                    experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],
-                                                       1))
-                    Z = np.vstack((Z,experiment_physical_uncertainty))
-                    sigma = np.vstack((sigma,experiment_physical_uncertainty))   
+                                active_parameters.append('X'+str(x+1)+'_'+species+'_'+'experiment'+'_'+str(i))
+                            elif species not in singular_species and species not in diluent:
+                                for j in range(len(exp_dic['simulation'].fullParsedYamlFile['conditions_to_run'])):
+                                    Z_data_Frame.append('X'+str(x+1)+'_'+species+'_experiment_'+str(i))
+                                    experiment_physical_uncertainty.append(species_uncertainties[specie])
+                                    active_parameters.append('X'+str(x+1)+'_'+species+'_'+'experiment'+'_'+str(i))                    
+                           
+                        
+    
+                        experiment_physical_uncertainty.append(exp_dic['uncertainty']['time_shift_absolute_uncertainty'])
+                        Z_data_Frame.append('Time_shift'+'_'+'experiment'+'_'+str(i))
+                        active_parameters.append('Time_shift'+'_'+'experiment'+'_'+str(i))
+                        experiment_physical_uncertainty = np.array(experiment_physical_uncertainty)
+                        experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],
+                                                           1))
+                        Z = np.vstack((Z,experiment_physical_uncertainty))
+                        sigma = np.vstack((sigma,experiment_physical_uncertainty))                       
+                    else:
+                        experiment_physical_uncertainty = []
+                        #Temperature Uncertainty 
+                        temp_uncertainties=igdelay_temp_uncertainties(exp_dic)
+                        experiment_physical_uncertainty=experiment_physical_uncertainty+temp_uncertainties
+                        
+                        for index in range(len(temp_uncertainties)):
+                            Z_data_Frame.append('T'+str(index+1)+'_'+'experiment'+'_'+str(i))
+                            active_parameters.append('T'+str(index+1)+'_'+'experiment'+'_'+str(i))
+                        #Z_data_Frame=Z_data_Frame+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+                            
+                        #active_parameters=active_parameters+['T'+'_'+'experiment'+'_'+str(i)]*len(temp_uncertainties)
+                        #Pressure Uncertainty
+                        
+                        press_uncertainties = igdelay_press_uncertainties(exp_dic)
+                        for index in range(len(press_uncertainties)):
+                            Z_data_Frame.append('P'+str(index+1)+'_'+'experiment'+'_'+str(i))
+                            active_parameters.append('P'+str(index+1)+'_'+'experiment'+'_'+str(i))
+                        
+                        #Z_data_Frame=Z_data_Frame+['P'+'_'+'experiment'+'_'+str(i)]*len(press_uncertainties)
+                        #active_parameters=active_parameters+['P'+'_'+'experiment'+'_'+str(i)]*len(press_uncertainties)
+                        experiment_physical_uncertainty=experiment_physical_uncertainty+press_uncertainties
+                        #print(len(press_uncertainties))
+                        #Species Uncertainty
+                        conditions = exp_dic['conditions_dict_list']
+                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                        species_to_loop =  list(exp_dic['conditions_dict_list'].keys())
+                        
+                        list_with_most_species_in_them = []
+                        for specie in species_to_loop:
+                            list_with_most_species_in_them.append(len(conditions[specie]))
+                        max_species = max(list_with_most_species_in_them)
+                        
+                            
+                            
+                            
+                            
+                        diluent=[]   
+                        if 'Diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
+                            diluent = exp_dic['uncertainty']['species_relative_uncertainty']['type_dict']['diluent']
+                        
+                        singular_species=[]
+                        for species in list(exp_dic['simulation'].fullParsedYamlFile['conditions'].keys()):
+                            
+                            if len(exp_dic['simulation'].fullParsedYamlFile['conditions'][species])==1 and species not in diluent:
+                                singular_species.append(species)
+                        
+                        for x,species in enumerate(exp_dic['simulation'].fullParsedYamlFile['speciesNames']):
+                            if species in singular_species and species not in diluent:
+                                Z_data_Frame.append('X'+str(x+1)+'_'+species+'_experiment_'+str(i))
+                                experiment_physical_uncertainty.append(species_uncertainties[specie])
+                                active_parameters.append('X'+str(x+1)+'_'+species+'_'+'experiment'+'_'+str(i))
+                            elif species not in singular_species and species not in diluent:
+                                for j in range(len(exp_dic['simulation'].fullParsedYamlFile['conditions_to_run'])):
+                                    Z_data_Frame.append('X'+str(x+1)+'_'+species+'_experiment_'+str(i))
+                                    experiment_physical_uncertainty.append(species_uncertainties[specie])
+                                    active_parameters.append('X'+str(x+1)+'_'+species+'_'+'experiment'+'_'+str(i))                    
+                           
+                        
+    
+                        experiment_physical_uncertainty.append(exp_dic['uncertainty']['time_shift_absolute_uncertainty'])
+                        Z_data_Frame.append('Time_shift'+'_'+'experiment'+'_'+str(i))
+                        active_parameters.append('Time_shift'+'_'+'experiment'+'_'+str(i))
+                        experiment_physical_uncertainty = np.array(experiment_physical_uncertainty)
+                        experiment_physical_uncertainty =  experiment_physical_uncertainty.reshape((experiment_physical_uncertainty.shape[0],
+                                                           1))
+                        Z = np.vstack((Z,experiment_physical_uncertainty))
+                        sigma = np.vstack((sigma,experiment_physical_uncertainty))   
                     
                
                elif re.match('[Rr][Cc][Mm]',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
@@ -853,6 +918,7 @@ class OptMatrix(object):
                     elif 's' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
                         if re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
                             #check these units would be in seconds of ms?
+                            
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_s'].to_numpy(),
                                                                       exp_dic['simulation'].timeHistories[0]['delay'])
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
@@ -1063,6 +1129,8 @@ class OptMatrix(object):
                         species_in_simulation = int(len(singular_species)+((len(set(exp_dic['simulation'].fullParsedYamlFile['speciesNames']).difference(diluent))-len(singular_species))*len(exp_dic['simulation'].fullParsedYamlFile['conditions_to_run'])))
 
                         temperatures_in_simulation = len(exp_dic['simulation'].temperatures)
+                        
+                        
                         pressures_in_simulation = len(exp_dic['simulation'].pressures)
                         time_shift_length = 1
                         #print(species_in_simulation,temperatures_in_simulation,pressures_in_simulation)
@@ -1510,7 +1578,18 @@ class OptMatrix(object):
 
                         
                     elif re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']) and re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']):
-                        if len(exp['simulation'].temperatures)>1:
+
+
+
+                    	#CHECK HOW MANY SPECIES THERE ARE.
+                        conditions = exp['conditions_dict_list']
+                        species_to_loop =  list(exp['conditions_dict_list'].keys())
+                        list_with_most_species_in_them = []
+                            
+                        for specie in species_to_loop:
+                        	list_with_most_species_in_them.append(len(conditions[specie]))
+
+                        if len(exp['simulation'].temperatures)>1 and len(exp['simulation'].pressures)==1:
                             temperature_sensitivity=np.array(exp['temperature']['delay'])*np.identity(len(exp['simulation'].temperatures))
                             pressure_sensitivity = exp['pressure']['delay'].dropna().values
                             pressure_sensitivity = pressure_sensitivity.reshape((pressure_sensitivity.shape[0], 1))
@@ -1524,7 +1603,8 @@ class OptMatrix(object):
                             time_shift_sensitivity = exp['time_shift']['delay'].dropna().values
                             time_shift_sensitivity = time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))
                             #print("INSIDE HERE")
-                        elif len(exp['simulation'].pressures)>1:
+
+                        elif len(exp['simulation'].pressures)>1 and len(exp['simulation'].temperatures)==1:
                             pressure_sensitivity = np.array(exp['pressure']['delay'])*np.identity(len(exp['simulation'].pressures))
                             temperature_sensitivity = exp['temperature']['delay'].dropna().values
                             temperature_sensitivity = temperature_sensitivity.reshape((temperature_sensitivity.shape[0], 1))
@@ -1538,7 +1618,7 @@ class OptMatrix(object):
                             time_shift_sensitivity = exp['time_shift']['delay'].dropna().values
                             time_shift_sensitivity = time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))
                             
-                        elif len(exp['simulation'].pressures)==1 and len(exp['simulation'].temperatures)==1:
+                        elif len(exp['simulation'].pressures)==1 and len(exp['simulation'].temperatures)==1 and len(list_with_most_species_in_them)>1:
                             pressure_sensitivity = exp['pressure']['delay'].dropna().values
                             pressure_sensitivity = pressure_sensitivity.reshape((pressure_sensitivity.shape[0], 1))
                             temperature_sensitivity = exp['temperature']['delay'].dropna().values
@@ -1575,6 +1655,57 @@ class OptMatrix(object):
                             time_shift_sensitivity = exp['time_shift']['delay'].dropna().values
                             time_shift_sensitivity = time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))
 
+                        elif len(exp['simulation'].pressures)>1 and len(exp['simulation'].temperatures)>1 and len(list_with_most_species_in_them)>1 and len(exp['simulation'].pressures)==len(exp['simulation'].temperatures):
+                            
+                            temperature_sensitivity=np.array(exp['temperature']['delay'])*np.identity(len(exp['simulation'].temperatures))
+                            pressure_sensitivity = np.array(exp['pressure']['delay'])*np.identity(len(exp['simulation'].pressures))
+
+                            species_sensitivty=[]
+                            conditions = exp['conditions_dict_list']
+                            
+                            species_to_loop =  list(exp['conditions_dict_list'].keys())
+                            list_with_most_species_in_them = []
+                            
+                            for specie in species_to_loop:
+                                list_with_most_species_in_them.append(len(conditions[specie]))
+                            
+                            diluent=[]   
+                            if 'Diluent' in exp['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in exp['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
+                                diluent = exp['uncertainty']['species_relative_uncertainty']['type_dict']['diluent']
+                            
+                            singular_species=[]
+                            for species in list(exp['simulation'].fullParsedYamlFile['conditions'].keys()):
+                                
+                                if len(exp['simulation'].fullParsedYamlFile['conditions'][species])==1 and species not in diluent:
+                                    singular_species.append(species)
+                            
+                            for x,species in enumerate(exp['simulation'].fullParsedYamlFile['speciesNames']):
+                                if species in singular_species and species not in diluent:
+                                    single_species_sensitivty = exp['species'][x]['delay'].dropna().values
+                                    single_species_sensitivty = single_species_sensitivty.reshape((single_species_sensitivty.shape[0],1))
+                                    #print(single_species_sensitivty)
+                                    species_sensitivty.append(single_species_sensitivty)
+                                elif species not in singular_species and species not in diluent:
+                                    single_species_sensitivty = np.array(exp['species'][x]['delay'])*np.identity(len(exp['species'][x]['delay'])) 
+                                    species_sensitivty.append(single_species_sensitivty)
+                            species_sensitivty=np.hstack((species_sensitivty))
+                            time_shift_sensitivity = exp['time_shift']['delay'].dropna().values
+                            time_shift_sensitivity = time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))                        
+
+
+                        elif len(exp['simulation'].pressures)>1 and len(exp['simulation'].temperatures)>1 and len(exp['simulation'].pressures) == len(exp['simulation'].temperatures):
+                            temperature_sensitivity=np.array(exp['temperature']['delay'])*np.identity(len(exp['simulation'].temperatures))
+                            pressure_sensitivity = np.array(exp['pressure']['delay'])*np.identity(len(exp['simulation'].pressures))
+
+                            species_sensitivty = []
+                            for df in exp['species']:
+                                single_species_sensitivty = df['delay'].dropna().values
+                                single_species_sensitivty = single_species_sensitivty.reshape((single_species_sensitivty.shape[0],1))
+                                species_sensitivty.append(single_species_sensitivty)
+                            
+                            species_sensitivty = np.hstack((species_sensitivty))
+                            time_shift_sensitivity = exp['time_shift']['delay'].dropna().values
+                            time_shift_sensitivity = time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))
 
 
                     elif re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']) and re.match('[Rr][Cc][Mm]',exp['simulation_type']):
@@ -1901,7 +2032,7 @@ class OptMatrix(object):
 
         
         #return((S_ksens,S_psens,S_abs_coef))
-        print(np.shape(S_ksens),np.shape(S_psens),np.shape(S_abs_coef))
+        #print(np.shape(S_ksens),np.shape(S_psens),np.shape(S_abs_coef))
         S_matrix = np.hstack((S_ksens,S_psens,S_abs_coef))
         shape = np.shape(S_matrix)[1]
         #append identy matrix
@@ -1967,8 +2098,12 @@ class OptMatrix(object):
         ################################################################
 
         ##################################################################
-#        print('RUNNING TEST')
-#        X_new[846] = -0.28572334167542013
+        #print('RUNNING TEST')
+        #X_new = np.zeros(np.shape(X_new))
+        #X_new[76] = .5
+        
+        
+        # print(X_new)
 #        X_new[847] = -0.007258986471821074
 #        X_new[848] = -0.07160891432785314
 #        X_new[849] = -0.038747789992729584
@@ -1982,8 +2117,7 @@ class OptMatrix(object):
         #zeros = np.zeros((X_new.shape))
         #X_new = zeros
        # X_new[873,0] = .01
-       # print("X_NEW")
-        
+       # print("X_NEW")       
         ################################################################        
         
         X_new = list(X_new.flatten())            
@@ -2086,7 +2220,7 @@ class OptMatrix(object):
                     previous_value = new_value
                     
                 elif re.match('[Ss]hock [Tt]ube',exp_dic['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dic['experiment_type']):
-                    
+
                     diluent=[]   
                     if 'Diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
                         diluent = exp_dic['uncertainty']['species_relative_uncertainty']['type_dict']['diluent']
@@ -2126,6 +2260,9 @@ class OptMatrix(object):
                     previous_value = new_value
                     #print(temp_dict)
                     
+                
+                
+                
                 elif re.match('[Rc][Cc][Mm]',exp_dic['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dic['experiment_type']):
                     
                     diluent=[]   
@@ -2454,7 +2591,7 @@ class Adding_Target_Values(meq.Master_Equation):
             
                 #check and make sure we are subtracting in the correct order 
 
-            difference = np.log(target_k[i]) - np.log(k) 
+            difference = np.log(target_k[i]) - np.log(k)
 
             diff_in_ks_for_Y.append(difference)
             Y_df_list.append(reaction)

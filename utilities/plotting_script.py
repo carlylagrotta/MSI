@@ -52,7 +52,11 @@ class Plotting(object):
                   mapped_to_alpha_full_simulation=None,
                   optimized_cti_file='',
                   original_cti_file='',
-                  sigma_ones=False):
+                  sigma_ones=False,
+                  T_min=200,
+                  T_max=3000,
+                  P_min=1013.25,
+                  P_max=1.013e+6):
         self.S_matrix = S_matrix
         self.s_matrix = s_matrix
         self.Y_matrix = Y_matrix
@@ -82,7 +86,10 @@ class Plotting(object):
         self.new_cti=optimized_cti_file
         self.nominal_cti=original_cti_file
         self.sigma_ones = sigma_ones
-
+        self.T_min = T_min
+        self.T_max = T_max
+        self.P_min = P_min
+        self.P_max = P_max
         
         
         
@@ -187,13 +194,17 @@ class Plotting(object):
         if 'volumeTraceCsv' not in exp['simulation'].fullParsedYamlFile.keys():
             if len(exp['simulation'].fullParsedYamlFile['temperatures'])>1:
                 tempmin=np.min(exp['simulation'].fullParsedYamlFile['temperatures'])
+                print(tempmin , 'THis is the min temp')
                 tempmax=np.max(exp['simulation'].fullParsedYamlFile['temperatures'])
+                print(tempmax,'This is the max temp')
                 total_range=tempmax-tempmin
                 tempmax=tempmax+0.1*total_range
                 tempmin=tempmin-0.1*total_range
                 temprange=np.linspace(tempmin,tempmax,n_of_data_points)
                 pressures=exp['simulation'].fullParsedYamlFile['pressures']
+                print(pressures,'These are the pressures')
                 conds=exp['simulation'].fullParsedYamlFile['conditions_to_run']
+                print(conds,'These are the conditions')
                 
             elif len(exp['simulation'].fullParsedYamlFile['pressures'])>1:
                 pmin = exp['simulation'].fullParsedYamlFile['pressures']*0.9
@@ -479,7 +490,7 @@ class Plotting(object):
                             plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
                             plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data') 
                             plt.xlabel('Time (ms)')
-                            plt.ylabel('ppm'+''+str(observable))
+                            plt.ylabel(str(observable)+ ' '+ 'ppm')
                             plt.title('Experiment_'+str(i+1))
                             
                             if bool(sigmas_optimized)==True:
@@ -588,28 +599,50 @@ class Plotting(object):
                         if len(exp['simulation'].temperatures)>1:
                             nominal=self.run_ignition_delay(self.exp_dict_list_original[i], self.nominal_cti)
                             MSI_model=self.run_ignition_delay(exp, self.new_cti)
-                            plt.semilogy(1000/MSI_model['temperature'],MSI_model['delay'],'b',label='MSI')
+                            #plt.semilogy(1000/MSI_model['temperature'],MSI_model['delay'],'b',label='MSI')
+                            #changed to plotting at nominal temperature
+                            
+                            #plt.semilogy(1000/MSI_model['temperature'],MSI_model['delay'],'b',label='MSI')
+                        
+                            #a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['temperature'],exp['simulation'].timeHistories[0]['delay'].dropna().values)))
+                            
+                            a, b = zip(*sorted(zip(1000/np.array(exp['simulation'].temperatures),exp['simulation'].timeHistories[0]['delay'].dropna().values)))
+
+                            plt.semilogy(a,b,'b',label='MSI')
+
                             plt.semilogy(1000/nominal['temperature'],nominal['delay'],'r',label= "$\it{A priori}$ model")
-    
+                            
                             #plt.semilogy(1000/exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0]['delay'],'b',label='MSI')
                             #plt.semilogy(1000/self.exp_dict_list_original[i]['simulation'].timeHistories[0]['temperature'],self.exp_dict_list_original[i]['simulation'].timeHistories[0]['delay'],'r',label= "$\it{A priori}$ model")
                             plt.semilogy(1000/exp['experimental_data'][observable_counter]['temperature'],exp['experimental_data'][observable_counter][observable+'_s'],'o',color='black',label='Experimental Data')
-                            plt.xlabel('1000/T (1000/K)')
-                            plt.ylabel('Time (ms)')
+                            plt.xlabel('1000/T')
+                            plt.ylabel('Time (s)')
                             plt.title('Experiment_'+str(i+1))
                             
                             if bool(sigmas_optimized) == True:
+
                                 
                                 high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])                   
                                 high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
+                                
                                 low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
                                 low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0]['delay'].dropna().values)
                                 #plt.figure()
-                                a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['temperature'],high_error_optimized)))
+                                #print(exp['simulation'].timeHistories[0]['delay'].dropna().values,'THIS IS IN THE PLOTTER')
+                                
+                                
+                                #a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['temperature'],high_error_optimized)))
+                                a, b = zip(*sorted(zip(1000/np.array(exp['simulation'].temperatures),high_error_optimized)))
+                                
                                 plt.semilogy(a,b,'b--')
-                                #plt.plot(1000/exp['experimental_data'][observable_counter]['temperature'],low_error_optimized,'b--')
-                                a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['temperature'],low_error_optimized)))
+
+                                #a, b = zip(*sorted(zip(1000/exp['experimental_data'][observable_counter]['temperature'],low_error_optimized)))
+                                a, b = zip(*sorted(zip(1000/np.array(exp['simulation'].temperatures),low_error_optimized)))
+                                
                                 plt.semilogy(a,b,'b--')                           
+                                
+                                #plt.plot(1000/exp['experimental_data'][observable_counter]['temperature'],exp['simulation'].timeHistories[0]['delay'].dropna().values,'x')
+                                #plt.plot(1000/np.array(exp['simulation'].temperatures),exp['simulation'].timeHistories[0]['delay'].dropna().values,'o')
                                 
                                 
                                 #high_error_original = np.exp(sigmas_original[i][observable_counter])
@@ -620,17 +653,21 @@ class Plotting(object):
                                # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
                                 #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
 
- 
-                            plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
-
-
-
-
-
-
-
-
+                            plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressures))
+                            key_list = []
+                            for key in self.exp_dict_list_original[i]['simulation'].fullParsedYamlFile['conditions_to_run'][0].keys():
+                               # ['simulation'].fullParsedYamlFile['conditions_to_run']
+                                plt.plot([],'w',label= key+': '+str(self.exp_dict_list_original[i]['simulation'].fullParsedYamlFile['conditions_to_run'][0][key]))
+                                key_list.append(key)
+                       
+                            #plt.legend(handlelength=3)
+                            plt.legend(ncol=2)
+                            sp = '_'.join(key_list)
                             
+                            
+                            
+                            
+                            plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf'), bbox_inches='tight',dpi=1000)
                             plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+'.svg'), bbox_inches='tight',dpi=1000)
                             observable_counter+=1
                     elif re.match('[Rr][Cc][Mm]',exp['simulation_type']):
@@ -692,6 +729,7 @@ class Plotting(object):
                         low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
                         low_error_optimized = np.multiply(low_error_optimized,exp['absorbance_model_data'][wl])
                         
+                       
                         plt.plot(exp['absorbance_experimental_data'][k]['time']*1e3,high_error_optimized,'b--')
                         plt.plot(exp['absorbance_experimental_data'][k]['time']*1e3,low_error_optimized,'b--')
                         
@@ -775,6 +813,8 @@ class Plotting(object):
                 
                 
                 def create_tuple_list(array_of_sensitivities):
+                    #stub
+                    
                     tuple_list = []
                     for ix,iy in np.ndindex(array_of_sensitivities.shape):
                         tuple_list.append((ix,iy))
@@ -782,6 +822,8 @@ class Plotting(object):
                     
                 MP_stack = []
                 target_values_to_stack =  []
+                master_equation_cheby_instance = meq.Master_Equation(T_min=self.T_min,T_max=self.T_max,P_min=self.P_min,P_max=self.P_max)
+
                 for i,reaction in enumerate(target_reactions):
                     if reaction in master_equation_reaction_list:
                         nested_reaction_list = create_empty_nested_reaction_list()
@@ -797,13 +839,17 @@ class Plotting(object):
                                     
                                 #these might not work
                                 
-                                t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                #t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                t_alpha= master_equation_cheby_instance.chebyshev_specific_poly(k,master_equation_cheby_instance.calc_reduced_T(target_temp[i]))
                                 
                                 if target_press[i] ==0:
                                     target_press_new = 1e-9
                                 else:
                                     target_press_new=target_press[i]
-                                p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                #p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                p_alpha = master_equation_cheby_instance.chebyshev_specific_poly(l,master_equation_cheby_instance.calc_reduced_P(target_press_new*101325))
+                                
+                                
                                 #these might nowt work 
                                 single_alpha_map = t_alpha*p_alpha*sensitivity
                                 temp.append(single_alpha_map)
@@ -887,21 +933,7 @@ class Plotting(object):
                 Temp.append(temperature)
                 k.append(gas.forward_rate_constants[reaction_number]*1000)
             return Temp,k
-#
-#        def calculate_sigmas_for_rate_constants(k_target_value_S_matrix,k_target_values_parsed_csv,unique_reactions,gas,covarience):
-#
-#            
-#            reaction_list_from_mechanism = gas.reaction_equations()
-#            sigma_list_for_target_ks = [[] for reaction in range(len(unique_reactions))]
-#            shape = k_target_value_S_matrix.shape
-#            for row in range(shape[0]):
-#                SC = np.dot(k_target_value_S_matrix[row,:],covarience)
-#                sigma_k = np.dot(SC,np.transpose(k_target_value_S_matrix[row,:]))
-#                sigma_k = np.sqrt(sigma_k)
-#                indx = reaction_list_from_mechanism.index(k_target_values_parsed_csv['Reaction'][row])
-#                sigma_list_for_target_ks[unique_reactions.index(indx)].append(sigma_k)
-#                
-#            return sigma_list_for_target_ks
+
         
         def calculate_sigmas_for_rate_constants(k_target_value_S_matrix,k_target_values_parsed_csv,unique_reactions,gas,covarience):
 
@@ -1008,10 +1040,11 @@ class Plotting(object):
             
             for i,reaction in enumerate(unique_reactions_optimized):
                 plt.figure()
+                #stub
                 Temp_optimized,k_optimized = rate_constant_over_temperature_range_from_cantera(reaction,
                                                                   gas_optimized,
-                                                                  initial_temperature=250,
-                                                                  final_temperature=2500,
+                                                                  initial_temperature=initial_temperature,
+                                                                  final_temperature=final_temperature,
                                                                   pressure=1,
                                                                   conditions={'H2':2,'O2':1,'Ar':4})
                 
@@ -1033,11 +1066,11 @@ class Plotting(object):
                 
                 a, b = zip(*sorted(zip(target_value_temps_optimized[i],low_error_optimized)))  
                 plt.semilogy(a,b,'b--')
-
+#stubb
                 Temp_original,k_original = rate_constant_over_temperature_range_from_cantera(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]),
                                                                   gas_original,
-                                                                  initial_temperature=250,
-                                                                  final_temperature=2500,
+                                                                  initial_temperature=initial_temperature,
+                                                                  final_temperature=final_temperature,
                                                                   pressure=1,
                                                                   conditions={'H2':2,'O2':1,'Ar':4})
                 
@@ -1064,8 +1097,8 @@ class Plotting(object):
                 plt.xlabel('Temperature (K)')
                 plt.ylabel('Kmol/m^3-s')
                 plt.title(reaction_list_from_mechanism[reaction])
-                #plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.pdf', bbox_inches='tight')
-                #plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.svg', bbox_inches='tight')
+                plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.pdf', bbox_inches='tight')
+                plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.svg', bbox_inches='tight')
                 
         elif bool(self.target_value_rate_constant_csv) and self.k_target_values=='Off':
             
@@ -1241,13 +1274,16 @@ class Plotting(object):
         elif self.sigma_ones==True:
             shape = len(self.short_sigma)
             Sig = np.ones((shape,1))
+
                        
             
         else:
             Sig = self.short_sigma
             
+            
         #Sig = self.sigma
         for pp  in range(np.shape(S_matrix_copy)[1]):
+
             S_matrix_copy[:,pp] *=Sig[pp]
 
         sensitivitys =[[] for x in range(len(self.simulation_lengths_of_experimental_data))]

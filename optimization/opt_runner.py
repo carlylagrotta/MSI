@@ -361,6 +361,48 @@ class Optimization_Utility(object):
                     
             csv_paths = [x for x in  experiment_dictionary['ignitionDelayCsvFiles'] if x is not None]
             exp_data = ig_delay.importExperimentalData(csv_paths)
+            
+        elif len(experiment_dictionary['temperatures']) == len(experiment_dictionary['pressures']) and len(experiment_dictionary['temperatures'])>1 and len(experiment_dictionary['pressures']) > 1 and 'volumeTraceCsvList' not in experiment_dictionary.keys():
+            
+            
+            int_ksens_exp_mapped= ig_delay.map_and_interp_ksens()
+            tsoln=ig_delay.sensitivity_adjustment(temp_del = dk)
+            psoln=ig_delay.sensitivity_adjustment(pres_del = dk)
+            diluent=[]
+            if 'Diluent' in experiment_dictionary['typeToSpeciesDict'].keys() or 'diluent' in experiment_dictionary['typeToSpeciesDict'].keys():
+                            diluent.append(experiment_dictionary['typeToSpeciesDict']['diluent'])
+            diluent=[item for sublist in diluent for item in sublist]
+            ssoln=ig_delay.species_adjustment(dk,diluents=diluent)
+            deltatsoln,deltatausens=ig_delay.calculate_time_shift_sens(soln['delay'].values,dtau=1e-8)
+            tsen=ig_delay.sensitivityCalculation(soln['delay'],tsoln['delay'])
+            psen=ig_delay.sensitivityCalculation(soln['delay'],psoln['delay'])
+            ssens=[]
+            
+            # for j in range(len(experiment_dictionary['conditions_to_run'])):
+            for i in range(len(ssoln)):                  
+                    ssens.append(ig_delay.sensitivityCalculation(soln['delay'],ssoln[i]['delay']))
+            species_length=len(set(experiment_dictionary['speciesNames']).difference(diluent))
+            list_of_ssens=[]
+            chunksize=int(len(ssens)/species_length)
+            #print(species_length,chunksize)
+            for i in range(species_length):
+                tempdata=[]
+                tempdata=pd.DataFrame(columns=['delay'])
+
+                tempdata['delay']=np.zeros(len(experiment_dictionary['conditions_to_run'])*len(experiment_dictionary['temperatures']))
+                for k in range(chunksize):
+                    #print(ssens[i+int(k*(chunksize))]['delay'])
+                    #print('Second array')
+                    #print(np.array(tempdata['delay']))
+                    tempdata['delay']=np.array(ssens[i+int(k*(chunksize))]['delay'])+np.array(tempdata['delay'])
+                    
+                #print(tempdata)
+                list_of_ssens.append(tempdata)
+            ssens=list_of_ssens
+                   
+                    
+            csv_paths = [x for x in  experiment_dictionary['ignitionDelayCsvFiles'] if x is not None]
+            exp_data = ig_delay.importExperimentalData(csv_paths)            
         else:
             int_ksens_exp_mapped= ig_delay.map_and_interp_ksens()
             tsoln=ig_delay.sensitivity_adjustment(temp_del = dk)
