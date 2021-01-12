@@ -43,7 +43,7 @@ files_to_include = [['Hong_0.yaml'],
 
 
                                                       
-numer_of_iterations = 5
+numer_of_iterations = 2
 cti_file = 'FFCM1_custom_cheb_extra_zeros_new.cti'
 #cti_file = 'FFCM1_custom_cheb_extra_zeros_new_1_colliders.cti'
 
@@ -78,6 +78,11 @@ rate_constant_target_value_data_for_plotting = 'FFCM1_target_reactions_1_plottin
 rate_constant_target_value_data = 'FFCM1_target_reactions_1.csv'
 rate_constant_target_value_data_extra = 'FFCM1_target_reactions_extra_data.csv'
 
+
+T_min=200
+T_max = 2400
+P_min=1013.25
+P_max=1.013e+6
 
 cheb_sensitivity_dict = {'2 HO2 <=> H2O2 + O2': [np.array([[-0.842718,0],
          [ 0.443424,0],
@@ -717,7 +722,11 @@ MSI_st_instance_one = stMSIcheb.MSI_shocktube_optimization_chebyshev(cti_file,
                                                    master_reaction_equation_cti_name = master_reaction_equation_cti_name,
                                                    master_index = master_index,
                                                    master_equation_uncertainty_df = master_equation_uncertainty_df,
-                                                   chebyshev_fit_nominal_parameters_dict = None)
+                                                   chebyshev_fit_nominal_parameters_dict = None,
+                                                   T_min = T_min,
+                                                   T_max = T_max,
+                                                   P_min=P_min,
+                                                   P_max=P_max)
 MSI_st_instance_one.one_run_shock_tube_optimization()
 
 
@@ -747,7 +756,11 @@ MSI_st_instance_two = stMSIcheb.MSI_shocktube_optimization_chebyshev(cti_file,
                                                    master_reaction_equation_cti_name = master_reaction_equation_cti_name,
                                                    master_index = master_index,
                                                    master_equation_uncertainty_df = master_equation_uncertainty_df,
-                                                   chebyshev_fit_nominal_parameters_dict = None)
+                                                   chebyshev_fit_nominal_parameters_dict = None,
+                                                   T_min = T_min,
+                                                   T_max = T_max,
+                                                   P_min=P_min,
+                                                   P_max=P_max)
 
 delta_X_list = MSI_st_instance_two.multiple_shock_tube_runs(numer_of_iterations)
 
@@ -820,7 +833,11 @@ plotting_instance = plotter.Plotting(S_matrix,
                                      working_directory = working_directory,
                                      sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma,
                                      cheby_sensitivity_dict = cheb_sensitivity_dict,
-                                     mapped_to_alpha_full_simulation=MSI_st_instance_two.mapped_to_alpha_full_simulation)
+                                     mapped_to_alpha_full_simulation=MSI_st_instance_two.mapped_to_alpha_full_simulation,
+                                     T_min=T_min,
+                                     T_max=T_max,
+                                     P_min=P_min,
+                                     P_max=P_max)
 
 #csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_updated.csv'
 observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()

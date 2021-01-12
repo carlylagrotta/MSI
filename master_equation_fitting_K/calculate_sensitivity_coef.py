@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy 
 import scipy.optimize as spcf
+import yaml
 def calculate_six_parameter_fit(reaction,dictonary,temperature):
     #finish editing this 
     #calc Ea,c,d,F seprately 
@@ -111,7 +112,28 @@ def fit_cheby_k_from_six_parameter_fit_ln(T_min,
     #check to make sure that these things match, and that the
     #coefficients we chose does not overfit
     return coef,k_chevy
-            
+ 
+####ONLY WROTE THIS FUNCTION TO CHECK MY VALUES AGAINST LEI###### 
+#USING THE ONE ABOVE IT TO DO THE FITTING#####
+def fit_cheby_k_from_six_parameter_fit_ln10(T_min,
+                                       T_max,
+                                       reaction,
+                                       dictonary,
+                                       number_coefficients):
+    k_six_parameter_fit = []
+    Temperature = []
+    for temp in np.arange(T_min,T_max):
+        Temperature.append(temp)
+        k_six_parameter_fit.append(calculate_six_parameter_fit(reaction,dictonary,temp))
+    
+    coef = fit_cheby_poly_1d(number_coefficients,np.log10(np.array(k_six_parameter_fit)),Temperature)
+    k_chevy = calc_polynomial(Temperature,coef)
+    
+    plt.semilogy(Temperature,k_six_parameter_fit)
+    plt.semilogy(Temperature,np.exp(k_chevy))
+    #check to make sure that these things match, and that the
+    #coefficients we chose does not overfit
+    return coef,k_chevy           
 
         
 def find_new_alpha(xdata, ydata, alphas, alpha_index_to_recompute):
@@ -136,7 +158,45 @@ def find_alpha_coefficients_sens(original_alphas,new_alphas,dk):
     sensitivity = np.true_divide(change_in_coefficients,dk)
     return sensitivity
 
-    
+#convert sensiivty  from log 10 to ln
+def multiply_lei_values(sens_dict):
+    temp_dict = {}
+    for keys in sens_dict:
+        temp_dict[keys] = []
+    for keys in sens_dict:
+        for arr in sens_dict[keys]:
+            temp_arr = arr*np.log(10)
+            temp_dict[keys].append(temp_arr)
+    return temp_dict
+            
+
+
+
+def change_lei_values_for_testing(sens_dict,values_to_skip=None):
+    temp_dict = {}
+    for keys in sens_dict:
+        print(keys)
+        temp_dict[keys] = []
+    for skp,keys in enumerate(sens_dict):
+        for i,arr in enumerate(sens_dict[keys]):
+            print(values_to_skip[skp], keys)
+            if i in values_to_skip[skp]:
+                temp_arr = arr*np.log(10)
+                temp_dict[keys].append(temp_arr)
+            else:
+                temp_arr = arr*np.log(.01)
+                temp_arr = temp_arr/.01
+                temp_arr = temp_arr*np.log(10)
+                temp_dict[keys].append(temp_arr)
+    return temp_dict
+def convert_energy_unit(energy_sens_array):
+    test_factor = (1/.012)*(1/(1000*1000))
+    converted = energy_sens_array * test_factor
+    return converted
+
+def write_out_dict(config2,path =''):
+    with open(path,'w') as f:
+        yaml.safe_dump(config2, f,default_flow_style=False)
 #def loop_over_six_parameter_fit(Temp_list,reaction,dictonary):
 #    k= []
 #    for temp in Temp_list:

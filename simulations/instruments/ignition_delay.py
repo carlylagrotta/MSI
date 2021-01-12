@@ -189,7 +189,7 @@ class ignition_delay(sim.Simulation):
         
         self.timehistory=copy.deepcopy(s.timeHistory)
         delay=None
-        if re.match('[Mm]ax[ -][Dd]erivative',self.target_type):
+        if re.match('^[Mm]ax[ -][Dd]erivative$',self.target_type):
             
             if re.match('[Tt]emperature',self.target):
                 
@@ -216,6 +216,7 @@ class ignition_delay(sim.Simulation):
         
         
         elif re.match('[Ss]pecific[ -][Vv]alue',self.target_type):
+           
             split_item = self.target.split(' ')
             
             if len(split_item) ==2:
@@ -226,11 +227,13 @@ class ignition_delay(sim.Simulation):
             elif re.match('[Pp]ressure',split_item[0]):
                 delay = self.ig_P_specific_value(self.timehistory, float(split_item[1]), split_item[2])
             elif not re.match('[Tt]emperature',split_item[0]) and not re.match('[Pp]ressure',split_item[0]):
+                
                 delay = self.ig_X_specific_value(self.timehistory, split_item[0], float(split_item[1]),unit = split_item[2])
        
         
        
-        elif re.match('[Mm]ax[ -][Dd]erivative[ -][Tt]angent[ -][Ii]ntercept',self.target_type):
+        elif re.match('^[Mm]ax[ -][Dd]erivative[ -][Tt]angent[ -][Ii]ntercept$',self.target_type):
+
             if re.match('[Tt]emperature',self.target):
                 delay = self.ig_dTdt_int(self.timehistory)
             elif re.match('[Pp]ressure',self.target):
@@ -262,7 +265,8 @@ class ignition_delay(sim.Simulation):
                 
         
         toc=time.time()
-        print('Simulation took '+str(round(toc-tic,9))+' seconds.')      
+        #stub
+        #print('Simulation took '+str(round(toc-tic,9))+' seconds.')      
         if re.match('[Rr][Cc][Mm]',self.fullParsedYamlFile['simulationType']):
             columns=['temperature','pressure']
             for species in self.conditions.keys():
@@ -292,6 +296,7 @@ class ignition_delay(sim.Simulation):
             data['delay']=[delay]
         #('Delay: '+str(delay))
         if self.kineticSens:  
+            #print(data)
             return data,self.kineticSensitivities
         else:
             return data,[]
@@ -353,6 +358,7 @@ class ignition_delay(sim.Simulation):
         tt=data['time'].values
         XX=data[target].values
         delay=tt[np.argmax(XX)]
+        
         
         return delay
     
@@ -438,14 +444,29 @@ class ignition_delay(sim.Simulation):
 
 
     def ig_X_specific_value(self,data,target,value,unit=''):
+        
         tt=data['time'].values
         XX=data[target].values
-        if re.match('',unit):
+        #if re.match('',unit):
+        if unit =='':
             value = value
         elif re.match('[Pp][Pp][Mm]',unit) or re.match('[Pp]arts[ -][Pp]er[ -][Mm]illion',unit):
             value = value/1e6
-        elif re.match('mol/cm^3',unit):
-            XX = np.multiply(data['pressure']/(data['temperature']*(ct.gas_constant/1000)).values, XX)
+        #elif re.match('mol/cm^3',unit):
+        elif unit == 'mol/cm^3':
+            temperature_matrix = data['temperature'].values
+            pressure_matrix = data['pressure'].values
+            species_array = data[target].values
+            
+            concentration = np.true_divide(1,temperature_matrix.flatten())*pressure_matrix.flatten()
+            concentration *= (1/(8.314e6))*species_array.flatten()     
+            max_value_index_in_array = np.argmax(concentration) + 1
+            slice_concentration = concentration[0:max_value_index_in_array]
+            slice_time = tt[0:max_value_index_in_array]
+            
+            
+            
+            
                                                  
                                                       
             
@@ -453,7 +474,7 @@ class ignition_delay(sim.Simulation):
         
         delay=[]
 
-        delay = np.interp(value,XX,tt)
+        delay = np.interp(value,slice_concentration,slice_time)
         
         return delay
     
@@ -551,10 +572,11 @@ class ignition_delay(sim.Simulation):
     def BFM(self,nominal,simulation_type = ''):
          
          sens=np.zeros(self.processor.solution.n_reactions)
-         if re.match('[Mm]ax [Dd]erivative',self.target_type):
+         if re.match('^[Mm]ax [Dd]erivative$',self.target_type):
             if re.match('[Tt]emperature',self.target):
                 
                 for i in range(self.processor.solution.n_reactions):
+                    #stub
                     print('Solving kinetic sensitivity for reaction '+str(i+1))
                     self.processor.solution.set_multiplier(1+self.dk,i)
                     if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
@@ -569,7 +591,8 @@ class ignition_delay(sim.Simulation):
             elif re.match('[Pp]ressure',self.target):
                 
                 for i in range(self.processor.solution.n_reactions):
-                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    #stub
+                    #print('Solving kinetic sensitivity for reaction '+str(i+1))
                     self.processor.solution.set_multiplier(1+self.dk,i)
                     if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
                         temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
@@ -633,11 +656,13 @@ class ignition_delay(sim.Simulation):
                     sens[i]=self.sensitivityCalculation(nominal,delay,self.dk)
                     #print(nominal,delay,sens[i])
                     self.processor.solution.set_multiplier(1.0,i)             
-         elif re.match('[Mm]ax[ -][Dd]erivative[- ][Tt]angent[ -][Ii]ntercept',self.target_type):
+         elif re.match('^[Mm]ax[ -][Dd]erivative[- ][Tt]angent[ -][Ii]ntercept$',self.target_type):
+             
             if re.match('[Tt]emperature',self.target):
                 
                 for i in range(self.processor.solution.n_reactions):
                     print('Solving kinetic sensitivity for reaction '+str(i+1))
+
                     self.processor.solution.set_multiplier(1+self.dk,i)
                     if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
                         temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
@@ -664,7 +689,9 @@ class ignition_delay(sim.Simulation):
             elif not re.match('[Tt]emperature',self.target) and not re.match('[Pp]ressure',self.target):
                 
                 for i in range(self.processor.solution.n_reactions):
-                    print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    #stub
+                    #print('Solving kinetic sensitivity for reaction '+str(i+1))
+                    #print('INSIDE HERE')
                     self.processor.solution.set_multiplier(1+self.dk,i)
                     if re.match('[Ss]hock[ -][Tt]ube',self.fullParsedYamlFile['simulationType']):
                         temp_history=copy.deepcopy(self.run_shocktube().timeHistory)
@@ -898,7 +925,52 @@ class ignition_delay_wrapper(sim.Simulation):
                     elif self.kineticSens==1 and ksens_1stIter:
                         ksens=np.vstack([ksens,temp1])                        
                         
+        elif len(self.pressures) == len(self.temperatures) and len(self.pressures)>1 and len(self.temperatures)>1 and not self.volumeTraceList :
+            print('T and P Itterate Together')
+            for i in range(len(self.temperatures)):
+                for k in range(len(self.conditions)):
+                    temp_ig=ignition_delay(pressure=self.pressures[i],
+                                                   temperature=self.temperatures[i],
+                                                   observables=self.observables,
+                                                   kineticSens=self.kineticSens,
+                                                   physicalSens=self.physicalSens,
+                                                   conditions=self.conditions[k],
+                                                   thermalBoundary=self.thermalBoundary,
+                                                   mechanicalBoundary=self.mechanicalBoundary,
+                                                   processor=self.processor,
+                                                   cti_path=self.cti_path, 
+                                                   save_physSensHistories=self.save_physSensHistories,
+                                                   moleFractionObservables=self.moleFractionObservables,
+                                                   absorbanceObservables=self.absorbanceObservables,
+                                                   concentrationObservables=self.concentrationObservables,
+                                                   fullParsedYamlFile=self.fullParsedYamlFile, 
+                                                   save_timeHistories=self.save_timeHistories,
+                                                   log_file=self.log_file,
+                                                   log_name=self.log_name,
+                                                   timeshift=self.timeshift,
+                                                   initialTime=self.initialTime,
+                                                   finalTime=self.finalTime,
+                                                   target=self.target,
+                                                   target_type=self.target_type,
+                                                   n_processors=self.n_processors)
                         
+                    a,b=temp_ig.run_single()
+                        
+                    temp=[]
+                    temp1=[]
+                    temp=copy.deepcopy(a)
+                        #print(temp)
+                    temp1=copy.deepcopy(b)
+                        #print(a)
+                    solution.append(temp)
+                        
+   
+                    if not ksens_1stIter and self.kineticSens==1:
+                        ksens=temp1
+                        ksens_1stIter=True
+                    elif self.kineticSens==1 and ksens_1stIter:
+                        ksens=np.vstack([ksens,temp1])               
+        
         else:
             for i in range(len(self.temperatures)):
                 for j in range(len(self.pressures)):
