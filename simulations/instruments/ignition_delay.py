@@ -189,7 +189,7 @@ class ignition_delay(sim.Simulation):
         
         self.timehistory=copy.deepcopy(s.timeHistory)
         delay=None
-        if re.match('[Mm]ax[ -][Dd]erivative',self.target_type):
+        if re.match('^[Mm]ax[ -][Dd]erivative$',self.target_type):
             
             if re.match('[Tt]emperature',self.target):
                 
@@ -230,7 +230,7 @@ class ignition_delay(sim.Simulation):
        
         
        
-        elif re.match('[Mm]ax[ -][Dd]erivative[ -][Tt]angent[ -][Ii]ntercept',self.target_type):
+        elif re.match('^[Mm]ax[ -][Dd]erivative[ -][Tt]angent[ -][Ii]ntercept$',self.target_type):
             if re.match('[Tt]emperature',self.target):
                 delay = self.ig_dTdt_int(self.timehistory)
             elif re.match('[Pp]ressure',self.target):
