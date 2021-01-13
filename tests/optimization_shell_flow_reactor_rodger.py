@@ -15,7 +15,7 @@ import cantera as ct
 import MSI.utilities.plotting_script as plotter
 
 
-files_to_include = [['YAML_ignition_delay_Mathieu_Tab6.yaml']]
+files_to_include = [['YAML_ignition_delay_Mathieu_Tab1.yaml']]
                     
 
                     # ['YAML_batch_reactor_Mueller_Fig2.yaml'],
