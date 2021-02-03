@@ -2100,7 +2100,7 @@ class OptMatrix(object):
         ##################################################################
         #print('RUNNING TEST')
         #X_new = np.zeros(np.shape(X_new))
-        #X_new[76] = .5
+        #X_new[860] = .5
         
         
         # print(X_new)
