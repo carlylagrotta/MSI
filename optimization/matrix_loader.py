@@ -217,6 +217,7 @@ class OptMatrix(object):
                 
                 
                 absolute_uncertainty_array = copy.deepcopy(x_dependent_a_uncertainty)
+                #Fix this to deal with 0 data.
                 absolute_uncertainty_array = np.divide(absolute_uncertainty_array,data)
                 absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
                 
@@ -824,7 +825,7 @@ class OptMatrix(object):
         self.z_matrix = Z
         self.sigma = sigma
         #print(Z.shape)
-        
+        #Z_data_Frame.to_csv('Z_out.csv',index=False)
         return Z,Z_data_Frame,sigma,active_parameters
 
 
@@ -853,7 +854,8 @@ class OptMatrix(object):
                 if observable == None:
                     pass
                 else:
-                    #if you need to add something with concentration add it here 
+                    #if you need to add something with concentration add it here
+                    print(exp_dic['experimental_data'],counter)
                     if 'ppm' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
                         if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_ppm'].values,
@@ -1437,7 +1439,7 @@ class OptMatrix(object):
         self.Y_matrix = Y
         #print(Y.shape,'Y matrix without k targets')
         #print(Y_data_Frame)
-        
+        #Y_data_Frame.to_csv('Y_data.csv',index=False)
         return Y, Y_data_Frame       
 
     def load_S(self, exp_dict_list:list,parsed_yaml_list:list,
@@ -2443,6 +2445,7 @@ class OptMatrix(object):
         ##################################################
 
         one_over_z = np.true_divide(1,z_matrix)
+        #print(Y_matrix)
         y_matrix = Y_matrix * one_over_z
         
         s_matrix = S_matrix * (one_over_z.flatten()[:,np.newaxis])
