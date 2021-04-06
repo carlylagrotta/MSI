@@ -263,6 +263,7 @@ class OptMatrix(object):
                 else:
                     if observable in exp_dic['mole_fraction_observables']:
                         ## add ppm statment here ? check if it exists? and add concentration statment below just for parcing 
+                        
                         total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['mole_fraction_relative_uncertainty'][counter],
                             exp_dic['uncertainty']['mole_fraction_absolute_uncertainty'][counter],
                             exp_dic['experimental_data'][counter][observable].values,exp_dic['experimental_data'][counter])

@@ -336,6 +336,7 @@ class Plotting(object):
                     save_timeHistories=0,
                     residence_time=exp['simulation'].fullParsedYamlFile['residence_time'],
                     moleFractionObservables = exp['simulation'].fullParsedYamlFile['moleFractionObservables'],
+                    concentrationObservables = exp['simulation'].fullParsedYamlFile['concentrationObservables'],
                     fullParsedYamlFile = exp['simulation'].fullParsedYamlFile)
         soln,temp=jsr1.run()
         
@@ -343,7 +344,7 @@ class Plotting(object):
         #print(soln)
         return soln
     
-    def plotting_observables(self,sigmas_original=[],sigmas_optimized=[],file_identifier='',filetype='.jpg'):
+    def plotting_observables(self,sigmas_original=[],sigmas_optimized=[],file_identifier='',filetype='.png'):
         
         
         
@@ -389,7 +390,7 @@ class Plotting(object):
                             # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
                         #stub
                         plt.plot([],'w' ,label= 'T:'+ str(self.exp_dict_list_original[i]['simulation'].temperature))
-                        plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressure))
+                        #plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressure))
                         key_list = []
                         for key in self.exp_dict_list_original[i]['simulation'].conditions.keys():
                             
@@ -404,7 +405,7 @@ class Plotting(object):
                         
                         #stub
                         plt.savefig(self.working_directory+'/'+'Exp_'+str(i+1)+'_'+str(observable)+'_'+str(self.exp_dict_list_original[i]['simulation'].temperature)+'K_'+sp+'.pdf', bbox_inches='tight')
-                        plt.savefig(self.working_directory+'/'+'Exp_'+str(i+1)+'_'+str(observable)+'_'+str(self.exp_dict_list_original[i]['simulation'].temperature)+'K_'+sp+'.svg', bbox_inches='tight',transparent=True)                      
+                        #plt.savefig(self.working_directory+'/'+'Exp_'+str(i+1)+'_'+str(observable)+'_'+str(self.exp_dict_list_original[i]['simulation'].temperature)+'K_'+sp+'.svg', bbox_inches='tight',transparent=True)                      
     
                         observable_counter+=1
                     elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
@@ -444,7 +445,7 @@ class Plotting(object):
                            # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
                             #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
                         
-                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+file_identifier+filetype), bbox_inches='tight',dpi=1200)
+                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+file_identifier+filetype), bbox_inches='tight',dpi=500)
                         observable_counter+=1
                     elif re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']) and re.match('[Ff]low[ -][Rr]eactor',exp['simulation_type']):
                         plt.plot(exp['simulation'].timeHistories[0]['temperature'],exp['simulation'].timeHistories[0][observable],'b',label='MSI')
@@ -539,7 +540,7 @@ class Plotting(object):
                                 plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_optimized,'b--') 
                         
                         plt.plot([],'w' ,label= 'T:'+ str(self.exp_dict_list_original[i]['simulation'].temperature))
-                        plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressure))
+                        #plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressure))
                         key_list = []
                         for key in self.exp_dict_list_original[i]['simulation'].conditions.keys():
                             
@@ -554,7 +555,7 @@ class Plotting(object):
                         
                         #stub
                         plt.savefig(self.working_directory+'/'+'Exp_'+str(i+1)+'_'+str(observable)+'_'+str(self.exp_dict_list_original[i]['simulation'].temperature)+'K_'+sp+'.pdf', bbox_inches='tight')
-                        plt.savefig(self.working_directory+'/'+'Exp_'+str(i+1)+'_'+str(observable)+'_'+str(self.exp_dict_list_original[i]['simulation'].temperature)+'K_'+sp+'.svg', bbox_inches='tight',transparent=True)
+                        #plt.savefig(self.working_directory+'/'+'Exp_'+str(i+1)+'_'+str(observable)+'_'+str(self.exp_dict_list_original[i]['simulation'].temperature)+'K_'+sp+'.svg', bbox_inches='tight',transparent=True)
                     
 
 
@@ -592,8 +593,47 @@ class Plotting(object):
                             #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
                             #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
                         
-                        #plt.savefig(self.working_directory+'/'+'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf', bbox_inches='tight',dpi=1000)                     
-                    observable_counter+=1                        
+                        plt.savefig(self.working_directory+'/'+'Experiment_'+str(i+1)+'_'+str(observable)+'.png', bbox_inches='tight',dpi=1000)                     
+                        observable_counter+=1 
+                    elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
+                        nominal=self.run_jsr(self.exp_dict_list_original[i],self.nominal_cti)
+                        
+                        MSI_model=self.run_jsr(exp,self.new_cti)
+                        plt.plot(MSI_model['temperature'],MSI_model[observable]*1e6,'b',label='MSI')
+                        plt.plot(nominal['temperature'],nominal[observable]*1e6,'r',label= "$\it{A priori}$ model")
+                        plt.plot(exp['experimental_data'][observable_counter]['Temperature'],exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data')
+                        plt.xlabel('Temperature (K)')
+                        plt.ylabel('ppm '+''+str(observable))
+                        plt.title('Experiment_'+str(i+1))
+                        
+                        if bool(sigmas_optimized) == True:
+                            
+                            high_error_optimized = np.exp(sigmas_optimized[i][observable_counter])
+                            print(high_error_optimized)
+                            high_error_optimized = np.multiply(high_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values)
+                            low_error_optimized = np.exp(sigmas_optimized[i][observable_counter]*-1)
+                            low_error_optimized = np.multiply(low_error_optimized,exp['simulation'].timeHistories[0][observable].dropna().values)
+                            #plt.figure()
+                            if len(high_error_optimized)>1 and len(low_error_optimized) > 1:
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],high_error_optimized*1e6,'b--')
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized*1e6,'b--')
+                            else:
+                                print(high_error_optimized,observable,exp['simulation'].timeHistories[0][observable].dropna().values)
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],  high_error_optimized,'rX')
+                                plt.plot(exp['experimental_data'][observable_counter]['Temperature'],low_error_optimized,'bX')
+                            
+                            
+                            
+                            #high_error_original = np.exp(sigmas_original[i][observable_counter])
+                           # high_error_original = np.multiply(high_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            #low_error_original = np.exp(sigmas_original[i][observable_counter]*-1)
+                            #low_error_original = np.multiply(low_error_original,self.exp_dict_list_original[i]['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
+                            #plt.figure()
+                           # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
+                            #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
+                        
+                        plt.savefig(os.path.join(self.working_directory,'Experiment_'+str(i+1)+'_'+str(observable)+file_identifier+filetype), bbox_inches='tight',dpi=100)
+                        observable_counter+=1                                           
                 if observable in exp['ignition_delay_observables']:
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
                         if len(exp['simulation'].temperatures)>1:
@@ -653,7 +693,7 @@ class Plotting(object):
                                # plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,  high_error_original,'r--')
                                 #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
 
-                            plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressures))
+                            #plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressures))
                             key_list = []
                             for key in self.exp_dict_list_original[i]['simulation'].fullParsedYamlFile['conditions_to_run'][0].keys():
                                # ['simulation'].fullParsedYamlFile['conditions_to_run']
@@ -748,7 +788,7 @@ class Plotting(object):
                     #start here
                     
                     plt.plot([],'w' ,label= 'T:'+ str(self.exp_dict_list_original[i]['simulation'].temperature))
-                    plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressure))
+                    #plt.plot([],'w', label= 'P:'+ str(self.exp_dict_list_original[i]['simulation'].pressure))
                     for key in self.exp_dict_list_original[i]['simulation'].conditions.keys():                        
                         plt.plot([],'w',label= key+': '+str(self.exp_dict_list_original[i]['simulation'].conditions[key]))
                         
