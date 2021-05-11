@@ -2,15 +2,10 @@
 """
 Created on Thu Sep 17 14:33:39 2020
 
-@author: Skoron
+@author: Mark Barbet
 """
 
 import sys, os
-sys.path.append('../../') #get rid of this at some point with central test script or when package is built
-#sys.path.append('C:\\Users\\Skoron\\Desktop')
-os.chdir('../../')
-#print(os.getcwd())
-#import sys
 import fire
 import MSI.optimization.optimization_shell as shell
 import MSI.utilities.plotting_script as plotter
