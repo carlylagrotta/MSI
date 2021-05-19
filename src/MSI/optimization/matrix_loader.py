@@ -2578,21 +2578,52 @@ class Adding_Target_Values(meq.Master_Equation):
         gas = ct.Solution(exp_dict_list[0]['simulation'].processor.cti_path)
         #print(gas.rea)
         diff_in_ks_for_Y = []
-        for i,reaction in enumerate(target_reactions): 
-                #ask about the mixture composition
-            if target_press[i] == 0:
-                pressure = 1e-9
-            else:
-                pressure = target_press[i]
-            if bath_gas[i] !=0:
-                gas.TPX = target_temp[i],pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}
-
-            else:
-                gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
-            reaction_number_in_cti = reactions_in_cti_file.index(reaction)
-            k = gas.forward_rate_constants[reaction_number_in_cti]
-            k = k*1000
-            
+        for i,reaction in enumerate(target_reactions):
+            index=gas.reaction_equations().index(reaction)
+            units_reaction_types=['ElementaryReaction',
+                                  'PlogReaction',
+                                  'ChebyshevReaction']
+            if type(gas.reaction(index)).__name__ in units_reaction_types:
+                coeff_sum = sum(gas.reaction(index).reactants.values())
+                    #ask about the mixture composition
+                if target_press[i] == 0:
+                    pressure = 1e-9
+                else:
+                    pressure = target_press[i]
+                if bath_gas[i] !=0:
+                    gas.TPX = target_temp[i],pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}
+    
+                else:
+                    gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
+                reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+                k = gas.forward_rate_constants[reaction_number_in_cti]
+                if coeff_sum==1:
+                    k=k
+                if coeff_sum==2:
+                    k = k*1000
+                if coeff_sum==3:
+                    k=k*1000000
+            elif type(gas.reaction(index)).__name__ == 'ThreeBodyReaction' or type(gas.reaction(index)).__name__ =='FalloffReaction':
+                coeff_sum = sum(gas.reaction(index).reactants.values())
+                    #ask about the mixture composition
+                if target_press[i] == 0:
+                    pressure = 1e-9
+                else:
+                    pressure = target_press[i]
+                if bath_gas[i] !=0:
+                    gas.TPX = target_temp[i],pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}
+    
+                else:
+                    gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
+                reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+                k = gas.forward_rate_constants[reaction_number_in_cti]
+                if coeff_sum==1:
+                    k=k
+                if coeff_sum==2:
+                    k = k*1000
+                if coeff_sum==3:
+                    k=k*1000000
+                '''Make sure to address issue of mixture specification in pressure dependent rates'''
                 #check and make sure we are subtracting in the correct order 
 
             difference = np.log(target_k[i]) - np.log(k)

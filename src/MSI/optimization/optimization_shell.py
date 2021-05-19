@@ -401,7 +401,29 @@ class MSI_optimization(object):
 
         self.updating_files(loop_counter=loop_counter)
         
+    def get_raw_matrices(self):
+        self.append_working_directory()
+        #every loop run this, probably not?
+        self.establish_processor(loop_counter=0)
+        self.parsing_yaml_files(loop_counter = 0)
+
         
+        #if loop_counter == 0:
+        original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
+        self.original_experimental_conditions_local = original_experimental_conditions_local
+            
+
+            #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
+        
+        
+        self.running_simulations(loop_counter=0)
+        
+        if self.master_equation_flag == True:
+            self.master_equation_s_matrix_building(loop_counter=0)
+            #need to add functionality to update with the surgate model or drop out of loop
+        self.building_matrices(loop_counter=0)
+        if bool(self.k_target_values_csv):
+            self.adding_k_target_values()
         
     def multiple_runs(self,loops):
         X_list = []
