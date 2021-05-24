@@ -11,6 +11,7 @@ import MSI.simulations.instruments.ignition_delay as ig
 import MSI.simulations.instruments.flow_reactor as fr
 import pandas as pd
 import numpy as np
+import os
 
 #acts as front end to the rest of the system
 
@@ -550,6 +551,12 @@ class Optimization_Utility(object):
                     fullParsedYamlFile = experiment_dictionary)
         
         soln,ksen=jet_stirred_reactor.run()
+        for i,species in enumerate(experiment_dictionary['observables']):
+            #print(os.path.split(experiment_dictionary['moleFractionCsvFiles']))
+            tempsoln=pd.DataFrame(columns=('Temperature',species))
+            tempsoln['Temperature']=soln['temperature']
+            tempsoln[species]=soln[species]
+            tempsoln.to_csv(os.path.join(os.path.split(experiment_dictionary['moleFractionCsvFiles'][i])[0],'jsr_simulation_data_'+species+'.csv'),index=False)
     
         int_ksens_exp_mapped= jet_stirred_reactor.map_and_interp_ksens()
         tsoln=jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)
