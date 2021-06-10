@@ -856,7 +856,7 @@ class OptMatrix(object):
                     pass
                 else:
                     #if you need to add something with concentration add it here
-                    print(exp_dic['experimental_data'],counter)
+                    #print(exp_dic['experimental_data'],counter)
                     if 'ppm' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
                         if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_ppm'].values,
