@@ -17,10 +17,10 @@ import pandas as pd
 #outfile='C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\N2O_AR\\glar_comp_lam_2027.csv'
 
 #outfile2='C:\\Users\\HP USER\\Google Drive\\Burke Group\\JSR Experiments\\N2O_AR\\glar_comp_lam_2027_ksens.csv'
-test_p=pr.Processor('C:\\Users\\Skoron\\Desktop\\MSI\\data\\N2O\\glarborg_updated.cti')
+test_p=pr.Processor('C:\\Users\\HP USER\\Google Drive\\Burke Group\\Codes\\Mechanisms\\Lamoreaux\\lam.cti')
 jsr1 = jsr.JSR_multiTemp_steadystate(volume=8.2e-5,pressure=1.02069,
-                         temperatures=np.arange(900,1100,10),
-                         observables=['NO'],
+                         temperatures=[1050],
+                         observables=['N2'],
                          kineticSens=1,
 						 physicalSens=0,
                          conditions={'N2O':0.045,'Ar':0.955},
@@ -32,6 +32,13 @@ jsr1 = jsr.JSR_multiTemp_steadystate(volume=8.2e-5,pressure=1.02069,
 
 tic=time.time()						 
 solution,ksens=jsr1.run()
+abs_ksens=np.abs(ksens)
+
+sens_data=pd.DataFrame(columns=['Reactions','ksens','abs'])
+sens_data['ksens']=ksens.flatten()
+sens_data['abs']=abs_ksens.flatten()
+sens_data['Reactions']=test_p.solution.reaction_equations()
+sens_data.sort_values(by='abs',ascending=False,inplace=True)
 # tempsens=ksens[10,:,:].flatten()
 # sens=pd.DataFrame(columns=['Rxn','NO'])
 # sens['NO']=tempsens

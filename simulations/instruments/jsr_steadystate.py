@@ -209,7 +209,8 @@ class JSR_steadystate(sim.Simulation):
         if bool(self.observables) and self.kineticSens==1:
             for i in range(gas.n_reactions):
                 stirredReactor.add_sensitivity_reaction(i)
-        reactorNetwork.rtol_sensitivity=0.00001
+        reactorNetwork.rtol_sensitivity=0.0000001
+        reactorNetwork.atol_sensitivity=0.00000001
         print('Sens tols:'+str(reactorNetwork.atol_sensitivity)+', '+str(reactorNetwork.rtol_sensitivity))
         # now compile a list of all variables for which we will store data
         columnNames = [stirredReactor.component_name(item) for item in range(stirredReactor.n_vars)]
