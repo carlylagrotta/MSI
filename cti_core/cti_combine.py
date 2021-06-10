@@ -17,6 +17,13 @@ from ..utilities import soln2cti_py3 as ctiw
 
 def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working_directory='',file_name=''):
     #print(MP)
+    flatten = lambda *n: (e for a in n
+        for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))  
+    #flatten master index 
+    master_index = list(flatten(master_index))
+    
+     
+    
 
     print(bool(x))
     if not original_cti:
@@ -157,18 +164,25 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
                        if NewModel.reaction(j).falloff.type=='Sri':
                            NewModel.reaction(j).falloff=NewModel.reaction(j).falloff
                    elif 'PlogReaction' in str(type(NewModel.reaction(j))):
+                       
+                       temp_rate=[]
                        for number, reactions in enumerate(NewModel.reaction(j).rates):
-                           A = NewModel.reaction(j)[number][1].pre_exponential_factor
-                           n = NewModel.reaction(j)[number][1].temperature_exponent
-                           Ea = NewModel.reaction(j)[number][1].activation_energy
-                           NewModel.reaction(j)[number][1] = ct.Arrhenius(A*np.exp(x['r'+str(j)]['A']),n+x['r'+str(j)]['n'],Ea+x['r'+str(j)]['Ea']*T)                      
-                       NewModel.reaction(j).rates=NewModel.reaction(j).rates                      
+                           A = NewModel.reaction(j).rates[number][1].pre_exponential_factor
+                           n = NewModel.reaction(j).rates[number][1].temperature_exponent
+                           Ea = NewModel.reaction(j).rates[number][1].activation_energy
+                           
+                           pressure =  NewModel.reaction(j).rates[number][0]
+                           temp_rate.append((pressure, ct.Arrhenius(A*np.exp(x['r'+str(j)]['A']),n+x['r'+str(j)]['n'],Ea+x['r'+str(j)]['Ea']*T)))
+
+                       NewModel.reaction(j).rates = temp_rate     
+                          
+                       #NewModel.reaction(j).rates=NewModel.reaction(j).rates                      
                    elif 'ChebyshevReaction' in str(type(original_mechanism.reaction(j))):
                        NewModel.reaction(j).set_parameters(NewModel.reaction(j).Tmin,NewModel.reaction(j).Tmax,NewModel.reaction(j).Pmin,NewModel.reaction(j).Pmax,NewModel.reaction(j).coeffs)
                        
                        
                except:
-                   #print ('we are in the except statment in marks code',j)
+                   print ('we are in the except statment in marks code',j)
                    if 'ThreeBodyReaction' in str(type(NewModel.reaction(j))):
                        NewModel.reaction(j).rate=NewModel.reaction(j).rate
                    elif 'ElementaryReaction' in str(type(NewModel.reaction(j))):

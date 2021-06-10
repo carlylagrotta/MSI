@@ -344,8 +344,15 @@ class OptMatrix(object):
         active_parameters = []
         reaction_uncertainty = pd.read_csv(reaction_uncertainty)
         
+        #Flatten master equation reaction list 
+        flatten = lambda *n: (e for a in n
+            for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))        
+        
+        flattened_master_equation_reaction_list = list(flatten(master_equation_reaction_list))  
+        
+        
         if master_equation_flag:
-            for reaction in master_equation_reaction_list:
+            for reaction in flattened_master_equation_reaction_list:
                 index = reaction_uncertainty.loc[reaction_uncertainty['Reaction'] == reaction].index[0]
                 reaction_uncertainty = reaction_uncertainty.drop([index])
                 
@@ -395,17 +402,54 @@ class OptMatrix(object):
 
         
         
-        if master_equation_flag ==True:
+        
+        if master_equation_flag == True:
             master_equation_uncertainty = []
-            for col in master_equation_uncertainty_df:
-                master_equation_uncertainty.append(list(master_equation_uncertainty_df[col].dropna().values))
+            for i,reaction in enumerate(master_equation_reaction_list):
+                if type(reaction)==str:
+                    master_equation_uncertainty.append(list(master_equation_uncertainty_df[reaction].dropna().values))
+
+                elif type(reaction)==tuple:
+                    column_headers = master_equation_uncertainty_df.columns.to_list()
+                    for sub_reaction in reaction:
+                        if sub_reaction in column_headers:
+                            master_equation_uncertainty.append(list(master_equation_uncertainty_df[sub_reaction].dropna().values))        
+        
+        
+        
+        
+        # if master_equation_flag ==True:
+        #     master_equation_uncertainty = []
+        #     for col in master_equation_uncertainty_df:
+        #         master_equation_uncertainty.append(list(master_equation_uncertainty_df[col].dropna().values))
                 
             
-            for i,reaction in enumerate(master_equation_uncertainty):
-                for j,uncer in enumerate(reaction):
-                    Z_data_Frame.append('R'+'_'+str(i)+'_'+'P'+str(j))
-                    active_parameters.append(master_equation_reaction_list[i]+'_P_'+str(j))
-                    #active_parameters.append('R'+'_'+str(i)+'_'+'P'+str(j))
+        if master_equation_flag == True:
+            
+            for i,reaction in enumerate(master_equation_reaction_list):
+                if type(reaction)==str:
+                    for j,paramter in enumerate(master_equation_uncertainty_df[reaction].dropna()):
+                        Z_data_Frame.append(str(reaction)+'_'+'P'+'_'+str(j))
+                        active_parameters.append(master_equation_reaction_list[i]+'_P_'+str(j))
+                
+                elif type(reaction)==tuple:
+                    column_headers = master_equation_uncertainty_df.columns.to_list()
+                    for sub_reaction in reaction:
+                        if sub_reaction in column_headers:
+                            for j,paramter in enumerate(master_equation_uncertainty_df[sub_reaction].dropna()):
+                                Z_data_Frame.append(str(reaction)+'_'+'P'+'_'+str(j))    
+                                active_parameters.append(str(master_equation_reaction_list[i])+'_P_'+str(j))
+            
+            
+            
+            # for i,reaction in enumerate(master_equation_uncertainty):
+            #     for j,uncer in enumerate(reaction):
+            #         Z_data_Frame.append('R'+'_'+str(i)+'_'+'P'+str(j))
+            #         #This might not look right in the data frame but we can try
+            #         #stub
+            #         active_parameters.append(master_equation_reaction_list[i]+'_P_'+str(j))
+                    
+           
             ##check this 
             
             master_equation_uncertainty = [item for sublist in master_equation_uncertainty for item in sublist]
@@ -824,7 +868,8 @@ class OptMatrix(object):
         self.z_matrix = Z
         self.sigma = sigma
         #print(Z.shape)
-        
+        #Z_data_Frame.to_csv('/Users/carlylagrotta/Desktop/Zdf.csv')
+
         return Z,Z_data_Frame,sigma,active_parameters
 
 
@@ -839,7 +884,7 @@ class OptMatrix(object):
         
         def natural_log_difference(experiment,model):
             natural_log_diff = np.log(np.array(experiment)) - np.log(np.array(model))
-
+            
             return natural_log_diff
         
         Y = []
@@ -971,9 +1016,17 @@ class OptMatrix(object):
             
             # add in a conditional statment for if there is master equation data
             #which is getting included in the simulation
+            
+            
+            
+        #Flatten master equation reaction list 
+        flatten = lambda *n: (e for a in n
+            for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))        
+        
+        flattened_master_equation_reaction_list = list(flatten(master_equation_reactions))              
 
         if master_equation_flag ==True:
-            A_n_Ea_length = int((len(reactions_in_cti_file) - len(master_equation_reactions))*3)            
+            A_n_Ea_length = int((len(reactions_in_cti_file) - len(flattened_master_equation_reaction_list))*3)            
             number_of_molecular_parameters_list = []
             for col in master_equation_uncertainty_df:
                 number_of_molecular_parameters_list.append(len(master_equation_uncertainty_df[col].dropna().values))
@@ -1001,10 +1054,26 @@ class OptMatrix(object):
         for variable in range(A_n_Ea_length//3):
             Y_data_Frame.append('Ea'+'_'+str(variable))
             
+        
+        #make this the order of master equation list
         if master_equation_flag == True:
-            for i,value in enumerate(number_of_molecular_parameters_list):
-                for j,parameter in enumerate(range(value)):
-                    Y_data_Frame.append('R'+'_'+str(i)+'P'+'_'+str(j))
+            for i,reaction in enumerate(master_equation_reactions):
+                if type(reaction)==str:
+                    for j,paramter in enumerate(master_equation_uncertainty_df[reaction].dropna()):
+                        Y_data_Frame.append(str(reaction)+'_P'+'_'+str(j))
+                elif type(reaction)==tuple:
+                    column_headers = master_equation_uncertainty_df.columns.to_list()
+                    for sub_reaction in reaction:
+                        if sub_reaction in column_headers:
+                            for j,paramter in enumerate(master_equation_uncertainty_df[sub_reaction].dropna()):
+                                Y_data_Frame.append(str(reaction)+'_P'+'_'+str(j))
+                        
+            
+        
+        # if master_equation_flag == True:
+        #     for i,value in enumerate(number_of_molecular_parameters_list):
+        #         for j,parameter in enumerate(range(value)):
+        #             Y_data_Frame.append('R'+'_'+str(i)+'P'+'_'+str(j))
                
             
         
@@ -1431,13 +1500,13 @@ class OptMatrix(object):
                 
         for x in range(num_ind_pert_coef):
             Y_data_Frame.append('Sigma'+'_'+str(x))
-
+        
         
         Y_data_Frame = pd.DataFrame({'value': Y_data_Frame,'ln_difference': Y.reshape((Y.shape[0],))})  
         self.Y_matrix = Y
         #print(Y.shape,'Y matrix without k targets')
-        #print(Y_data_Frame)
         
+        #Y_data_Frame.to_csv('/Users/carlylagrotta/Desktop/Ydf.csv')
         return Y, Y_data_Frame       
 
     def load_S(self, exp_dict_list:list,parsed_yaml_list:list,
@@ -1936,7 +2005,10 @@ class OptMatrix(object):
                 
                
 ######################################################################################################################################################
-
+        flatten = lambda *n: (e for a in n
+            for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))        
+        
+        flattened_master_equation_reaction_list = list(flatten(master_equation_reactions)) 
                 
         #assembling the S matrix from the individual experiments 
         #master_equation = False
@@ -1946,7 +2018,7 @@ class OptMatrix(object):
             N_k = np.hsplit(S_ksens,3)[1]
             Ea_k  = np.hsplit(S_ksens,3)[2]
             
-            number_of_master_equation_reactions = len(master_equation_reactions)
+            number_of_master_equation_reactions = len(flattened_master_equation_reaction_list)
             
             A_k = A_k[:,:-number_of_master_equation_reactions]
             N_k = N_k[:,:-number_of_master_equation_reactions]
@@ -2100,7 +2172,7 @@ class OptMatrix(object):
         ##################################################################
         #print('RUNNING TEST')
         #X_new = np.zeros(np.shape(X_new))
-        #X_new[860] = .5
+        #X_new[79] = .01
         
         
         # print(X_new)
@@ -2119,11 +2191,15 @@ class OptMatrix(object):
        # X_new[873,0] = .01
        # print("X_NEW")       
         ################################################################        
+        flatten = lambda *n: (e for a in n
+            for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))        
+        
+        flattened_master_equation_reaction_list = list(flatten(master_equation_reactions))         
         
         X_new = list(X_new.flatten())            
         if exp_dict_list[0]['simulation'].kineticSens ==1:
             
-            value1 = 3*(number_of_reactions - len(master_equation_reactions))
+            value1 = 3*(number_of_reactions - len(flattened_master_equation_reaction_list))
             
                
             AsNsEas = X_new[:value1]
@@ -2154,10 +2230,28 @@ class OptMatrix(object):
         # might need to fix this based on how lei is passing me information, check in notebook
         
         if master_equation_flag == True:
-            number_of_molecular_parameters_list = []
-            for col in master_equation_uncertainty_df:
-                number_of_molecular_parameters_list.append(len(master_equation_uncertainty_df[col].dropna().values))
+            # number_of_molecular_parameters_list = []
+            # for col in master_equation_uncertainty_df:
+            #     number_of_molecular_parameters_list.append(len(master_equation_uncertainty_df[col].dropna().values))
                 
+            
+            number_of_molecular_parameters_list = []
+
+            for i,reaction in enumerate(master_equation_reactions):
+                if type(reaction)==str:
+                    number_of_molecular_parameters_list.append(len(list(master_equation_uncertainty_df[reaction].dropna().values)))
+
+                elif type(reaction)==tuple:
+                    column_headers = master_equation_uncertainty_df.columns.to_list()
+                    for sub_reaction in reaction:
+                        if sub_reaction in column_headers:
+                            number_of_molecular_parameters_list.append(len(list(master_equation_uncertainty_df[sub_reaction].dropna().values)))     
+
+
+
+                
+                
+            
             sum_of_moleular_paramters = sum(number_of_molecular_parameters_list)
             value2 = sum_of_moleular_paramters     
             deltaXmolecularParams = X_new[value1:(value1+value2)]
@@ -2179,11 +2273,14 @@ class OptMatrix(object):
                 for j,value in enumerate(reaction):
                     temp.append('Paramter_'+str(j)+'_Update')
                 list_of_mp.append(temp)
+                
+                
+                
             inner_dict_temp = [dict(zip(list_of_mp[x],molecular_paramters_by_reaction[x])) for x in range(len(molecular_paramters_by_reaction))]
             inner_dict_temp_2 = dict(zip(master_equation_reactions,inner_dict_temp))
                     
             kinetic_paramter_dict.update(inner_dict_temp_2)
-
+            #its possible this kinetic paramters dict might break
             
            
        
@@ -2558,7 +2655,10 @@ class Adding_Target_Values(meq.Master_Equation):
         
          
         
-    def target_values_Y(self,target_value_csv,exp_dict_list:list,Y_data_Frame):
+    def target_values_Y(self,target_value_csv,
+                        exp_dict_list:list,
+                        Y_data_Frame,
+                        master_equation_reactions):
         import cantera as ct
         Y_df_list = []
         Y_values = []
@@ -2572,30 +2672,328 @@ class Adding_Target_Values(meq.Master_Equation):
         bath_gas = target_value_csv['M']
         reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
         gas = ct.Solution(exp_dict_list[0]['simulation'].processor.cti_path)
-        #print(gas.rea)
+        
         diff_in_ks_for_Y = []
+        
+        
+        def check_if_M_in_reactants(list_to_append_to,
+                                    gas,
+                                    reactants_in_target_reactions,
+                                    reverse_reactants_in_target_reaction):
+            
+            if reverse_reactants_in_target_reaction !=None:
+                for reaction_number_in_cti_file in range(gas.n_reactions):
+                    if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
+                        gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
+                        gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                        gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' (+M)' or 
+                        gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'  or 
+                        gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' + M') : 
+                            list_to_append_to.append(reactions_in_cti_file[reaction_number_in_cti_file])
+                            
+            elif reverse_reactants_in_target_reaction==None:
+                for reaction_number_in_cti_file in range(gas.n_reactions):
+                    if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
+                        gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
+                        gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                        gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'): 
+                            list_to_append_to.append(reactions_in_cti_file[reaction_number_in_cti_file])  
+  
+            return list_to_append_to
+        
+        
         for i,reaction in enumerate(target_reactions): 
                 #ask about the mixture composition
-            if target_press[i] == 0:
-                pressure = 1e-9
-            else:
-                pressure = target_press[i]
-            if bath_gas[i] !=0:
-                gas.TPX = target_temp[i],pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}
+            #if reaction not in flattened_linked_channel_reactions:
+                
+            if '*' not in reaction and reaction != 'More Complex Combination Rule' and '(+)' not in reaction:
+                index_in_cti_file = gas.reaction_equations().index(reaction)
+                units_reaction_types=['ElementaryReaction',
+                                  'PlogReaction',
+                                  'ChebyshevReaction',
+                                  'ThreeBodyReaction',
+                                  'FalloffReaction']
+                coeff_sum = sum(gas.reaction(index_in_cti_file).reactants.values())
+                
+                if target_press[i] == 0:
+                    pressure = 1e-9
+                else:
+                    pressure = target_press[i]
+                if bath_gas[i] !=0:
+                    gas.TPX = target_temp[i],pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}
+    
+                else:
+                    gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
+                reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+                k = gas.forward_rate_constants[reaction_number_in_cti]
+                
+                if coeff_sum==1:
+                    k = k
+                elif coeff_sum==2:
+                    k=k*1000
+                elif coeff_sum==3:
+                    k=k*1000000
+                
+                    #check and make sure we are subtracting in the correct order 
+    
+                difference = np.log(target_k[i]) - np.log(k)
+    
+                diff_in_ks_for_Y.append(difference)
+                Y_df_list.append(reaction)
+                Y_values.append(difference)
+                
+            #elif reaction in flattened_linked_channel_reactions:
+            elif '*' in reaction and reaction != 'More Complex Combination Rule' and '/' not in reaction:
+                reactions_in_cti_file_with_these_reactants = []
+                #might be a more comprehensive way to do this 
+                            
+                                
+                
+                reactants_in_target_reactions = reaction.split('<=>')[0].rstrip()
+                reverse_reactants_in_target_reaction=None
+                if len(reactants_in_target_reactions.split('+'))>1:
+                    reverse_reactants_in_target_reaction = reactants_in_target_reactions.split('+')
+                    temp = reverse_reactants_in_target_reaction[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction[0]
+                    temp = temp.lstrip()
+                    temp = temp.rstrip()
+                    reverse_reactants_in_target_reaction = temp
+                
+                for reaction_number_in_cti_file in range(gas.n_reactions):
+                    if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction:                        
+                        reactions_in_cti_file_with_these_reactants.append(reactions_in_cti_file[reaction_number_in_cti_file])
+                    
+                reactions_in_cti_file_with_these_reactants =  check_if_M_in_reactants(reactions_in_cti_file_with_these_reactants,
+                                        gas,
+                                        reactants_in_target_reactions,
+                                        reactants_in_target_reactions)
+                if target_press[i] == 0:
+                    pressure = 1e-9
+                else:
+                    pressure = target_press[i]
+                if bath_gas[i] !=0:
+                    gas.TPX = target_temp[i],pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}
+    
+                else:
+                    gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
+                    
+                tottal_k = []  
+                
+                for secondary_reaction in reactions_in_cti_file_with_these_reactants:
+                    reaction_number_in_cti = reactions_in_cti_file.index(secondary_reaction)
+                    coeff_sum = sum(gas.reaction(reaction_number_in_cti).reactants.values())
+                    k = gas.forward_rate_constants[reaction_number_in_cti]
+                    if coeff_sum==1:
+                        k=k
+                    elif coeff_sum==2:
+                        k = k*1000
+                    elif coeff_sum==3:
+                        k= k*1000000
+                    tottal_k.append(k)
+                
+                    #check and make sure we are subtracting in the correct order 
+                k=sum(tottal_k)    
+                difference = np.log(target_k[i]) - np.log(k)
+    
+                diff_in_ks_for_Y.append(difference)
+                #I guess i could append the tuple 
+                Y_df_list.append(reaction)
+                Y_values.append(difference)                  
 
-            else:
-                gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
-            reaction_number_in_cti = reactions_in_cti_file.index(reaction)
-            k = gas.forward_rate_constants[reaction_number_in_cti]
-            k = k*1000
-            
-                #check and make sure we are subtracting in the correct order 
+            elif  '/' in reaction:
+                reactants_in_numerator = reaction.split('/')[0].rstrip()
+                reactants_in_numerator = reactants_in_numerator.lstrip()
+                
+                reactants_in_denominator = reaction.split('/')[1].rstrip()
+                reactants_in_denominator = reactants_in_denominator.lstrip()
+                
+                reactions_in_cti_file_with_these_reactants_numerator = []
+                reactions_in_cti_file_with_these_reactants_denominator = []
+                #take back here
+                if '*' in reactants_in_numerator:
+                    reactants_in_target_reactions_numerator = reactants_in_numerator.split('<=>')[0].rstrip()
+                    reverse_reactants_in_target_reaction_in_numerator=None
+                    if len(reactants_in_target_reactions_numerator.split('+'))>1:
+                        reverse_reactants_in_target_reaction_in_numerator = reactants_in_target_reactions_numerator.split('+')
+                        temp = reverse_reactants_in_target_reaction_in_numerator[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction_in_numerator[0]
+                        temp = temp.lstrip()
+                        temp = temp.rstrip()
+                        reverse_reactants_in_target_reaction_in_numerator = temp
+                    
+                    for reaction_number_in_cti_file in range(gas.n_reactions):
+                        if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions_numerator or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction_in_numerator:                        
+                            reactions_in_cti_file_with_these_reactants_numerator.append(reactions_in_cti_file[reaction_number_in_cti_file])
+                            
+                            
+                    reactions_in_cti_file_with_these_reactants_numerator =  check_if_M_in_reactants(reactions_in_cti_file_with_these_reactants_numerator,
+                                        gas,
+                                        reactants_in_target_reactions_numerator,
+                                        reverse_reactants_in_target_reaction_in_numerator)         
+                else:
+                    #need to figure out how to split addition of reactions 
+                    if '(+)' not in reactants_in_numerator:
+                        reactions_in_cti_file_with_these_reactants_numerator.append(reactants_in_numerator)
+                    else:
+                        list_of_reactions_in_numerator = reactants_in_numerator.split('(+)')
+                        list_of_reactions_in_numerator_cleaned=[]
+                        for reaction in list_of_reactions_in_numerator:
+                            reaction = reaction.rstrip()
+                            reaction = reaction.lstrip()
+                            list_of_reactions_in_numerator_cleaned.append(reaction)
+                        
+                        reactions_in_cti_file_with_these_reactants_numerator  =    list_of_reactions_in_numerator_cleaned                    
+                    
+                    
 
-            difference = np.log(target_k[i]) - np.log(k)
+                if '*' in reactants_in_denominator:
+                    
+                    
 
-            diff_in_ks_for_Y.append(difference)
-            Y_df_list.append(reaction)
-            Y_values.append(difference)
+                    reactants_in_target_reactions_denominator = reactants_in_denominator.split('<=>')[0].rstrip()
+                    reverse_reactants_in_target_reaction_in_denominator=None
+                    if len(reactants_in_target_reactions_denominator.split('+'))>1:
+                        reverse_reactants_in_target_reaction_in_denominator = reactants_in_target_reactions_denominator.split('+')
+                        temp = reverse_reactants_in_target_reaction_in_denominator[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction_in_denominator[0]
+                        temp = temp.lstrip()
+                        temp = temp.rstrip()
+                        reverse_reactants_in_target_reaction_in_denominator = temp
+                    
+                    for reaction_number_in_cti_file in range(gas.n_reactions):
+                        if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions_denominator or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction_in_denominator:                        
+                            reactions_in_cti_file_with_these_reactants_denominator.append(reactions_in_cti_file[reaction_number_in_cti_file])
+                    
+                
+                
+                    reactions_in_cti_file_with_these_reactants_denominator =  check_if_M_in_reactants(reactions_in_cti_file_with_these_reactants_denominator,
+                                        gas,
+                                        reactants_in_target_reactions_denominator,
+                                        reverse_reactants_in_target_reaction_in_denominator)
+                
+                
+                
+                else:
+                    #need to figure out how to split addition of reactions 
+                    if '(+)' not in reactants_in_denominator:
+                        reactions_in_cti_file_with_these_reactants_denominator.append(reactants_in_denominator)
+                    
+                    else:
+                        list_of_reactions_in_denominator = reactants_in_denominator.split('(+)')
+                        list_of_reactions_in_denominator_cleaned=[]
+                        for reaction in list_of_reactions_in_denominator:
+                            reaction = reaction.rstrip()
+                            reaction = reaction.lstrip()
+                            list_of_reactions_in_denominator_cleaned.append(reaction)
+                        
+                        reactions_in_cti_file_with_these_reactants_denominator  =    list_of_reactions_in_denominator_cleaned
+                            
+                            
+
+                
+                if target_press[i] == 0:
+                    pressure = 1e-9
+                else:
+                    pressure = target_press[i]
+                if bath_gas[i] !=0:
+                    gas.TPX = target_temp[i],pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}
+    
+                else:
+                    gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
+                    
+                tottal_k_numerator = []    
+                for secondary_reaction in reactions_in_cti_file_with_these_reactants_numerator:
+                    reaction_number_in_cti = reactions_in_cti_file.index(secondary_reaction)
+                    coeff_sum = sum(gas.reaction(reaction_number_in_cti).reactants.values())
+                    k = gas.forward_rate_constants[reaction_number_in_cti]
+                    
+                    if coeff_sum==1:
+                        k=k
+                    elif coeff_sum==2:
+                        k = k*1000
+                    elif coeff_sum==3:
+                        k = k*1000000
+                    tottal_k_numerator.append(k)
+                
+                    #check and make sure we are subtracting in the correct order 
+                k_numerator=sum(tottal_k_numerator)
+                
+                tottal_k_denominator = []    
+                for secondary_reaction in reactions_in_cti_file_with_these_reactants_denominator:
+                    reaction_number_in_cti = reactions_in_cti_file.index(secondary_reaction)
+                    coeff_sum = sum(gas.reaction(reaction_number_in_cti).reactants.values())
+                    k = gas.forward_rate_constants[reaction_number_in_cti]
+                    if coeff_sum==1:
+                        k=k
+                    elif coeff_sum==2:
+                        k = k*1000
+                    elif coeff_sum==3:
+                        k = k*1000000
+                    tottal_k_denominator.append(k)                
+                
+                k_denominator=sum(tottal_k_denominator)
+                
+                k = k_numerator/k_denominator
+                difference = np.log(target_k[i]) - np.log(k)
+                #print(k_numerator,k_denominator)
+                ##print(target_k[i],k)
+    
+                diff_in_ks_for_Y.append(difference)
+                #I guess i could append the tuple 
+                Y_df_list.append(reaction)
+                Y_values.append(difference)                 
+                
+                
+                    
+            elif  '(+)' in reaction and '/' not in reaction and '*' not in reaction: 
+                list_of_reactions = reaction.split('(+)')
+                list_of_reactions_cleaned=[]
+                for reaction in list_of_reactions:
+                    reaction = reaction.rstrip()
+                    reaction = reaction.lstrip()
+                    list_of_reactions_cleaned.append(reaction)
+                        
+                reactions_in_cti_file_with_these_reactants  =    list_of_reactions_cleaned                
+                if target_press[i] == 0:
+                    pressure = 1e-9
+                else:
+                    pressure = target_press[i]
+                if bath_gas[i] !=0:
+                    gas.TPX = target_temp[i],pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}
+    
+                else:
+                    gas.TPX = target_temp[i],pressure*101325,{'Ar':.99}
+                    
+                tottal_k = []  
+                
+                for secondary_reaction in reactions_in_cti_file_with_these_reactants:
+                    reaction_number_in_cti = reactions_in_cti_file.index(secondary_reaction)
+                    coeff_sum = sum(gas.reaction(reaction_number_in_cti).reactants.values())
+                    k = gas.forward_rate_constants[reaction_number_in_cti]
+                    if coeff_sum==1:
+                        k=k
+                    elif coeff_sum==2:
+                        k = k*1000
+                    elif coeff_sum==3:
+                        k= k*1000000
+                    tottal_k.append(k)
+                
+                    #check and make sure we are subtracting in the correct order 
+                k=sum(tottal_k)    
+                difference = np.log(target_k[i]) - np.log(k)
+    
+                diff_in_ks_for_Y.append(difference)
+                #I guess i could append the tuple 
+                Y_df_list.append(reaction)
+                Y_values.append(difference)  
+
+
+                
+                
+            elif reaction == 'More Complex Combination Rule': 
+                print('do someting else ')                   
+                
+                
+                
+                
+                
             
         k_targets_for_y = np.array(diff_in_ks_for_Y)
         k_targets_for_y = k_targets_for_y.reshape((k_targets_for_y.shape[0],1))
@@ -2634,7 +3032,6 @@ class Adding_Target_Values(meq.Master_Equation):
         z_data_Frame = z_data_Frame.append(Z_data_Frame_temp, ignore_index=True)    
         return k_targets_for_z,sigma,z_data_Frame
     
-
     def target_values_for_S(self,target_value_csv,
                             exp_dict_list,
                             S_matrix,
@@ -2648,22 +3045,222 @@ class Adding_Target_Values(meq.Master_Equation):
             target_temp = target_value_csv['temperature']
             target_press = target_value_csv['pressure']
             target_k = target_value_csv['k']
+            bath_gas = target_value_csv['M']
             reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
             number_of_reactions_in_cti = len(reactions_in_cti_file)
+            gas = ct.Solution(exp_dict_list[0]['simulation'].processor.cti_path)
             As = []
             Ns =  []
             Eas = []
                 
+            flatten = lambda *n: (e for a in n
+                for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))  
+            flattened_master_equation_reaction_list = list(flatten(master_equation_reaction_list))
+            
+            coupled_reaction_list = []
+            list_of_reaction_tuples = []
+            for reaction in master_equation_reaction_list:
+                if type(reaction)==tuple:
+                    list_of_reaction_tuples.append(reaction)
+                    for secondary_reaction in reaction:
+                        coupled_reaction_list.append(secondary_reaction)
+                        
+                        
+                        
+            def reactants_in_master_equation_reactions(flattened_master_equation_reaction_list):
+                reactants = []
+                for me_reaction in flattened_master_equation_reaction_list:
+                    reactants_in_master_equation_reaction = me_reaction.split('<=>')[0].rstrip()
+                    reactants.append(reactants_in_master_equation_reaction)
+    
+                    if len(reactants_in_master_equation_reaction.split('+')) >1:
+                        reverse_reactants_in_target_reaction = reactants_in_master_equation_reaction.split('+')
+                        
+                        temp = reverse_reactants_in_target_reaction[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction[0]
+                        temp = temp.lstrip()
+                        temp = temp.rstrip()
+                        reverse_reactants_in_target_reaction = temp
+                        reactants.append(reverse_reactants_in_target_reaction)
+                return reactants            
+            
+            master_equation_reactants_and_reverse_reactants = reactants_in_master_equation_reactions(flattened_master_equation_reaction_list)
+            #print(master_equation_reactants_and_reverse_reactants)
+            
+            
+            
+            
+            def calculate_weighting_factor_summation(rate_constant_list,gas,temperature,Press,bath_gas):
+                if Press == 0:
+                    pressure = 1e-9
+                else:
+                    pressure = Press
+                    
+                if bath_gas !=0:
+                    gas.TPX = temperature,pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}   
+                else:
+                    gas.TPX = temperature,pressure*101325,{'Ar':.99}
+                
+                tottal_k = []    
+                original_rc_dict = {}
+                for reaction in rate_constant_list:
+                    reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+                    coeff_sum = sum(gas.reaction(reaction_number_in_cti).reactants.values())
 
+                    k = gas.forward_rate_constants[reaction_number_in_cti]
+                    if coeff_sum==1:
+                        k=k
+                    elif coeff_sum==2:
+                        k = k*1000
+                    elif coeff_sum==3:
+                        k = k*1000000
+                    original_rc_dict[reaction] = k
+                    tottal_k.append(k)
+                    
+                            
+                                #check and make sure we are subtracting in the correct order 
+                k_summation=sum(tottal_k)    
+                
+                weighting_factor_dict = {}
+                for reaction in rate_constant_list:
+                    weighting_factor_dict[reaction] = original_rc_dict[reaction] / k_summation
+                    
+                return weighting_factor_dict
+            
+            def calculate_weighting_factor_summation_with_denominator(numerator_rate_constant_list,denominator_rate_constant_list,gas,temperature,Press,bath_gas):
+                if Press == 0:
+                    pressure = 1e-9
+                else:
+                    pressure = Press
+                    
+                if bath_gas !=0:
+                    gas.TPX = temperature,pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}   
+                else:
+                    gas.TPX = temperature,pressure*101325,{'Ar':.99}
+                
+                tottal_k_numerator = []    
+                original_rc_dict = {}
+                for reaction in numerator_rate_constant_list:
+                    reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+                    coeff_sum = sum(gas.reaction(reaction_number_in_cti).reactants.values())
+
+                    k = gas.forward_rate_constants[reaction_number_in_cti]
+                    if coeff_sum==1:
+                        k=k
+                    elif coeff_sum==2:
+                        k = k*1000
+                    elif coeff_sum==3:
+                        k = k*1000000
+                    original_rc_dict[reaction] = k
+                    tottal_k_numerator.append(k)
+                    
+                            
+                                #check and make sure we are subtracting in the correct order 
+                k_summation_numerator=sum(tottal_k_numerator)    
+                
+                weighting_factor_dict_numerator = {}
+                for reaction in numerator_rate_constant_list:
+                    weighting_factor_dict_numerator[reaction] = original_rc_dict[reaction] / k_summation_numerator
+
+                tottal_k_denominator = []    
+                original_rc_dict = {}
+                for reaction in denominator_rate_constant_list:
+                    reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+                    coeff_sum = sum(gas.reaction(reaction_number_in_cti).reactants.values())
+
+                    k = gas.forward_rate_constants[reaction_number_in_cti]
+                    if coeff_sum==1:
+                        k=k
+                    elif coeff_sum==2:
+                        k = k*1000
+                    elif coeff_sum==3:
+                        k = k*1000000
+                    original_rc_dict[reaction] = k
+                    tottal_k_denominator.append(k)
+                    
+                            
+                                #check and make sure we are subtracting in the correct order 
+                k_summation_denominator=sum(tottal_k_denominator)    
+                
+                weighting_factor_dict_denominator = {}
+                for reaction in denominator_rate_constant_list:
+                    weighting_factor_dict_denominator[reaction] = -(original_rc_dict[reaction] / k_summation_denominator)
+
+                
+                reactions_in_common = weighting_factor_dict_numerator.keys() &  weighting_factor_dict_denominator.keys()
+                
+                weighting_factor_dict = {}
+                for reaction in reactions_in_common:
+                    weighting_factor_dict[reaction] = weighting_factor_dict_numerator[reaction] + weighting_factor_dict_denominator[reaction]
+                
+                for reaction in weighting_factor_dict_numerator.keys():
+                    if reaction in reactions_in_common:
+                        pass
+                    else:
+                        weighting_factor_dict[reaction] = weighting_factor_dict_numerator[reaction]
+                        
+                for reaction in weighting_factor_dict_denominator.keys():
+                    if reaction in reactions_in_common:
+                        pass
+                    else:
+                        weighting_factor_dict[reaction] = weighting_factor_dict_denominator[reaction]
+
+
+                    
+                return weighting_factor_dict            
+            
+            
+            def add_tuple_lists(nested_list,master_euqation_reactions_list):
+                if any(isinstance(x, tuple) for x in master_euqation_reactions_list) == False:
+                
+                    return nested_list
+                else:
+                    all_tuple_summations = []
+                    indexes_that_need_to_be_removed = []
+                    indexes_to_replace_with = []
+                    counter = 0
+                    for i,reaction in enumerate(master_euqation_reactions_list):
+                        if type(reaction) == str:
+                            counter+=1
+                            
+                        elif type(reaction) == tuple:
+                            tuple_sublist=[]
+                            indexes_to_replace_with.append(counter)
+                            for j,secondary_reaction in enumerate(reaction):
+                                tuple_sublist.append(np.array(nested_list[counter])) 
+                                if j!= 0:
+                                    indexes_that_need_to_be_removed.append(counter)
+                                counter+=1
+                            sum_of_tupe_sublist = list(sum(tuple_sublist))
+                            all_tuple_summations.append(sum_of_tupe_sublist)
+                    
+                    new_nested_list = copy.deepcopy(nested_list)
+                    for i,replacment in enumerate(indexes_to_replace_with):  
+                        new_nested_list[replacment] = all_tuple_summations[i]
+                    
+                    new_nested_list = [x for i,x in enumerate(new_nested_list) if i not in indexes_that_need_to_be_removed]
+            
+            
+                    return new_nested_list            
+            
+            
+            
+            
+            
+            
             
             def create_empty_nested_reaction_list():
                 
                 
-                nested_reaction_list = [[] for x in range(len(master_equation_reaction_list))]
-                for reaction in master_equation_reaction_list:
+                nested_reaction_list = [[] for x in range(len(flattened_master_equation_reaction_list))]
+                
+                for reaction in flattened_master_equation_reaction_list:
                     for i,MP in enumerate(master_equation_sensitivites[reaction]):
-                        nested_reaction_list[master_equation_reaction_list.index(reaction)].append(0)
-                return nested_reaction_list      
+                        nested_reaction_list[flattened_master_equation_reaction_list.index(reaction)].append(0)
+                        
+                return nested_reaction_list   
+            
+            
+
             
             
             def create_tuple_list(array_of_sensitivities):
@@ -2671,88 +3268,1297 @@ class Adding_Target_Values(meq.Master_Equation):
                 for ix,iy in np.ndindex(array_of_sensitivities.shape):
                     tuple_list.append((ix,iy))
                 return tuple_list
+            
+            def check_if_M_in_reactants(list_to_append_to,
+                                        gas,
+                                        reactants_in_target_reactions,
+                                        reverse_reactants_in_target_reaction):
+                if reverse_reactants_in_target_reaction !=None:
+                    for reaction_number_in_cti_file in range(gas.n_reactions):
+                        if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
+                            gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
+                            gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                            gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' (+M)' or 
+                            gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'  or 
+                            gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' + M') : 
+                                list_to_append_to.append(reactions_in_cti_file[reaction_number_in_cti_file])
+                                
+                elif reverse_reactants_in_target_reaction==None:
+                    for reaction_number_in_cti_file in range(gas.n_reactions):
+                        if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
+                            gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
+                            gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                            gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'): 
+                                list_to_append_to.append(reactions_in_cti_file[reaction_number_in_cti_file])  
+      
+                return list_to_append_to
+            
+            
+            
+            
+            def check_if_reaction_is_theory_or_not(reaction):
                 
+                is_reaction_in_master_equation_list = False
+                is_reacton_in_normal_reaction_list = False
+                if '/' in reaction:
+                    #check numerator and denominator
+                    reactants_in_numerator = reaction.split('/')[0].rstrip()
+                    reactants_in_numerator = reactants_in_numerator.lstrip()
+                    
+                    reactants_in_denominator = reaction.split('/')[1].rstrip()
+                    reactants_in_denominator = reactants_in_denominator.lstrip()
+
+                    if '*' in reactants_in_numerator and '(+)' not in reactants_in_numerator:
+
+                        reactions_in_numerator_with_these_reactants = []
+                        #might be a more comprehensive way to do this 
+                        reactants_in_target_reactions = reaction.split('<=>')[0].rstrip()
+                        reverse_reactants_in_target_reaction=None
+                        if len(reactants_in_target_reactions.split('+'))>1:
+                            reverse_reactants_in_target_reaction = reactants_in_target_reactions.split('+')
+                            temp = reverse_reactants_in_target_reaction[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction[0]
+                            temp = temp.lstrip()
+                            temp = temp.rstrip()
+                            reverse_reactants_in_target_reaction = temp
+                        
+                        for reaction_number_in_cti_file in range(gas.n_reactions):
+                            if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction:                        
+                                reactions_in_numerator_with_these_reactants.append(reactions_in_cti_file[reaction_number_in_cti_file]) 
+                        
+                        reactions_in_numerator_with_these_reactants =  check_if_M_in_reactants(reactions_in_numerator_with_these_reactants,
+                                        gas,
+                                        reactants_in_target_reactions,
+                                        reverse_reactants_in_target_reaction)
+                        
+                        
+                        
+                        
+
+
+
+                    elif '(+)' in reactants_in_numerator and '*' not in reactants_in_numerator:
+                        list_of_reactions_in_numerator = reactants_in_numerator.split('(+)')
+                        list_of_reactions_in_numerator_cleaned=[]
+                        for reaction in list_of_reactions_in_numerator:
+                            reaction = reaction.rstrip()
+                            reaction = reaction.lstrip()
+                            list_of_reactions_in_numerator_cleaned.append(reaction)
+                                
+                        reactions_in_numerator_with_these_reactants  =    list_of_reactions_in_numerator_cleaned 
+
+
+
+
+                    elif '(+)' in reactants_in_numerator and '*' in reactants_in_numerator:
+                        print('need to make rule')
+                    else:
+                        reactions_in_numerator_with_these_reactants = []
+                        reactions_in_numerator_with_these_reactants.append(reactants_in_numerator)
+
+                    
+
+
+
+
+                    #check reactants in numerator 
+                    if '*' in reactants_in_denominator and '(+)' not in reactants_in_denominator:
+                        reactions_in_denominator_with_these_reactants = []
+                        #might be a more comprehensive way to do this 
+                        reactants_in_target_reactions = reaction.split('<=>')[0].rstrip()
+                        reverse_reactants_in_target_reaction=None
+                        if len(reactants_in_target_reactions.split('+'))>1:
+                            reverse_reactants_in_target_reaction = reactants_in_target_reactions.split('+')
+                            temp = reverse_reactants_in_target_reaction[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction[0]
+                            temp = temp.lstrip()
+                            temp = temp.rstrip()
+                            reverse_reactants_in_target_reaction = temp
+                        
+                        for reaction_number_in_cti_file in range(gas.n_reactions):
+                            if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction:                        
+                                reactions_in_denominator_with_these_reactants.append(reactions_in_cti_file[reaction_number_in_cti_file]) 
+
+                        reactions_in_denominator_with_these_reactants =  check_if_M_in_reactants(reactions_in_denominator_with_these_reactants,
+                                                                gas,
+                                                                reactants_in_target_reactions,
+                                                                reverse_reactants_in_target_reaction)
+
+
+
+
+                    elif '(+)' in reactants_in_denominator and '*' not in reactants_in_denominator:
+                        list_of_reactions_in_denominator = reactants_in_numerator.split('(+)')
+                        list_of_reactions_in_denominator_cleaned=[]
+                        for reaction in list_of_reactions_in_denominator:
+                            reaction = reaction.rstrip()
+                            reaction = reaction.lstrip()
+                            list_of_reactions_in_denominator_cleaned.append(reaction)
+                                
+                        reactions_in_denominator_with_these_reactants  =    list_of_reactions_in_numerator_cleaned 
+                    
+
+                    elif '(+)' in reactants_in_denominator and '*' in reactants_in_denominator:
+                        print('need to make rule')
+                    else:
+                        reactions_in_denominator_with_these_reactants=[]
+                        reactions_in_denominator_with_these_reactants.append(reactants_in_denominator)
+
+                    
+                    reactions_in_numerator_and_denominator = reactions_in_numerator_with_these_reactants+reactions_in_denominator_with_these_reactants
+                    for reaction_check in reactions_in_numerator_and_denominator:
+                        if reaction_check in flattened_master_equation_reaction_list:
+                            is_reaction_in_master_equation_list = True
+                        else:
+                            is_reacton_in_normal_reaction_list = True
+
+                    if is_reaction_in_master_equation_list == True and is_reacton_in_normal_reaction_list==False:
+                        return 'master_equations_only', (reactions_in_numerator_with_these_reactants,reactions_in_denominator_with_these_reactants)
+                    elif is_reaction_in_master_equation_list == False and is_reacton_in_normal_reaction_list==True:
+                        return 'not_master_equations_only', (reactions_in_numerator_with_these_reactants,reactions_in_denominator_with_these_reactants)
+                    elif is_reaction_in_master_equation_list == True and is_reacton_in_normal_reaction_list==True:
+                        return 'mixed', (reactions_in_numerator_with_these_reactants,reactions_in_denominator_with_these_reactants)
+
+
+
+                elif '(+)' in reaction and '/' not in reaction and '*' not in reaction:
+                    list_of_reactions = reaction.split('(+)')
+                    list_of_reactions_cleaned=[]
+                    for reaction in list_of_reactions:
+                        reaction = reaction.rstrip()
+                        reaction = reaction.lstrip()
+                        list_of_reactions_cleaned.append(reaction)
+                                
+                    reactions_in_cti_file_with_these_reactants  =    list_of_reactions_cleaned
+
+                    for reaction_check in reactions_in_cti_file_with_these_reactants:
+                        if reaction_check in flattened_master_equation_reaction_list:
+                            is_reaction_in_master_equation_list = True
+                        else:
+                            is_reacton_in_normal_reaction_list = True
+
+
+                    if is_reaction_in_master_equation_list == True and is_reacton_in_normal_reaction_list==False:
+                        return 'master_equations_only', (reactions_in_cti_file_with_these_reactants,)
+                    elif is_reaction_in_master_equation_list == False and is_reacton_in_normal_reaction_list==True:
+                        return 'not_master_equations_only', (reactions_in_cti_file_with_these_reactants,)
+                    elif is_reaction_in_master_equation_list == True and is_reacton_in_normal_reaction_list==True:
+                        return 'mixed', (reactions_in_cti_file_with_these_reactants,)
+
+
+
+                elif '*' in reaction and '/' not in reaction and '(+)' not in reaction:
+
+                    reactions_in_cti_file_with_these_reactants = []
+                        #might be a more comprehensive way to do this 
+                    reactants_in_target_reactions = reaction.split('<=>')[0].rstrip()
+                    reverse_reactants_in_target_reaction=None
+                    if len(reactants_in_target_reactions.split('+'))>1:
+                        reverse_reactants_in_target_reaction = reactants_in_target_reactions.split('+')
+                        temp = reverse_reactants_in_target_reaction[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction[0]
+                        temp = temp.lstrip()
+                        temp = temp.rstrip()
+                        reverse_reactants_in_target_reaction = temp
+                    
+                    for reaction_number_in_cti_file in range(gas.n_reactions):
+                        if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction:                        
+                            reactions_in_cti_file_with_these_reactants.append(reactions_in_cti_file[reaction_number_in_cti_file]) 
+                            
+                    reactions_in_cti_file_with_these_reactants =  check_if_M_in_reactants(reactions_in_cti_file_with_these_reactants,
+                                                                gas,
+                                                                reactants_in_target_reactions,
+                                                                reverse_reactants_in_target_reaction)
+
+                    for reaction_check in reactions_in_cti_file_with_these_reactants:
+                        if reaction_check in flattened_master_equation_reaction_list:
+                            is_reaction_in_master_equation_list = True
+                        else:
+                            is_reacton_in_normal_reaction_list = True
+
+
+                    if is_reaction_in_master_equation_list == True and is_reacton_in_normal_reaction_list==False:
+                        return 'master_equations_only', (reactions_in_cti_file_with_these_reactants,)
+                    elif is_reaction_in_master_equation_list == False and is_reacton_in_normal_reaction_list==True:
+                        return 'not_master_equations_only', (reactions_in_cti_file_with_these_reactants,)
+                    elif is_reaction_in_master_equation_list == True and is_reacton_in_normal_reaction_list==True:
+                        return 'mixed', (reactions_in_cti_file_with_these_reactants,)
+
+
+
+                else:
+                    #normal reaction 
+                    reactions_in_cti_file_with_these_reactants=[]
+                    for reaction_check in [reaction]:
+                        if reaction_check in flattened_master_equation_reaction_list:
+                            is_reaction_in_master_equation_list = True
+                        else:
+                            is_reacton_in_normal_reaction_list = True
+
+                    reactions_in_cti_file_with_these_reactants.append(reaction)
+                    if is_reaction_in_master_equation_list == True and is_reacton_in_normal_reaction_list==False:
+                        return 'master_equations_only', (reactions_in_cti_file_with_these_reactants,)
+                    elif is_reaction_in_master_equation_list == False and is_reacton_in_normal_reaction_list==True:
+                        return 'not_master_equations_only', (reactions_in_cti_file_with_these_reactants,)
+                    elif is_reaction_in_master_equation_list == True and is_reacton_in_normal_reaction_list==True:
+                        return 'mixed', (reactions_in_cti_file_with_these_reactants,)
+
+
+
+
             MP_stack = []
             target_values_to_stack =  []
             for i,reaction in enumerate(target_reactions):
-                if reaction in master_equation_reaction_list:
-                    nested_reaction_list = create_empty_nested_reaction_list()
-                    for j, MP_array in enumerate(master_equation_sensitivites[reaction]):
-                        tuple_list = create_tuple_list(MP_array)
-                        temp = []
-                        counter = 0    
-                        for sensitivity in np.nditer(MP_array,order='C'):
-                            k = tuple_list[counter][0]
-                            l= tuple_list[counter][1]
-                            counter +=1
-                               #need to add reduced p and t, and check these units were using to map
-                                
-                            #these might not work
-                            
-                            t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
-                            
-                            if target_press[i] ==0:
-                                target_press_new = 1e-9
-                            else:
-                                target_press_new=target_press[i]
-                            p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
-                            #these might nowt work 
-                            single_alpha_map = t_alpha*p_alpha*sensitivity
-                            temp.append(single_alpha_map)
-                        temp =sum(temp)
-                        #should there be an = temp here 
-                        #nested_reaction_list[master_equation_reaction_list.index(reaction)][j]=temp
-                        nested_reaction_list[master_equation_reaction_list.index(reaction)][j]=temp
+                type_of_reaction, reaction_tuple = check_if_reaction_is_theory_or_not(reaction)
 
-                    temp2  = nested_reaction_list
-                    flat_list = [item for sublist in temp2 for item in sublist]
-                    #print(flat_list)
-                    MP_stack.append(nested_reaction_list)
-                    flat_list = np.array(flat_list)
-                    flat_list = flat_list.reshape((1,flat_list.shape[0])) 
-                    target_values_to_stack.append(flat_list)
-                
-                else:
-                    #this will need to get fixed if we want to handle all reactions as chevy
-                    A_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
-    
-                    N_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
-                    Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(master_equation_reaction_list)))
-                        #decide if this mapping is correct             
-                    A_temp[0,reactions_in_cti_file.index(reaction)] = 1
-                    N_temp [0,reactions_in_cti_file.index(reaction)] = np.log(target_temp[i])
-                    Ea_temp[0,reactions_in_cti_file.index(reaction)] = (-1/target_temp[i])
+
+                if type_of_reaction== 'master_equations_only':
                     
-                    As.append(A_temp)
-                    Ns.append(N_temp)
-                    Eas.append(Ea_temp)
-                    A_temp = A_temp.reshape((1,A_temp.shape[1]))
-                    N_temp = N_temp.reshape((1,N_temp.shape[1]))
-                    Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
-                    target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp)))
+                    if len(reaction_tuple)==1:
+                        if len(reaction_tuple[0])==1:
+                            
+                            
+
+                            nested_reaction_list = create_empty_nested_reaction_list()
+                            for j, MP_array in enumerate(master_equation_sensitivites[reaction]):
+                                tuple_list = create_tuple_list(MP_array)
+                                temp = []
+                                counter = 0    
+                                for sensitivity in np.nditer(MP_array,order='C'):
+                                    k = tuple_list[counter][0]
+                                    l= tuple_list[counter][1]
+                                    counter +=1
+                                       #need to add reduced p and t, and check these units were using to map
+                                        
+                                    #these might not work
+                                    
+                                    t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                    
+                                    if target_press[i] ==0:
+                                        target_press_new = 1e-9
+                                    else:
+                                        target_press_new=target_press[i]
+                                    p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                    #these might nowt work 
+                                    single_alpha_map = t_alpha*p_alpha*sensitivity
+                                    temp.append(single_alpha_map)
+                                temp =sum(temp)
+                                #should there be an = temp here 
+                                #nested_reaction_list[master_equation_reaction_list.index(reaction)][j]=temp
+                                nested_reaction_list[flattened_master_equation_reaction_list.index(reaction)][j]=temp
+                                
+                            
+                            temp2  = nested_reaction_list
+                            
+                            temp2_summed = add_tuple_lists(temp2,master_equation_reaction_list)
+                            
+                            flat_list = [item for sublist in temp2_summed for item in sublist]
+                            #print(flat_list)
+                            MP_stack.append(nested_reaction_list)
+                            flat_list = np.array(flat_list)
+                            flat_list = flat_list.reshape((1,flat_list.shape[0])) 
+                            target_values_to_stack.append(flat_list)
+
+                        elif len(reaction_tuple[0])>1:
+                            reactions_in_cti_file_with_these_reactants = reaction_tuple[0]
+                            weighting_factor_dictonary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
+                                                                                          gas,
+                                                                                          target_temp[i],
+                                                                                          target_press[i],
+                                                                                          bath_gas[i])
+                            nested_reaction_list = create_empty_nested_reaction_list()
+                        
+                            for secondary_reaction in reactions_in_cti_file_with_these_reactants:
+                                for j, MP_array in enumerate(master_equation_sensitivites[secondary_reaction]):
+                                    tuple_list = create_tuple_list(MP_array)
+                                    temp = []
+                                    counter = 0    
+                                    for sensitivity in np.nditer(MP_array,order='C'):
+                                        k = tuple_list[counter][0]
+                                        l= tuple_list[counter][1]
+                                        counter +=1
+                                           #need to add reduced p and t, and check these units were using to map
+                                            
+                                        #these might not work
+                                        
+                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                        
+                                        if target_press[i] ==0:
+                                            target_press_new = 1e-9
+                                        else:
+                                            target_press_new=target_press[i]
+                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                        #these might nowt work 
+                                        single_alpha_map = t_alpha*p_alpha*sensitivity
+                                        temp.append(single_alpha_map)
+                                    temp =sum(temp)
+                                    nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)][j]=temp
+                                    
+                                sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictonary[secondary_reaction])
+                                nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)] = sub_array_to_apply_weighting_factor_to
+                                
+                                
+                            temp2  = nested_reaction_list     
+                            #print('THIS IS TEMP:',temp2)
+                            temp2_summed = add_tuple_lists(temp2,master_equation_reaction_list)
+                            #print('THIS IS TEMP SUMMED:',temp2_summed)
+                            flat_list = [item for sublist in temp2_summed for item in sublist]
+                            #print(flat_list)
+                            MP_stack.append(nested_reaction_list)
+                            flat_list = np.array(flat_list)
+                            flat_list = flat_list.reshape((1,flat_list.shape[0])) 
+                            target_values_to_stack.append(flat_list)
+
+
+                    elif len(reaction_tuple)==2:
+                        reactions_in_cti_file_with_these_reactants_numerator = reaction_tuple[0]
+                        reactions_in_cti_file_with_these_reactants_denominator= reaction_tuple[1]
+
+                        weighting_factor_dictonary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
+                                                                                          reactions_in_cti_file_with_these_reactants_denominator,                 
+                                                                                          gas,
+                                                                                          target_temp[i],
+                                                                                          target_press[i],
+                                                                                          bath_gas[i])
+
+                        #now need to add to S matrix 
+                        for secondary_reaction in (reactions_in_cti_file_with_these_reactants_numerator+reactions_in_cti_file_with_these_reactants_denominator):
+                            for j, MP_array in enumerate(master_equation_sensitivites[secondary_reaction]):
+                                tuple_list = create_tuple_list(MP_array)
+                                temp = []
+                                counter = 0    
+                                for sensitivity in np.nditer(MP_array,order='C'):
+                                    k = tuple_list[counter][0]
+                                    l= tuple_list[counter][1]
+                                    counter +=1
+                                       #need to add reduced p and t, and check these units were using to map
+                                        
+                                    #these might not work
+                                    
+                                    t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                    
+                                    if target_press[i] ==0:
+                                        target_press_new = 1e-9
+                                    else:
+                                        target_press_new=target_press[i]
+                                    p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                    #these might nowt work 
+                                    single_alpha_map = t_alpha*p_alpha*sensitivity
+                                    temp.append(single_alpha_map)
+                                temp =sum(temp)
+                                nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)][j]=temp
+                                
+                            sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictonary[secondary_reaction])
+                            nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)] = sub_array_to_apply_weighting_factor_to
+                            
+                            
+                        temp2  = nested_reaction_list     
+                        #print('THIS IS TEMP:',temp2)
+                        temp2_summed = add_tuple_lists(temp2,master_equation_reaction_list)
+                        #print('THIS IS TEMP SUMMED:',temp2_summed)
+                        flat_list = [item for sublist in temp2_summed for item in sublist]
+                        #print(flat_list)
+                        MP_stack.append(nested_reaction_list)
+                        flat_list = np.array(flat_list)
+                        flat_list = flat_list.reshape((1,flat_list.shape[0])) 
+                        target_values_to_stack.append(flat_list)                        
+
+
+
+
+       
+                elif type_of_reaction== 'not_master_equations_only':
+                    if len(reaction_tuple)==1:
+                        if len(reaction_tuple[0])==1:        
+
+                            A_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+            
+                            N_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                            Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                                #decide if this mapping is correct             
+                            A_temp[0,reactions_in_cti_file.index(reaction)] = 1
+                            N_temp [0,reactions_in_cti_file.index(reaction)] = np.log(target_temp[i])
+                            Ea_temp[0,reactions_in_cti_file.index(reaction)] = (-1/target_temp[i])
+                            
+                            As.append(A_temp)
+                            Ns.append(N_temp)
+                            Eas.append(Ea_temp)
+                            A_temp = A_temp.reshape((1,A_temp.shape[1]))
+                            N_temp = N_temp.reshape((1,N_temp.shape[1]))
+                            Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+                            target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp)))
+                        
+                    
+
+
+                        elif len(reaction_tuple[0])>1:
+                            reactions_in_cti_file_with_these_reactants = reaction_tuple[0]
+
+
+                            weighting_factor_dictonary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
+                                                                                              gas,
+                                                                                              target_temp[i],
+                                                                                              target_press[i],
+                                                                                              bath_gas[i])
+                            
+                            A_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))        
+                            N_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                            Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                            
+                            for secondary_reaction in reactions_in_cti_file_with_these_reactants:
+                                #need to multiply by the weighting factor for the reaction
+                                
+                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
+                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                            As.append(A_temp)
+                            Ns.append(N_temp)
+                            Eas.append(Ea_temp)
+                            A_temp = A_temp.reshape((1,A_temp.shape[1]))
+                            N_temp = N_temp.reshape((1,N_temp.shape[1]))
+                            Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+                            target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp)))   
+
+                    elif len(reaction_tuple)==2:
+
+                        reactions_in_cti_file_with_these_reactants_numerator = reaction_tuple[0]
+                        reactions_in_cti_file_with_these_reactants_denominator= reaction_tuple[1]
+                        weighting_factor_dictonary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
+                                                                                          reactions_in_cti_file_with_these_reactants_denominator,                 
+                                                                                          gas,
+                                                                                          target_temp[i],
+                                                                                          target_press[i],
+                                                                                          bath_gas[i])
+                        
+                        A_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))        
+                        N_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                        Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                        
+                        for secondary_reaction in (reactions_in_cti_file_with_these_reactants_numerator+reactions_in_cti_file_with_these_reactants_denominator):
+                            
+                            if reaction not in flattened_master_equation_reaction_list:
+                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
+                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                
+                        
+                        As.append(A_temp)
+                        Ns.append(N_temp)
+                        Eas.append(Ea_temp)
+                        A_temp = A_temp.reshape((1,A_temp.shape[1]))
+                        N_temp = N_temp.reshape((1,N_temp.shape[1]))
+                        Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+                        target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp))) 
+
+
+
+                elif type_of_reaction== 'mixed':
+                    #need to figure out what is going in here
                     
                     
-               # might need to edit this to pass in s? and  
+                    if len(reaction_tuple) == 1:
+                        
+                        reactions_in_cti_file_with_these_reactants = reaction_tuple[0]
+                        weighting_factor_dictonary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
+                                                                                            gas,
+                                                                                            target_temp[i],
+                                                                                            target_press[i],
+                                                                                            bath_gas[i])
+                        #fill in respective lists and figure out what to do with them?
+                        
+
+                        A_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))        
+                        N_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                        Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+
+                        nested_reaction_list = create_empty_nested_reaction_list()
+
+                        for secondary_reaction in reactions_in_cti_file_with_these_reactants:
+
+                            if secondary_reaction not in flattened_master_equation_reaction_list:
+                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
+                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                  
+                            
+                            elif secondary_reaction in flattened_master_equation_reaction_list:
+                                for j, MP_array in enumerate(master_equation_sensitivites[secondary_reaction]):
+                                    tuple_list = create_tuple_list(MP_array)
+                                    temp = []
+                                    counter = 0    
+                                    for sensitivity in np.nditer(MP_array,order='C'):
+                                        k = tuple_list[counter][0]
+                                        l= tuple_list[counter][1]
+                                        counter +=1
+                                           #need to add reduced p and t, and check these units were using to map
+                                            
+                                        #these might not work
+                                        
+                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                        
+                                        if target_press[i] ==0:
+                                            target_press_new = 1e-9
+                                        else:
+                                            target_press_new=target_press[i]
+                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                        #these might nowt work 
+                                        single_alpha_map = t_alpha*p_alpha*sensitivity
+                                        temp.append(single_alpha_map)
+                                    temp =sum(temp)
+                                    nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)][j]=temp
+                                    
+                                sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictonary[secondary_reaction])
+                                nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)] = sub_array_to_apply_weighting_factor_to
+                                
+                                
+                        temp2  = nested_reaction_list     
+                        temp2_summed = add_tuple_lists(temp2,master_equation_reaction_list)
+                        flat_list = [item for sublist in temp2_summed for item in sublist]
+                        MP_stack.append(nested_reaction_list)
+                        flat_list = np.array(flat_list)
+                        flat_list = flat_list.reshape((1,flat_list.shape[0])) 
+                            
+                        master_equation_stacked = flat_list
+
+
+                        As.append(A_temp)
+                        Ns.append(N_temp)
+                        Eas.append(Ea_temp)
+                        A_temp = A_temp.reshape((1,A_temp.shape[1]))
+                        N_temp = N_temp.reshape((1,N_temp.shape[1]))
+                        Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+                        A_n_Ea_stacked = (np.hstack((A_temp,N_temp,Ea_temp))) 
+
+                        combined_master_and_A_n_Ea= np.hstack((A_n_Ea_stacked,master_equation_stacked))
+                        target_values_to_stack.append(combined_master_and_A_n_Ea)
+
+
+
+
+                    elif len(reaction_tuple) == 2:
+                        reactions_in_cti_file_with_these_reactants_numerator = reaction_tuple[0]
+                        reactions_in_cti_file_with_these_reactants_denominator = reaction_tuple[1]
+
+                        weighting_factor_dictonary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
+                                                                                          reactions_in_cti_file_with_these_reactants_denominator,                 
+                                                                                          gas,
+                                                                                          target_temp[i],
+                                                                                          target_press[i],
+                                                                                          bath_gas[i])
+                        #fill in respective lists and figure out what to do with them?
+
+                        A_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))        
+                        N_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                        Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+
+                        nested_reaction_list = create_empty_nested_reaction_list()
+
+                        for secondary_reaction in (reactions_in_cti_file_with_these_reactants_numerator+reactions_in_cti_file_with_these_reactants_denominator):
+
+                            if secondary_reaction not in flattened_master_equation_reaction_list:
+                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
+                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                  
+                            
+                            elif secondary_reaction in flattened_master_equation_reaction_list:
+                                for j, MP_array in enumerate(master_equation_sensitivites[secondary_reaction]):
+                                    tuple_list = create_tuple_list(MP_array)
+                                    temp = []
+                                    counter = 0    
+                                    for sensitivity in np.nditer(MP_array,order='C'):
+                                        k = tuple_list[counter][0]
+                                        l= tuple_list[counter][1]
+                                        counter +=1
+                                           #need to add reduced p and t, and check these units were using to map
+                                            
+                                        #these might not work
+                                        
+                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                        
+                                        if target_press[i] ==0:
+                                            target_press_new = 1e-9
+                                        else:
+                                            target_press_new=target_press[i]
+                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                        #these might nowt work 
+                                        single_alpha_map = t_alpha*p_alpha*sensitivity
+                                        temp.append(single_alpha_map)
+                                    temp =sum(temp)
+                                    nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)][j]=temp
+                                    
+                                sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictonary[secondary_reaction])
+                                nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)] = sub_array_to_apply_weighting_factor_to
+                                
+                                
+                        temp2  = nested_reaction_list     
+                        temp2_summed = add_tuple_lists(temp2,master_equation_reaction_list)
+                        flat_list = [item for sublist in temp2_summed for item in sublist]
+                        MP_stack.append(nested_reaction_list)
+                        flat_list = np.array(flat_list)
+                        flat_list = flat_list.reshape((1,flat_list.shape[0])) 
+                            
+                        master_equation_stacked = flat_list
+
+
+                        As.append(A_temp)
+                        Ns.append(N_temp)
+                        Eas.append(Ea_temp)
+                        A_temp = A_temp.reshape((1,A_temp.shape[1]))
+                        N_temp = N_temp.reshape((1,N_temp.shape[1]))
+                        Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+                        A_n_Ea_stacked = (np.hstack((A_temp,N_temp,Ea_temp))) 
+
+                        combined_master_and_A_n_Ea= np.hstack((A_n_Ea_stacked,master_equation_stacked))
+                        target_values_to_stack.append(combined_master_and_A_n_Ea)
+
+
+
+
+
+                        
+                    
+                    
             S_matrix = S_matrix
             shape_s = S_matrix.shape
             S_target_values = []
+            #print(target_values_to_stack,target_values_to_stack[0].shape)
+            #this whole part needs to be edited
             for i,row in enumerate(target_values_to_stack):
-                if target_reactions[i] in master_equation_reaction_list:
-                    zero_to_append_infront = np.zeros((1,((number_of_reactions_in_cti-len(master_equation_reaction_list))*3)))
-                    
-                    zero_to_append_behind = np.zeros((1, shape_s[1] - ((number_of_reactions_in_cti-len(master_equation_reaction_list))*3) - np.shape(row)[1] ))                
+                type_of_reaction, reaction_tuple = check_if_reaction_is_theory_or_not(target_reactions[i])
+
+                if type_of_reaction=='master_equations_only':
+                    #zero_to_append_infront = np.zeros((1,((number_of_reactions_in_cti-len(master_equation_reaction_list))*3)))
+                    zero_to_append_infront = np.zeros((1,((number_of_reactions_in_cti-len(flattened_master_equation_reaction_list))*3)))
+
+                    zero_to_append_behind = np.zeros((1, shape_s[1] - ((number_of_reactions_in_cti-len(flattened_master_equation_reaction_list))*3) - np.shape(row)[1] ))                
                     temp_array = np.hstack((zero_to_append_infront,row,zero_to_append_behind))
                     S_target_values.append(temp_array)
-                else:
+                elif type_of_reaction=='not_master_equations_only':
                     zero_to_append_behind = np.zeros((1,shape_s[1]-np.shape(row)[1]))
                     temp_array = np.hstack((row,zero_to_append_behind))
                     S_target_values.append(temp_array)
+                elif type_of_reaction=='mixed':
+                    zero_to_append_behind = np.zeros((1,shape_s[1]-np.shape(row)[1]))
+                    temp_array = np.hstack((row,zero_to_append_behind))
+                    S_target_values.append(temp_array)                   
 
 
             S_target_values = np.vstack((S_target_values))
-            #print(S_target_values.shape,'S Target values')
-            return S_target_values        
+            
+            return S_target_values
+        
+    # def target_values_for_S_old(self,target_value_csv,
+    #                         exp_dict_list,
+    #                         S_matrix,
+    #                         master_equation_reaction_list = [],
+    #                         master_equation_sensitivites = {}):
+                
+                
+                
+    #         target_value_csv = pd.read_csv(target_value_csv)
+    #         target_reactions = target_value_csv['Reaction']
+    #         target_temp = target_value_csv['temperature']
+    #         target_press = target_value_csv['pressure']
+    #         target_k = target_value_csv['k']
+    #         bath_gas = target_value_csv['M']
+    #         reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
+    #         number_of_reactions_in_cti = len(reactions_in_cti_file)
+    #         gas = ct.Solution(exp_dict_list[0]['simulation'].processor.cti_path)
+    #         As = []
+    #         Ns =  []
+    #         Eas = []
+                
+    #         flatten = lambda *n: (e for a in n
+    #             for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))  
+    #         flattened_master_equation_reaction_list = list(flatten(master_equation_reaction_list))
+            
+    #         coupled_reaction_list = []
+    #         list_of_reaction_tuples = []
+    #         for reaction in master_equation_reaction_list:
+    #             if type(reaction)==tuple:
+    #                 list_of_reaction_tuples.append(reaction)
+    #                 for secondary_reaction in reaction:
+    #                     coupled_reaction_list.append(secondary_reaction)
+                        
+                        
+                        
+    #         def reactants_in_master_equation_reactions(flattened_master_equation_reaction_list):
+    #             reactants = []
+    #             for me_reaction in flattened_master_equation_reaction_list:
+    #                 reactants_in_master_equation_reaction = me_reaction.split('<=>')[0].rstrip()
+    #                 reactants.append(reactants_in_master_equation_reaction)
+    
+    #                 if len(reactants_in_master_equation_reaction.split('+')) >1:
+    #                     reverse_reactants_in_target_reaction = reactants_in_master_equation_reaction.split('+')
+                        
+    #                     temp = reverse_reactants_in_target_reaction[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction[0]
+    #                     temp = temp.lstrip()
+    #                     temp = temp.rstrip()
+    #                     reverse_reactants_in_target_reaction = temp
+    #                     reactants.append(reverse_reactants_in_target_reaction)
+    #             return reactants            
+            
+    #         master_equation_reactants_and_reverse_reactants = reactants_in_master_equation_reactions(flattened_master_equation_reaction_list)
+    #         #print(master_equation_reactants_and_reverse_reactants)
+            
+            
+            
+            
+    #         def calculate_weighting_factor_summation(rate_constant_list,gas,temperature,Press,bath_gas):
+    #             if Press == 0:
+    #                 pressure = 1e-9
+    #             else:
+    #                 pressure = Press
+                    
+    #             if bath_gas !=0:
+    #                 gas.TPX = temperature,pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}   
+    #             else:
+    #                 gas.TPX = temperature,pressure*101325,{'Ar':.99}
+                
+    #             tottal_k = []    
+    #             original_rc_dict = {}
+    #             for reaction in rate_constant_list:
+    #                 reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+    #                 k = gas.forward_rate_constants[reaction_number_in_cti]
+    #                 k = k*1000
+    #                 original_rc_dict[reaction] = k
+    #                 tottal_k.append(k)
+                    
+                            
+    #                             #check and make sure we are subtracting in the correct order 
+    #             k_summation=sum(tottal_k)    
+                
+    #             weighting_factor_dict = {}
+    #             for reaction in rate_constant_list:
+    #                 weighting_factor_dict[reaction] = original_rc_dict[reaction] / k_summation
+                    
+    #             return weighting_factor_dict
+            
+    #         def calculate_weighting_factor_summation_with_denominator(numerator_rate_constant_list,denominator_rate_constant_list,gas,temperature,Press,bath_gas):
+    #             if Press == 0:
+    #                 pressure = 1e-9
+    #             else:
+    #                 pressure = Press
+                    
+    #             if bath_gas !=0:
+    #                 gas.TPX = temperature,pressure*101325,{'H2O':.013,'O2':.0099,'H':.0000007,'Ar':.9770993}   
+    #             else:
+    #                 gas.TPX = temperature,pressure*101325,{'Ar':.99}
+                
+    #             tottal_k_numerator = []    
+    #             original_rc_dict = {}
+    #             for reaction in numerator_rate_constant_list:
+    #                 reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+    #                 k = gas.forward_rate_constants[reaction_number_in_cti]
+    #                 k = k*1000
+    #                 original_rc_dict[reaction] = k
+    #                 tottal_k_numerator.append(k)
+                    
+                            
+    #                             #check and make sure we are subtracting in the correct order 
+    #             k_summation_numerator=sum(tottal_k_numerator)    
+                
+    #             weighting_factor_dict_numerator = {}
+    #             for reaction in numerator_rate_constant_list:
+    #                 weighting_factor_dict_numerator[reaction] = original_rc_dict[reaction] / k_summation_numerator
 
+    #             tottal_k_denominator = []    
+    #             original_rc_dict = {}
+    #             for reaction in denominator_rate_constant_list:
+    #                 reaction_number_in_cti = reactions_in_cti_file.index(reaction)
+    #                 k = gas.forward_rate_constants[reaction_number_in_cti]
+    #                 k = k*1000
+    #                 original_rc_dict[reaction] = k
+    #                 tottal_k_denominator.append(k)
+                    
+                            
+    #                             #check and make sure we are subtracting in the correct order 
+    #             k_summation_denominator=sum(tottal_k_denominator)    
+                
+    #             weighting_factor_dict_denominator = {}
+    #             for reaction in denominator_rate_constant_list:
+    #                 weighting_factor_dict_denominator[reaction] = -(original_rc_dict[reaction] / k_summation_denominator)
+
+                
+    #             reactions_in_common = weighting_factor_dict_numerator.keys() &  weighting_factor_dict_denominator.keys()
+                
+    #             weighting_factor_dict = {}
+    #             for reaction in reactions_in_common:
+    #                 weighting_factor_dict[reaction] = weighting_factor_dict_numerator[reaction] + weighting_factor_dict_denominator[reaction]
+                
+    #             for reaction in weighting_factor_dict_numerator.keys():
+    #                 if reaction in reactions_in_common:
+    #                     pass
+    #                 else:
+    #                     weighting_factor_dict[reaction] = weighting_factor_dict_numerator[reaction]
+                        
+    #             for reaction in weighting_factor_dict_denominator.keys():
+    #                 if reaction in reactions_in_common:
+    #                     pass
+    #                 else:
+    #                     weighting_factor_dict[reaction] = weighting_factor_dict_denominator[reaction]
+
+
+                    
+    #             return weighting_factor_dict            
+            
+            
+    #         def add_tuple_lists(nested_list,master_euqation_reactions_list):
+    #             if any(isinstance(x, tuple) for x in master_euqation_reactions_list) == False:
+                
+    #                 return nested_list
+    #             else:
+    #                 all_tuple_summations = []
+    #                 indexes_that_need_to_be_removed = []
+    #                 indexes_to_replace_with = []
+    #                 counter = 0
+    #                 for i,reaction in enumerate(master_euqation_reactions_list):
+    #                     if type(reaction) == str:
+    #                         counter+=1
+                            
+    #                     elif type(reaction) == tuple:
+    #                         tuple_sublist=[]
+    #                         indexes_to_replace_with.append(counter)
+    #                         for j,secondary_reaction in enumerate(reaction):
+    #                             tuple_sublist.append(np.array(nested_list[counter])) 
+    #                             if j!= 0:
+    #                                 indexes_that_need_to_be_removed.append(counter)
+    #                             counter+=1
+    #                         sum_of_tupe_sublist = list(sum(tuple_sublist))
+    #                         all_tuple_summations.append(sum_of_tupe_sublist)
+                    
+    #                 new_nested_list = copy.deepcopy(nested_list)
+    #                 for i,replacment in enumerate(indexes_to_replace_with):  
+    #                     new_nested_list[replacment] = all_tuple_summations[i]
+                    
+    #                 new_nested_list = [x for i,x in enumerate(new_nested_list) if i not in indexes_that_need_to_be_removed]
+            
+            
+    #                 return new_nested_list            
+            
+            
+            
+            
+            
+            
+            
+    #         def create_empty_nested_reaction_list():
+                
+                
+    #             nested_reaction_list = [[] for x in range(len(flattened_master_equation_reaction_list))]
+                
+    #             for reaction in flattened_master_equation_reaction_list:
+    #                 for i,MP in enumerate(master_equation_sensitivites[reaction]):
+    #                     nested_reaction_list[flattened_master_equation_reaction_list.index(reaction)].append(0)
+                        
+    #             return nested_reaction_list   
+            
+            
+
+            
+            
+    #         def create_tuple_list(array_of_sensitivities):
+    #             tuple_list = []
+    #             for ix,iy in np.ndindex(array_of_sensitivities.shape):
+    #                 tuple_list.append((ix,iy))
+    #             return tuple_list
+            
+    #         # def determine_if_reaction_is_theory_or_mix(reaction):
+    #         #     if '/' in reaction:
+    #         #         print('chek numerator and denominator')
+    #         #     elif '*' in reaction and '(+)' not in reaction:
+    #         #         print('do somtething')
+    #         #     elif '(+)' in reaction and '*' not in reaction:
+    #         #         print('do somtething')
+    #         #     elif  '(+)' in reaction and '*' in reaction:
+                    
+    #         #     return
+            
+    #         MP_stack = []
+    #         target_values_to_stack =  []
+    #         for i,reaction in enumerate(target_reactions):
+    #             if reaction in flattened_master_equation_reaction_list or reaction.split('<=>')[0].rstrip() in master_equation_reactants_and_reverse_reactants:
+    #                 #check if reaction is coupled with anything else
+                    
+    #                 #here we should check if ther was a * in the reaction
+    #                 #if no * and not a complex combination
+    #                 # if * and not a complex combination
+    #                 #if no * and is a complex combination
+    #                 if '*' not in reaction and reaction != 'More Complex Combination Rule' and '(+)' not in reaction:
+                    
+                    
+    #                     nested_reaction_list = create_empty_nested_reaction_list()
+    #                     for j, MP_array in enumerate(master_equation_sensitivites[reaction]):
+    #                         tuple_list = create_tuple_list(MP_array)
+    #                         temp = []
+    #                         counter = 0    
+    #                         for sensitivity in np.nditer(MP_array,order='C'):
+    #                             k = tuple_list[counter][0]
+    #                             l= tuple_list[counter][1]
+    #                             counter +=1
+    #                                 #need to add reduced p and t, and check these units were using to map
+                                    
+    #                             #these might not work
+                                
+    #                             t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                
+    #                             if target_press[i] ==0:
+    #                                 target_press_new = 1e-9
+    #                             else:
+    #                                 target_press_new=target_press[i]
+    #                             p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+    #                             #these might nowt work 
+    #                             single_alpha_map = t_alpha*p_alpha*sensitivity
+    #                             temp.append(single_alpha_map)
+    #                         temp =sum(temp)
+    #                         #should there be an = temp here 
+    #                         #nested_reaction_list[master_equation_reaction_list.index(reaction)][j]=temp
+    #                         nested_reaction_list[flattened_master_equation_reaction_list.index(reaction)][j]=temp
+                            
+                        
+    #                     temp2  = nested_reaction_list
+                        
+    #                     temp2_summed = add_tuple_lists(temp2,master_equation_reaction_list)
+                        
+    #                     flat_list = [item for sublist in temp2_summed for item in sublist]
+    #                     #print(flat_list)
+    #                     MP_stack.append(nested_reaction_list)
+    #                     flat_list = np.array(flat_list)
+    #                     flat_list = flat_list.reshape((1,flat_list.shape[0])) 
+    #                     target_values_to_stack.append(flat_list)
+                        
+                        
+    #                 elif '*' in reaction and reaction != 'More Complex Combination Rule' and '(+)' not in reaction:
+    #                     #figure out what reactions * ecompases and loop ove rthose reactions 
+    #                     #make sure i am applying the multiplicitive rule and confirm that derivitive
+    #                     #check here 
+    #                     #figure out which tuple i it is in and lop over htat 
+                        
+                        
+    #                     reactions_in_cti_file_with_these_reactants = []
+    #                     #might be a more comprehensive way to do this 
+    #                     reactants_in_target_reactions = reaction.split('<=>')[0].rstrip()
+    #                     reverse_reactants_in_target_reaction=None
+    #                     if len(reactants_in_target_reactions.split('+'))>1:
+    #                         reverse_reactants_in_target_reaction = reactants_in_target_reactions.split('+')
+    #                         temp = reverse_reactants_in_target_reaction[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction[0]
+    #                         temp = temp.lstrip()
+    #                         temp = temp.rstrip()
+    #                         reverse_reactants_in_target_reaction = temp
+                        
+    #                     for reaction_number_in_cti_file in range(gas.n_reactions):
+    #                         if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction:                        
+    #                             reactions_in_cti_file_with_these_reactants.append(reactions_in_cti_file[reaction_number_in_cti_file])                        
+                        
+    #                     weighting_factor_dictonary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
+    #                                                                                       gas,
+    #                                                                                       target_temp[i],
+    #                                                                                       target_press[i],
+    #                                                                                       bath_gas[i])
+                        
+
+    #                     # tuple_index = None
+    #                     # for ii,tup in enumerate(list_of_reaction_tuples):
+    #                     #     if reaction in tup:
+    #                     #         tuple_index=ii
+                        
+                        
+    #                     nested_reaction_list = create_empty_nested_reaction_list()
+                        
+    #                     for secondary_reaction in reactions_in_cti_file_with_these_reactants:
+    #                         for j, MP_array in enumerate(master_equation_sensitivites[secondary_reaction]):
+    #                             tuple_list = create_tuple_list(MP_array)
+    #                             temp = []
+    #                             counter = 0    
+    #                             for sensitivity in np.nditer(MP_array,order='C'):
+    #                                 k = tuple_list[counter][0]
+    #                                 l= tuple_list[counter][1]
+    #                                 counter +=1
+    #                                     #need to add reduced p and t, and check these units were using to map
+                                        
+    #                                 #these might not work
+                                    
+    #                                 t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                    
+    #                                 if target_press[i] ==0:
+    #                                     target_press_new = 1e-9
+    #                                 else:
+    #                                     target_press_new=target_press[i]
+    #                                 p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+    #                                 #these might nowt work 
+    #                                 single_alpha_map = t_alpha*p_alpha*sensitivity
+    #                                 temp.append(single_alpha_map)
+    #                             temp =sum(temp)
+    #                             nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)][j]=temp
+                                
+    #                         sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictonary[secondary_reaction])
+    #                         nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)] = sub_array_to_apply_weighting_factor_to
+                            
+                            
+    #                     temp2  = nested_reaction_list     
+    #                     #print('THIS IS TEMP:',temp2)
+    #                     temp2_summed = add_tuple_lists(temp2,master_equation_reaction_list)
+    #                     #print('THIS IS TEMP SUMMED:',temp2_summed)
+    #                     flat_list = [item for sublist in temp2_summed for item in sublist]
+    #                     #print(flat_list)
+    #                     MP_stack.append(nested_reaction_list)
+    #                     flat_list = np.array(flat_list)
+    #                     flat_list = flat_list.reshape((1,flat_list.shape[0])) 
+    #                     target_values_to_stack.append(flat_list)                        
+    #                     #   do something else
+    #                 elif reaction == 'More Complex Combination Rule': 
+    #                     print('do someting else ')                   
+    #             else:
+                    
+    #                 #this will need to get fixed if we want to handle all reactions as chevy
+    #                 #this needs to get edited to adress if not a master equation reaction 
+    #                 if '*' not in reaction and reaction != 'More Complex Combination Rule' and '(+)' not in reaction:
+    #                     #this might need to be the flattened list 
+    #                     #check this!
+    #                     A_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+        
+    #                     N_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+    #                     Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+    #                         #decide if this mapping is correct             
+    #                     A_temp[0,reactions_in_cti_file.index(reaction)] = 1
+    #                     N_temp [0,reactions_in_cti_file.index(reaction)] = np.log(target_temp[i])
+    #                     Ea_temp[0,reactions_in_cti_file.index(reaction)] = (-1/target_temp[i])
+                        
+    #                     As.append(A_temp)
+    #                     Ns.append(N_temp)
+    #                     Eas.append(Ea_temp)
+    #                     A_temp = A_temp.reshape((1,A_temp.shape[1]))
+    #                     N_temp = N_temp.reshape((1,N_temp.shape[1]))
+    #                     Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+    #                     target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp)))
+                        
+                        
+    #                 elif '*' in reaction and reaction != 'More Complex Combination Rule' and '/' not in reaction:
+    #                     reactions_in_cti_file_with_these_reactants = []
+    #                     #might be a more comprehensive way to do this 
+    #                     reactants_in_target_reactions = reaction.split('<=>')[0].rstrip()
+    #                     reverse_reactants_in_target_reaction = reactants_in_target_reactions.split('+')
+    #                     temp = reverse_reactants_in_target_reaction[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction[0]
+    #                     temp = temp.lstrip()
+    #                     temp = temp.rstrip()
+    #                     reverse_reactants_in_target_reaction = temp
+                        
+    #                     for reaction_number_in_cti_file in range(gas.n_reactions):
+    #                         if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction:                        
+    #                             reactions_in_cti_file_with_these_reactants.append(reactions_in_cti_file[reaction_number_in_cti_file])                        
+                        
+    #                     weighting_factor_dictonary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
+    #                                                                                       gas,
+    #                                                                                       target_temp[i],
+    #                                                                                       target_press[i],
+    #                                                                                       bath_gas[i])
+                        
+    #                     A_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))        
+    #                     N_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+    #                     Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                        
+    #                     for secondary_reaction in reactions_in_cti_file_with_these_reactants:
+    #                         #need to multiply by the weighting factor for the reaction
+                            
+    #                         A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
+    #                         N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+    #                         Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+    #                     As.append(A_temp)
+    #                     Ns.append(N_temp)
+    #                     Eas.append(Ea_temp)
+    #                     A_temp = A_temp.reshape((1,A_temp.shape[1]))
+    #                     N_temp = N_temp.reshape((1,N_temp.shape[1]))
+    #                     Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+    #                     target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp)))                        
+
+
+    #                 elif '*' in reaction and reaction != 'More Complex Combination Rule' and '/' in reaction or '(+)' in reaction:
+    #                     reactants_in_numerator = reaction.split('/')[0].rstrip()
+    #                     reactants_in_numerator = reactants_in_numerator.lstrip()
+                        
+    #                     reactants_in_denominator = reaction.split('/')[1].rstrip()
+    #                     reactants_in_denominator = reactants_in_denominator.lstrip()
+                        
+    #                     reactions_in_cti_file_with_these_reactants_numerator = []
+    #                     reactions_in_cti_file_with_these_reactants_denominator = []
+                        
+    #                     if '*' in reactants_in_numerator:
+                            
+    #                         reactants_in_target_reactions_numerator = reactants_in_numerator.split('<=>')[0].rstrip()
+    #                         reverse_reactants_in_target_reaction_in_numerator=None
+    #                         if len(reactants_in_target_reactions_numerator.split('+'))>1:
+    #                             reverse_reactants_in_target_reaction_in_numerator = reactants_in_target_reactions_numerator.split('+')
+    #                             temp = reverse_reactants_in_target_reaction_in_numerator[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction_in_numerator[0]
+    #                             temp = temp.lstrip()
+    #                             temp = temp.rstrip()
+    #                             reverse_reactants_in_target_reaction_in_numerator = temp
+                            
+    #                         for reaction_number_in_cti_file in range(gas.n_reactions):
+    #                             if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions_numerator or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction_in_numerator:                        
+    #                                 reactions_in_cti_file_with_these_reactants_numerator.append(reactions_in_cti_file[reaction_number_in_cti_file])
+    #                     else:
+    #                         if '(+)' not in reactants_in_numerator:
+    #                             reactions_in_cti_file_with_these_reactants_numerator.append(reactants_in_numerator)
+                                
+    #                         else:
+    #                             list_of_reactions_in_numerator = reactants_in_numerator.split('(+)')
+    #                             list_of_reactions_in_numerator_cleaned=[]
+    #                             for reaction in list_of_reactions_in_numerator:
+    #                                 reaction = reaction.rstrip()
+    #                                 reaction = reaction.lstrip()
+    #                                 list_of_reactions_in_numerator_cleaned.append(reaction)
+                                
+    #                             reactions_in_cti_file_with_these_reactants_numerator  =    list_of_reactions_in_numerator_cleaned 
+                                
+                        
+                        
+    #                     if '*' in reactants_in_denominator:
+    #                         reactants_in_target_reactions_denominator = reactants_in_denominator.split('<=>')[0].rstrip()
+    #                         reverse_reactants_in_target_reaction_in_denominator=None
+    #                         if len(reactants_in_target_reactions_denominator.split('+'))>1:
+    #                             reverse_reactants_in_target_reaction_in_denominator = reactants_in_target_reactions_denominator.split('+')
+    #                             temp = reverse_reactants_in_target_reaction_in_denominator[1] + ' '+ '+' +' '+ reverse_reactants_in_target_reaction_in_denominator[0]
+    #                             temp = temp.lstrip()
+    #                             temp = temp.rstrip()
+    #                             reverse_reactants_in_target_reaction_in_denominator = temp
+                            
+    #                         for reaction_number_in_cti_file in range(gas.n_reactions):
+    #                             if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions_denominator or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction_in_denominator:                        
+    #                                 reactions_in_cti_file_with_these_reactants_denominator.append(reactions_in_cti_file[reaction_number_in_cti_file])
+    #                     else:
+    #                         if '(+)' not in reactants_in_denominator:
+    #                             reactions_in_cti_file_with_these_reactants_denominator.append(reactants_in_denominator)
+    #                         else:
+    #                             list_of_reactions_in_denominator = reactants_in_denominator.split('(+)')
+    #                             list_of_reactions_in_denominator_cleaned=[]
+    #                             for reaction in list_of_reactions_in_denominator:
+    #                                 reaction = reaction.rstrip()
+    #                                 reaction = reaction.lstrip()
+    #                                 list_of_reactions_in_denominator_cleaned.append(reaction)
+                                
+    #                             reactions_in_cti_file_with_these_reactants_denominator  =    list_of_reactions_in_denominator_cleaned
+                               
+    #                     #start here 
+                        
+                        
+                        
+    #                     weighting_factor_dictonary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
+    #                                                                                       reactions_in_cti_file_with_these_reactants_denominator,                 
+    #                                                                                       gas,
+    #                                                                                       target_temp[i],
+    #                                                                                       target_press[i],
+    #                                                                                       bath_gas[i])
+                        
+    #                     A_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))        
+    #                     N_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+    #                     Ea_temp = np.zeros((1,number_of_reactions_in_cti-len(flattened_master_equation_reaction_list)))
+                        
+    #                     for secondary_reaction in (reactions_in_cti_file_with_these_reactants_numerator+reactions_in_cti_file_with_these_reactants_denominator):
+                            
+    #                         if reaction not in flattened_master_equation_reaction_list:
+    #                             A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
+    #                             N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+    #                             Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                
+                        
+    #                     As.append(A_temp)
+    #                     Ns.append(N_temp)
+    #                     Eas.append(Ea_temp)
+    #                     A_temp = A_temp.reshape((1,A_temp.shape[1]))
+    #                     N_temp = N_temp.reshape((1,N_temp.shape[1]))
+    #                     Ea_temp = Ea_temp.reshape((1,Ea_temp.shape[1]))
+    #                     target_values_to_stack.append(np.hstack((A_temp,N_temp,Ea_temp)))    
+
+
+
+
+
+                        
+                    
+                    
+    #         S_matrix = S_matrix
+    #         shape_s = S_matrix.shape
+    #         S_target_values = []
+    #         #print(target_values_to_stack,target_values_to_stack[0].shape)
+    #         #this whole part needs to be edited
+    #         for i,row in enumerate(target_values_to_stack):
+    #             #if target_reactions[i] in master_equation_reaction_list:
+    #             if target_reactions[i] in flattened_master_equation_reaction_list or reaction.split('<=>')[0].rstrip() in master_equation_reactants_and_reverse_reactants:
+    #                 #zero_to_append_infront = np.zeros((1,((number_of_reactions_in_cti-len(master_equation_reaction_list))*3)))
+    #                 zero_to_append_infront = np.zeros((1,((number_of_reactions_in_cti-len(flattened_master_equation_reaction_list))*3)))
+
+    #                 zero_to_append_behind = np.zeros((1, shape_s[1] - ((number_of_reactions_in_cti-len(flattened_master_equation_reaction_list))*3) - np.shape(row)[1] ))                
+    #                 temp_array = np.hstack((zero_to_append_infront,row,zero_to_append_behind))
+    #                 S_target_values.append(temp_array)
+    #             else:
+    #                 zero_to_append_behind = np.zeros((1,shape_s[1]-np.shape(row)[1]))
+    #                 temp_array = np.hstack((row,zero_to_append_behind))
+    #                 S_target_values.append(temp_array)
+
+
+    #         S_target_values = np.vstack((S_target_values))
+    #         #print(S_target_values.shape,'S Target values')
+    #         return S_target_values       
+
+    def preprocessing_rate_constant_target_csv(self,target_value_csv,
+                                               master_equation_reactions):
+
+            #split up the master equations into multiple data frames 
+            
+            master_equation_df_list = []
+            master_equation_df_sorted_list = []
+            df_summation_list = []
+            for reaction in master_equation_reactions:
+                if type(reaction) == tuple:
+                    master_equation_df_list.append([])
+                    master_equation_df_sorted_list.append([])            
+                    
+            df_ttl = pd.read_csv(target_value_csv)
+            counter = 0 
+            for reaction in master_equation_reactions:
+                if type(reaction) == tuple:
+                    for secondary_reaction in reaction:                
+                        temp = df_ttl.loc[df_ttl['Reaction'] == secondary_reaction]
+                        if not temp.empty:
+                            master_equation_df_list[counter].append(temp)
+                    counter +=1
+            
+            for i,lst in enumerate(master_equation_df_list):
+                for j,df in enumerate(lst):
+                    df = df.sort_values(["temperature", "pressure"], ascending = (True, True))
+                    master_equation_df_sorted_list[i].append(df)
+                    
+            for i,lst in enumerate(master_equation_df_sorted_list):
+                df_summation = pd.DataFrame()
+                df_summation['Reaction'] = lst[0]['Reaction']
+                df_summation['temperature'] = lst[0]['temperature']
+                df_summation['pressure'] = lst[0]['pressure']
+                df_summation['M'] = lst[0]['M']
+                df_summation['ln_unc_k'] = lst[0]['ln_unc_k']
+                df_summation['W'] = lst[0]['W']  
+                k_summation_list=[]
+                for j,df in enumerate(lst):
+                    k_summation_list.append(df['k'].to_numpy())
+                df_summation['k'] = sum(k_summation_list)
+                df_summation_list.append(df_summation)
+        
+            reactions_to_remove = []
+            for reaction in master_equation_reactions:
+                if type(reaction) == tuple:
+                    for secondary_reaction in reaction:
+                        reactions_to_remove.append(secondary_reaction)
+            
+            df_cleaned =   df_ttl[~df_ttl['Reaction'].isin(reactions_to_remove)]
+            
+            df_concat_list = [df_cleaned]+ df_summation_list
+            df_new_tottal = pd.concat(df_concat_list)
+            new_file_name = target_value_csv[:-4]
+            new_file_path = new_file_name+'_combined_channels.csv'
+            df_new_tottal.to_csv(new_file_path,
+                                 index=False)
+                 
+        
+            return df_new_tottal,new_file_path
+    
+    
     
     def appending_target_values(self,target_values_for_z,
                                 target_values_for_Y,

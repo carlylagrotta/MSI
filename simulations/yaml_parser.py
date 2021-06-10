@@ -229,20 +229,37 @@ class Parser(object):
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
         species_uncertainties = dict(zip(species_names,species_uncertainties))
-        observables = [x for x in mole_fraction_observables if x is not None]
+        #observables = [x for x in mole_fraction_observables if x is not None]
+
+                
+        concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']] 
+        if concentration_observables[0]!=None:
+            for i in range(len(concentration_observables)):
+                if not concentration_observables[i]:
+                    concentration_observables[i]='NO'    
+        #print(concentration_observables,len(concentration_observables))
+        observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]                
         for i in range(len(observables)):
             if not observables[i]:
-                observables[i]='NO'
+                observables[i]='NO'                
+                
+                
+                
         #print(observables)
         mole_fraction_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['mole-fraction']]
-        csv_files = [x for x in mole_fraction_csv_files if x is not None]
+        concentration_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['concentration']]
+        
+        csv_files = [x for x in (mole_fraction_csv_files+concentration_csv_files) if x is not None]
         temp_relative_uncertainty = loaded_exp['common-properties']['temperature']['relative-uncertainty']
         temp_relative_uncertainty = float(temp_relative_uncertainty)
         pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
         pressure_relative_uncertainty = float(pressure_relative_uncertainty)
         mole_fraction_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]
+        concentration_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
         volume=loaded_exp['apparatus']['reactor-volume']['value']
-        mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']]        
+        mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']] 
+        concentration_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['concentration']] 
+
         residence_time=loaded_exp['apparatus']['residence-time']['value']
         restime_relative_uncertainty=loaded_exp['apparatus']['residence-time']['relative-uncertainty']
         if loaded_absorption == {}:
@@ -259,10 +276,13 @@ class Parser(object):
                'speciesNames':species_names,
                'MoleFractions':mole_fractions,
                'moleFractionCsvFiles':mole_fraction_csv_files,
+               'concentrationCsvFiles':concentration_csv_files,
                'tempRelativeUncertainty':temp_relative_uncertainty,
                'pressureRelativeUncertainty': pressure_relative_uncertainty,
                'moleFractionAbsoluteUncertainty':mole_fraction_absolute_uncertainty,
                'moleFractionRelativeUncertainty':mole_fraction_relative_uncertainty,
+               'concentrationAbsoluteUncertainty':concentration_absolute_uncertainty,
+               'concentrationRelativeUncertainty':concentration_relative_uncertainty,               
                'csvFiles': csv_files,
                'simulationType':  simulation_type,
                'volume': volume,

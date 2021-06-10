@@ -202,7 +202,11 @@ class MSI_optimization(object):
         self.z_matrix = z_matrix
         self.sigma = sigma
         self.Y_data_frame = Y_data_frame
+        
+                
         self.z_data_frame = z_data_frame
+        
+        
         self.k_target_values_for_s = k_target_values_for_s
         return
     

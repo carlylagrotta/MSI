@@ -125,31 +125,31 @@ files_to_include = [['Hong_0.yaml'],
 #                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_14.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_14_abs.yaml'],
 #                    ['large_uncertainty_yaml/Hong_HO2_fake_data_large_uncertainty_15.yaml','large_uncertainty_yaml/Hong_HO2_fake_data_15_abs.yaml']] 
 
-#files_to_include = [['Hong_0.yaml'],
-#                    ['Hong_2.yaml'],
-#                    ['Hong_3.yaml'],
-#                    ['Hong_1.yaml'],
-#                    ['Troe_4.yaml','Troe_4_abs.yaml'],
-#                    ['Troe_5.yaml','Troe_5_abs.yaml'],
-#                    ['Troe_6.yaml','Troe_6_abs.yaml'],
-#                    ['Troe_7.yaml','Troe_7_abs.yaml'],
-#                    ['Troe_8.yaml','Troe_8_abs.yaml'],
-#                    ['Hong_HO2_fake_data_0.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_1.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_2.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_3.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_4.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_5.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_6.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_7.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_8.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_9.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_10.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_11.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_12.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_13.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_14.yaml','Hong_fake_data_fitted_abs.yaml'],
-#                    ['Hong_HO2_fake_data_15.yaml','Hong_fake_data_fitted_abs.yaml']]      
+files_to_include = [['Hong_0.yaml'],
+                    ['Hong_2.yaml'],
+                    ['Hong_3.yaml'],
+                    ['Hong_1.yaml'],
+                    ['Troe_4.yaml','Troe_4_abs.yaml'],
+                    ['Troe_5.yaml','Troe_5_abs.yaml'],
+                    ['Troe_6.yaml','Troe_6_abs.yaml'],
+                    ['Troe_7.yaml','Troe_7_abs.yaml'],
+                    ['Troe_8.yaml','Troe_8_abs.yaml'],
+                    ['Hong_HO2_fake_data_0.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_1.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_2.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_3.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_4.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_5.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_6.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_7.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_8.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_9.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_10.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_11.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_12.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_13.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_14.yaml','Hong_fake_data_new_fitted_abs.yaml'],
+                    ['Hong_HO2_fake_data_15.yaml','Hong_fake_data_new_fitted_abs.yaml']]      
 
 
 
@@ -179,7 +179,7 @@ files_to_include = [['Hong_0.yaml'],
 #                     ['Hong_HO2_fake_data_13.yaml','Hong_fake_data_fitted_abs.yaml'],
 #                     ['Hong_HO2_fake_data_14.yaml','Hong_fake_data_fitted_abs.yaml'],
 #                     ['Hong_HO2_fake_data_15.yaml','Hong_fake_data_fitted_abs.yaml']]                                 
-numer_of_iterations = 10
+numer_of_iterations = 2
 cti_file = 'FFCM1_custom_extra_reaction.cti'
 working_directory = 'MSI/data/klip_optimization_with_raw_data'
 reaction_uncertainty_csv = 'FFCM1_reaction_uncertainty_extra_reaction.csv'

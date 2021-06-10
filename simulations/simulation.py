@@ -164,8 +164,8 @@ class Simulation(object):
             Time history of the perturbed simulation.
 
         '''
-        inert_species=['Ar','AR','HE','He','Kr','KR',
-                       'Xe','XE','NE','Ne']
+        inert_species=['Ar','AR','ar','HE','He','he','Kr','KR','kr',
+                       'Xe','XE','xe','NE','Ne','ne']
 
         # gets the mole fraction and the species which are going to be 
         #perturbed in order to run a sensitivity calculation 

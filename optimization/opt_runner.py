@@ -190,6 +190,9 @@ class Optimization_Utility(object):
         uncertainty_dict['restime_relative_uncertainty'] = experiment_dictionary['residenceTimeRelativeUncertainty']
         uncertainty_dict['mole_fraction_relative_uncertainty'] = experiment_dictionary['moleFractionRelativeUncertainty']
         uncertainty_dict['mole_fraction_absolute_uncertainty'] = experiment_dictionary['moleFractionAbsoluteUncertainty'] 
+        uncertainty_dict['concentration_relative_uncertainty'] = experiment_dictionary['concentrationRelativeUncertainty']
+        uncertainty_dict['concentration_absolute_uncertainty'] = experiment_dictionary['concentrationAbsoluteUncertainty']        
+        
         return uncertainty_dict
     
     def build_uncertainty_flow_reactor_dict(self,experiment_dictionary:dict={}):
@@ -547,6 +550,7 @@ class Optimization_Utility(object):
                     save_timeHistories=1,
                     residence_time=experiment_dictionary['residence_time'],
                     moleFractionObservables = experiment_dictionary['moleFractionObservables'],
+                    concentrationObservables = experiment_dictionary['concentrationObservables'],
                     fullParsedYamlFile = experiment_dictionary)
         
         soln,ksen=jet_stirred_reactor.run()
@@ -566,7 +570,7 @@ class Optimization_Utility(object):
         rsens=jet_stirred_reactor.sensitivityCalculation(soln[jet_stirred_reactor.observables],rsoln[jet_stirred_reactor.observables],jet_stirred_reactor.observables)
         #print(ssens)
         #print(jet_stirred_reactor.physicalSens)
-        csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] if x is not None]
+        csv_paths = [x for x in  (experiment_dictionary['moleFractionCsvFiles']+ experiment_dictionary['concentrationCsvFiles']) if x is not None]
         #print(csv_paths)
         exp_data = jet_stirred_reactor.importExperimentalData(csv_paths)
         

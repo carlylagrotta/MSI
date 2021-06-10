@@ -85,10 +85,11 @@ class Master_Equation(object):
                                            coef[0:-1],
                                            tensor = False)  
         return x-y
-        
+    #changed this to force it ot be a flaot 
     def calc_reduced_T(self,T):
-        numerator = (2*(T**-1))-((self.T_min)**-1) - ((self.T_max)**-1)
-        denominator = ((self.T_max)**-1) - ((self.T_min)**-1)
+        
+        numerator = (2*(float(T)**-1))-((float(self.T_min))**-1) - ((float(self.T_max))**-1)
+        denominator = ((float(self.T_max))**-1) - ((float(self.T_min))**-1)
         T_reduced = np.divide(numerator,denominator)
         return T_reduced
         
@@ -105,6 +106,14 @@ class Master_Equation(object):
                  exp_dict_list:list,
                  parsed_yaml_file_list,
                  master_equation_reactions:list):
+        
+        
+        #flatten master euqation reactions
+        flatten = lambda *n: (e for a in n
+            for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))  
+        #flatten master index 
+        master_equation_reactions = list(flatten(master_equation_reactions))
+
         
     
         nested_list = []
@@ -160,6 +169,8 @@ class Master_Equation(object):
             nested_list.append(simulation)        
             mapped_to_alpha_full_simulation.append(np.vstack((single_experiment)))
         
+        
+        
        
         
             
@@ -171,6 +182,15 @@ class Master_Equation(object):
     def  map_parameters_to_s_matrix(self,mapped_to_alpha_full_simulation,
                                    sensitivity_dict:dict,
                                    master_equation_reactions:list):
+        
+        
+        #flatten master euqation reactions
+        flatten = lambda *n: (e for a in n
+            for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))  
+        #flatten master index 
+        master_equation_reactions = list(flatten(master_equation_reactions))
+
+
         
         broken_up_by_reaction = {}
         tottal_array  = np.vstack((mapped_to_alpha_full_simulation))
@@ -204,7 +224,7 @@ class Master_Equation(object):
         
         mapped_dict = {}     
         #start looking here 
-        #print(new_sens_dict['H2O2 + OH <=> H2O + HO2'])
+        #flatten list and then operate on the final 
         for reaction in master_equation_reactions:
             number_of_MP_nested_list = [[] for x in range(len(sensitivity_dict[reaction]))]
             for i,sens_list in enumerate(new_sens_dict[reaction]):
@@ -239,12 +259,39 @@ class Master_Equation(object):
        
         
         S_matrix_mapped_MP = np.hstack((temp_list_2))
-        #print(S_matrix_mapped_MP.shape)
+        #print(S_matrix_mapped_MP.shape, 'THIS IS THE SHAPE OF THING GOING INTO THE S MATRIX')
         return S_matrix_mapped_MP, new_sens_dict,broken_up_by_reaction,tottal_array,tester
     
     
-   
- 
+
+    def combine_multiple_channels(self,S_matrix_mapped_MP,
+                                  master_equation_sensitivity_dict:dict,
+                                  master_equation_reactions_list:list):
+        
+        #first check what parts of the matrix should be combined 
+        counter = 0
+        previous = 0
+        new_matrix_list = []
+        for reaction in master_equation_reactions_list:
+            if type(reaction) ==str:
+                number_of_parameters = len(master_equation_sensitivity_dict[reaction])
+                counter = counter + number_of_parameters
+                new_matrix_list.append(S_matrix_mapped_MP[:,previous:counter])
+            elif type(reaction) == tuple:
+                ttl=0
+                for secondary_reaction in reaction:
+                    number_of_parameters = len(master_equation_sensitivity_dict[secondary_reaction])
+                    ttl = ttl + number_of_parameters
+                counter = counter + ttl
+                full_matrix = S_matrix_mapped_MP[:,previous:counter]
+                list_of_splits = np.hsplit(full_matrix,len(reaction))
+                summation = sum(list_of_splits)
+                new_matrix_list.append(summation)
+            previous = counter
+                    
+        
+        new_S_matrix = np.hstack((new_matrix_list))
+        return new_S_matrix
     
     def surrogate_model_molecular_parameters_chevy(self,master_equation_sensitivity_dict:dict,
                                                    master_equation_sensitivites_new:dict,
@@ -252,33 +299,53 @@ class Master_Equation(object):
                                                    delta_x_molecular_params_by_reaction_dict,
                                                    exp_dict_list):
         
+        
+        flatten = lambda *n: (e for a in n
+            for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))  
+        #flatten master index 
+        master_equation_reactions_flattened = list(flatten(master_equation_reactions))
+        
         #this function is not working correctly
         #print(delta_x_molecular_params_by_reaction_dict)
         reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
         number_of_reactions = len(reactions_in_cti_file)
         
+        #this is where would need to implement tuple
         temp_dict = {}
         for i,reaction in enumerate(master_equation_reactions):                
             temp_array=[]
-            for j,sensativity_array in enumerate(master_equation_sensitivity_dict[reaction]):
-                delta_x_MP = delta_x_molecular_params_by_reaction_dict[reaction][j]
-                temp_array.append(sensativity_array*delta_x_MP)
-                #if reaction=='H2O2 + OH <=> H2O + HO2':
-                    #print(sensativity_array*delta_x_MP)
+            if type(reaction) == str:
+                for j,sensativity_array in enumerate(master_equation_sensitivity_dict[reaction]):
+                    delta_x_MP = delta_x_molecular_params_by_reaction_dict[reaction][j]
+                    temp_array.append(sensativity_array*delta_x_MP)
+                    
+                summation = sum(temp_array)
+                temp_dict[reaction] = summation
+            
+            elif type(reaction) == tuple:
+                for secondary_reaction in reaction:
+                    temp_array=[]
+                    for j,sensativity_array in enumerate(master_equation_sensitivity_dict[secondary_reaction]):
+                        delta_x_MP = delta_x_molecular_params_by_reaction_dict[reaction][j]
+                        temp_array.append(sensativity_array*delta_x_MP)
+                
+                    summation = sum(temp_array)
+                    temp_dict[secondary_reaction] = summation                        
+                    
                 
             #print(temp_array)
-            summation = sum(temp_array)
+            #summation = sum(temp_array)
             #if reaction=='H2O2 + OH <=> H2O + HO2':
                 #print(summation)
-            temp_dict[reaction] = summation
+            #temp_dict[reaction] = summation
             
         Keys =[]
-        for x in np.arange(number_of_reactions-len(master_equation_reactions),number_of_reactions):
+        for x in np.arange(number_of_reactions-len(master_equation_reactions_flattened),number_of_reactions):
             Keys.append('r'+str(x))
             #is this in the correct order?
             #is this unit correct
         update_array_list_without_keys = []
-        for reaction in master_equation_reactions:
+        for reaction in master_equation_reactions_flattened:
             update_array_list_without_keys.append(temp_dict[reaction])
         
         MP = dict(zip(Keys,update_array_list_without_keys))                

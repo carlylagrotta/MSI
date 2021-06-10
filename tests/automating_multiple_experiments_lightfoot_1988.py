@@ -28,7 +28,7 @@ pressure = df['Pressure']
 density = df['Density']
 temperature = df['Temperature']
 k = df['k1']
-Cl = df['Cl']
+Cl2 = df['Cl2']
 CH3OH = df['CH3OH']
 HO2 = df['HO2']
 N2 = df['N2']
@@ -37,12 +37,12 @@ for i in range(df.shape[0]):
     Press = pressure[i]
     Temp = temperature[i]
     k_value = k[i]
-    Cl_mf = Cl[i]
+    Cl2_mf = Cl2[i]
     CH3OH_mf = CH3OH[i]
     HO2_mf = HO2[i]
     N2_mf = N2[i]
-    species_list = [Cl_mf,CH3OH_mf,HO2_mf,N2_mf]
-    species_string = ['cl','ch3oh','ho2','n2']
+    species_list = [HO2_mf,N2_mf]
+    species_string = ['ho2','n2']
     uncertainty_string = [2.3,2.3,2.3,2.3]
 #    
 #    
@@ -112,16 +112,26 @@ for i in range(df.shape[0]):
     NewName2 = tempName2 + 'Lightfoot_'+str(i)+'_abs'+absExtention
     shutil.copy2(absorbance_template,NewName2)
     
+    test_dict = {'Cl':HO2_mf,
+                 'Cl2':Cl2_mf,
+                 'CH3OH':CH3OH_mf,
+                 'N2':N2_mf}
     
+    uncertainty_dict = {'Cl':2,
+                        'Cl2':2,
+                        'CH3OH':2,
+                        'N2':2}    
     with open(NewName) as f:
         config2 = yaml.safe_load(f)
     
     config2['common-properties']['pressure']['value']=float(Press)
     config2['common-properties']['temperature']['value']=float(Temp)
     
-    for jj,specie in enumerate(conditions_dict.keys()):
+    for jj,specie in enumerate(test_dict.keys()):
         config2['common-properties']['composition'][jj]['species'] = specie
-        config2['common-properties']['composition'][jj]['mole-fraction']=float(conditions_dict[specie])
+        config2['common-properties']['composition'][jj]['mole-fraction']=float(test_dict[specie])
+        config2['common-properties']['composition'][jj]['relative-uncertainty'] = float(uncertainty_dict[specie])
+        
 #    
     config2['datapoints']['absorbance'][0]['csvfile'] = csv_file_name
     config2['datapoints']['absorbance'][0]['wavelength']['value'] = wavelength

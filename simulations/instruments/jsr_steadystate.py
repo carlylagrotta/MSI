@@ -503,8 +503,7 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         return data
     
     def species_adjustment(self,spec_del:float=0.0):
-        inert_species=['Ar','AR','HE','He','Kr','KR',
-                       'Xe','XE','NE','Ne']
+        inert_species=['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
         
         '''
         Creates tuples of specie that need to be perturbed and the

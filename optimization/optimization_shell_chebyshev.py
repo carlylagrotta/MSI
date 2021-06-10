@@ -180,8 +180,15 @@ class MSI_optimization_chebyshev(object):
         MP_for_S_matrix,new_sens_dict,broken_up_by_reaction,tottal_dict,tester = master_equation_cheby_instance.map_parameters_to_s_matrix(self.mapped_to_alpha_full_simulation,
                                                                                     self.chebyshev_sensitivities,
                                                                                     self.master_equation_reactions)
+        
+        
+        new_S_matrix_for_MP  = master_equation_cheby_instance.combine_multiple_channels(MP_for_S_matrix,
+                                  self.chebyshev_sensitivities,
+                                 self.master_equation_reactions)
+        
+        
 
-        self.MP_for_S_matrix = MP_for_S_matrix
+        self.MP_for_S_matrix = new_S_matrix_for_MP
         self.new_sens_dict = new_sens_dict
         self.broken_up_by_reaction = broken_up_by_reaction
         self.tottal_dict = tottal_dict
@@ -189,6 +196,8 @@ class MSI_optimization_chebyshev(object):
         return
         
     def building_matrices(self,loop_counter=0):
+        
+        
         matrix_builder_instance = ml.OptMatrix()
         self.matrix_builder_instance = matrix_builder_instance
         S_matrix = matrix_builder_instance.load_S(self.experiment_dictonaries,
@@ -238,11 +247,11 @@ class MSI_optimization_chebyshev(object):
     def adding_k_target_values(self,loop_counter=0):
         
         ### This needs to be editied to accomidate chebychev 
-
         adding_target_values_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,self.Y_data_frame,self.z_data_frame)
         
         self.adding_target_values_instance = adding_target_values_instance
         
+
         k_target_values_for_z,sigma_target_values,z_data_frame = self.adding_target_values_instance.target_values_for_Z(self.data_directory+'/'+ self.k_target_values_csv,
                                                                                                                             self.z_data_frame)
         
@@ -251,10 +260,10 @@ class MSI_optimization_chebyshev(object):
     
             
             k_target_values_for_Y,Y_data_frame = self.adding_target_values_instance.target_values_Y(self.data_directory+'/'+ self.k_target_values_csv,
-                                                                                              self.experiment_dictonaries,self.Y_data_frame)
+                                                                                              self.experiment_dictonaries,self.Y_data_frame,self.master_equation_reactions)
         else:
             k_target_values_for_Y,Y_data_frame = self.adding_target_values_instance.target_values_Y(self.data_directory+'/'+ self.k_target_values_csv,
-                                                                                              self.experiment_dictonaries,self.Y_data_frame)       
+                                                                                              self.experiment_dictonaries,self.Y_data_frame,self.master_equation_reactions)       
         
 
         
@@ -288,6 +297,8 @@ class MSI_optimization_chebyshev(object):
         self.sigma = sigma
         self.Y_data_frame = Y_data_frame
         self.z_data_frame = z_data_frame
+
+        
         self.k_target_values_for_S = k_target_values_for_S
         return
     
@@ -483,7 +494,8 @@ class MSI_optimization_chebyshev(object):
         self.building_matrices(loop_counter=loop_counter)
         if bool(self.k_target_values_csv):
             self.adding_k_target_values(loop_counter=loop_counter)
-            
+        
+        
         self.matrix_math(loop_counter=loop_counter)
         if loop_counter==0:
             self.saving_first_itteration_matrices(loop_counter=loop_counter)
