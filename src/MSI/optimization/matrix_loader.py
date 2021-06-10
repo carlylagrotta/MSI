@@ -264,6 +264,7 @@ class OptMatrix(object):
                 else:
                     if observable in exp_dic['mole_fraction_observables']:
                         ## add ppm statment here ? check if it exists? and add concentration statment below just for parcing 
+                        
                         total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['mole_fraction_relative_uncertainty'][counter],
                             exp_dic['uncertainty']['mole_fraction_absolute_uncertainty'][counter],
                             exp_dic['experimental_data'][counter][observable].values,exp_dic['experimental_data'][counter])
@@ -899,7 +900,7 @@ class OptMatrix(object):
                     pass
                 else:
                     #if you need to add something with concentration add it here
-                    
+
                     if 'ppm' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
                         if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_ppm'].values,
@@ -2767,6 +2768,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                         gas,
                                         reactants_in_target_reactions,
                                         reactants_in_target_reactions)
+
                 if target_press[i] == 0:
                     pressure = 1e-9
                 else:
@@ -2846,8 +2848,6 @@ class Adding_Target_Values(meq.Master_Equation):
                     
 
                 if '*' in reactants_in_denominator:
-                    
-                    
 
                     reactants_in_target_reactions_denominator = reactants_in_denominator.split('<=>')[0].rstrip()
                     reverse_reactants_in_target_reaction_in_denominator=None

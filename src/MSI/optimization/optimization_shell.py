@@ -113,7 +113,7 @@ class MSI_optimization(object):
         return
     
     def running_simulations(self,loop_counter=0):
-        optimization_instance = opt.Optimization_Utility()
+        optimization_instance = opt.Optimization_Utility(yaml_list=self.yaml_file_list_with_working_directory)
         if loop_counter == 0:
             experiment_dictonaries = optimization_instance.looping_over_parsed_yaml_files(self.list_of_parsed_yamls,
                                               self.yaml_file_list_with_working_directory ,
@@ -191,12 +191,20 @@ class MSI_optimization(object):
         target_value_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,self.Y_data_frame,self.z_data_frame)
         k_target_values_for_s = target_value_instance.target_values_for_S(self.data_directory +'/'+ self.k_target_values_csv,
                                                                           self.experiment_dictonaries,
+                                                                          self.S_matrix,
                                                                           master_equation_reaction_list = self.master_equation_reactions, 
                                                                           master_equation_sensitivites = self.sensitivity_dict)
         
-        k_targets_for_y,Y_data_frame = target_value_instance.target_values_Y(self.data_directory +'/'+ self.k_target_values_csv ,self.experiment_dictonaries)
-        k_targets_for_z,sigma,z_data_frame = target_value_instance.target_values_for_Z(self.data_directory +'/'+ self.k_target_values_csv)
-        S_matrix,Y_matrix,z_matrix,sigma = target_value_instance.appending_target_values(k_targets_for_z,k_targets_for_y,k_target_values_for_s,sigma)
+        k_targets_for_y,Y_data_frame = target_value_instance.target_values_Y(self.data_directory +'/'+ self.k_target_values_csv ,self.experiment_dictonaries,self.Y_data_frame)
+        k_targets_for_z,sigma_target_values,z_data_frame = target_value_instance.target_values_for_Z(self.data_directory +'/'+ self.k_target_values_csv,self.z_data_frame)
+        S_matrix,Y_matrix,z_matrix,sigma = target_value_instance.appending_target_values(k_targets_for_z,
+                                                                                         k_targets_for_y,
+                                                                                         k_target_values_for_s,
+                                                                                         sigma_target_values,
+                                                                                         self.S_matrix,
+                                                                                         self.Y_matrix,
+                                                                                         self.z_matrix,
+                                                                                         self.sigma)
         self.S_matrix = S_matrix
         self.Y_matrix = Y_matrix
         self.z_matrix = z_matrix
@@ -406,6 +414,56 @@ class MSI_optimization(object):
         self.updating_files(loop_counter=loop_counter)
         
         
+    def run_simulations(self):
+        self.append_working_directory()
+        #every loop run this, probably not?
+        self.establish_processor(loop_counter=0)
+        self.parsing_yaml_files(loop_counter = 0)
+
+        
+        #if loop_counter == 0:
+        original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
+        self.original_experimental_conditions_local = original_experimental_conditions_local
+            
+
+            #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
+        
+        
+        self.running_simulations(loop_counter=0)
+        
+        
+    def get_matrices(self):
+        if self.master_equation_flag == True:
+            self.master_equation_s_matrix_building(loop_counter=0)
+            #need to add functionality to update with the surgate model or drop out of loop
+        self.building_matrices(loop_counter=0)
+        if bool(self.k_target_values_csv):
+            self.adding_k_target_values()
+        
+        
+    def get_raw_matrices(self):
+        self.append_working_directory()
+        #every loop run this, probably not?
+        self.establish_processor(loop_counter=0)
+        self.parsing_yaml_files(loop_counter = 0)
+
+        
+        #if loop_counter == 0:
+        original_experimental_conditions_local = copy.deepcopy(self.yaml_instance.original_experimental_conditions)
+        self.original_experimental_conditions_local = original_experimental_conditions_local
+            
+
+            #self.coupled_coefficients_original = copy.deepcopy(original_experimental_conditions_local[0]['coupledCoefficients'])
+        
+        
+        self.running_simulations(loop_counter=0)
+        
+        if self.master_equation_flag == True:
+            self.master_equation_s_matrix_building(loop_counter=0)
+            #need to add functionality to update with the surgate model or drop out of loop
+        self.building_matrices(loop_counter=0)
+        if bool(self.k_target_values_csv):
+            self.adding_k_target_values()
         
     def multiple_runs(self,loops):
         X_list = []

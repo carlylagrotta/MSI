@@ -11,6 +11,7 @@ import MSI.simulations.instruments.ignition_delay as ig
 import MSI.simulations.instruments.flow_reactor as fr
 import pandas as pd
 import numpy as np
+import os
 
 #acts as front end to the rest of the system
 
@@ -23,9 +24,9 @@ import numpy as np
 # psens should match interpolated_tp and species sens in size, but again is dict with wavelength keys
 # index from 1, so if you have 3 experiments, their indices will be 1,2,3
 class Optimization_Utility(object):
-    def __init__(self):
+    def __init__(self,yaml_list=None):
         self.matrix = None
-        
+        self.yaml_list=yaml_list
         
     def build_single_exp_dict(self,exp_index:int,
                               simulation,
@@ -43,7 +44,8 @@ class Optimization_Utility(object):
         exp_dict = {}
         exp_dict['index']              = exp_index
         exp_dict['simulation']         = simulation
-       
+        #print(yaml_dict,'wtf is going on')
+        #print('HELLO I AM TRAPPED IN A COMPUTER')
         if interpolated_kinetic_sens==None:
             exp_dict['ksens']  = None
             exp_dict['temperature'] = None
@@ -554,6 +556,14 @@ class Optimization_Utility(object):
                     fullParsedYamlFile = experiment_dictionary)
         
         soln,ksen=jet_stirred_reactor.run()
+        #print(experiment_dictionary)
+        for i,species in enumerate(experiment_dictionary['observables']):
+            #print(os.path.split(experiment_dictionary['moleFractionCsvFiles']))
+            tempsoln=pd.DataFrame(columns=('Temperature',species))
+            tempsoln['Temperature']=soln['temperature']
+            tempsoln[species]=soln[species]
+            #print(self.yaml_list[exp_number])
+            tempsoln.to_csv(os.path.join(os.path.splitext(self.yaml_list[exp_number][0])[0]+'_'+species+'.csv'),index=False)
     
         int_ksens_exp_mapped= jet_stirred_reactor.map_and_interp_ksens()
         tsoln=jet_stirred_reactor.sensitivity_adjustment(temp_del = dk)

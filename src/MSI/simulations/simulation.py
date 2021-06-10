@@ -175,4 +175,3 @@ class Simulation(object):
                 data =  self.sensitivity_adjustment(spec_pair=(x,spec_del))
 
         return data
-
