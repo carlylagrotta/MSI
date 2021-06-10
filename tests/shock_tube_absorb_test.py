@@ -14,7 +14,7 @@ test_p = pr.Processor('MSI/data/branching_reaction_study/FFCM1_custom_cheb_extra
 
 
 
-test_tube = st.shockTube(pressure=.772,
+test_tube = st.shockTube(pressure=0.772,
                          temperature=2188,
                          observables=['OH'],
                          kineticSens=0,
