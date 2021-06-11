@@ -574,14 +574,14 @@ def write(solution,cwd='',file_name='',original_cti=''):
                 j = equation_object.falloff.parameters
                 #If optional Arrhenius data included:
                  
-                if equation_object.falloff.type!='Lindemann':
+                if equation_object.falloff.type!='Lindemann' and equation_object.falloff.type!='Simple':
                     try:
                         falloff_str = build_falloff(equation_object,j)
                         #print(equation_object.falloff.type)
                         f.write(falloff_str)
                     except IndexError:
                         f.write('\n           )\n\n')
-                elif equation_object.falloff.type=='Lindemann':
+                elif equation_object.falloff.type=='Lindemann' or equation_object.falloff.type=='Simple':
                     f.write('\n           )\n\n')
             if equation_type=='PlogReaction':
                 f.write('#  Reaction '+str(m)+'\n')

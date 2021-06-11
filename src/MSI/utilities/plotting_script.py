@@ -349,7 +349,7 @@ class Plotting(object):
         
         
         for i,exp in enumerate(self.exp_dict_list_optimized):
-            
+
             observable_counter=0
             for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables'] + exp['ignition_delay_observables']):
                 if observable == None:
@@ -483,10 +483,11 @@ class Plotting(object):
                         
                         
                 if observable in exp['concentration_observables']:
-                    #print(observable_counter,'THIS IS OBSERVABLE COUNTER')
+
+                   
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
-                        #print(observable_counter)
                         if observable+'_ppm' in exp['experimental_data'][observable_counter].columns:
+                            
                             plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
                             plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable]*1e6,'r',label= "$\it{A priori}$ model")
                             plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable+'_ppm'],'o',color='black',label='Experimental Data') 
@@ -559,7 +560,7 @@ class Plotting(object):
                     
 
 
-                        #observable_counter+=1
+                        observable_counter+=1
                     
                     elif re.match('[Ff]low [Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
                         plt.plot(exp['simulation'].timeHistories[0]['initial_temperature'],exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
