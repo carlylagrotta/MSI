@@ -195,7 +195,8 @@ class MSI_optimization(object):
                                                                           master_equation_reaction_list = self.master_equation_reactions, 
                                                                           master_equation_sensitivites = self.sensitivity_dict)
         
-        k_targets_for_y,Y_data_frame = target_value_instance.target_values_Y(self.data_directory +'/'+ self.k_target_values_csv ,self.experiment_dictonaries,self.Y_data_frame)
+        k_targets_for_y,Y_data_frame = target_value_instance.target_values_Y(self.data_directory +'/'+ self.k_target_values_csv ,self.experiment_dictonaries,self.Y_data_frame,
+                                                                             self.master_equation_reactions)
         k_targets_for_z,sigma_target_values,z_data_frame = target_value_instance.target_values_for_Z(self.data_directory +'/'+ self.k_target_values_csv,self.z_data_frame)
         S_matrix,Y_matrix,z_matrix,sigma = target_value_instance.appending_target_values(k_targets_for_z,
                                                                                          k_targets_for_y,
