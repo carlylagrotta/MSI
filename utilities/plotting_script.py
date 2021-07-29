@@ -56,7 +56,8 @@ class Plotting(object):
                   T_min=200,
                   T_max=3000,
                   P_min=1013.25,
-                  P_max=1.013e+6):
+                  P_max=1.013e+6,
+                  T_P_min_max_dict={}):
         self.S_matrix = S_matrix
         self.s_matrix = s_matrix
         self.Y_matrix = Y_matrix
@@ -90,6 +91,7 @@ class Plotting(object):
         self.T_max = T_max
         self.P_min = P_min
         self.P_max = P_max
+        self.T_P_min_max_dict = T_P_min_max_dict
         
         
         
@@ -558,7 +560,7 @@ class Plotting(object):
                     
 
 
-                        #observable_counter+=1
+                        observable_counter+=1
                     
                     elif re.match('[Ff]low [Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
                         plt.plot(exp['simulation'].timeHistories[0]['initial_temperature'],exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
@@ -593,7 +595,7 @@ class Plotting(object):
                             #plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,low_error_original,'r--')
                         
                         #plt.savefig(self.working_directory+'/'+'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf', bbox_inches='tight',dpi=1000)                     
-                    observable_counter+=1                        
+                        observable_counter+=1                        
                 if observable in exp['ignition_delay_observables']:
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
                         if len(exp['simulation'].temperatures)>1:
@@ -831,7 +833,7 @@ class Plotting(object):
                     
                 MP_stack = []
                 target_values_to_stack =  []
-                master_equation_cheby_instance = meq.Master_Equation(T_min=self.T_min,T_max=self.T_max,P_min=self.P_min,P_max=self.P_max)
+                master_equation_cheby_instance = meq.Master_Equation(T_min=self.T_min,T_max=self.T_max,P_min=self.P_min,P_max=self.P_max,T_P_min_max_dict = self.T_P_min_max_dict)
 
                 for i,reaction in enumerate(target_reactions):
                     if reaction in master_equation_reaction_list:
@@ -5812,6 +5814,7 @@ class Plotting(object):
             return min_value,max_value
         
         
+
         def target_values_for_S(target_value_csv,
                                 exp_dict_list,
                                 S_matrix,
@@ -5819,7 +5822,7 @@ class Plotting(object):
                                 master_equation_sensitivites = {}):
                     
                     
-                    
+                
                 target_value_csv = pd.read_csv(target_value_csv)
                 target_reactions = target_value_csv['Reaction']
                 target_temp = target_value_csv['temperature']
@@ -6055,9 +6058,7 @@ class Plotting(object):
                                             reverse_reactants_in_target_reaction):
                     if reverse_reactants_in_target_reaction !=None:
                         for reaction_number_in_cti_file in range(gas.n_reactions):
-                            if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
-                                gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
-                                gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                            if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
                                 gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' (+M)' or 
                                 gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'  or 
                                 gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' + M') : 
@@ -6065,9 +6066,7 @@ class Plotting(object):
                                     
                     elif reverse_reactants_in_target_reaction==None:
                         for reaction_number_in_cti_file in range(gas.n_reactions):
-                            if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
-                                gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
-                                gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                            if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
                                 gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'): 
                                     list_to_append_to.append(reactions_in_cti_file[reaction_number_in_cti_file])  
           
@@ -6109,6 +6108,7 @@ class Plotting(object):
                                             gas,
                                             reactants_in_target_reactions,
                                             reverse_reactants_in_target_reaction)
+                            
                             
                             
                             
@@ -6246,6 +6246,7 @@ class Plotting(object):
                                                                     gas,
                                                                     reactants_in_target_reactions,
                                                                     reverse_reactants_in_target_reaction)
+                        
     
                         for reaction_check in reactions_in_cti_file_with_these_reactants:
                             if reaction_check in flattened_master_equation_reaction_list:
@@ -6309,13 +6310,13 @@ class Plotting(object):
                                             
                                         #these might not work
                                         
-                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],reaction,self.T_P_min_max_dict))
                                         
                                         if target_press[i] ==0:
                                             target_press_new = 1e-9
                                         else:
                                             target_press_new=target_press[i]
-                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,reaction,self.T_P_min_max_dict))
                                         #these might nowt work 
                                         single_alpha_map = t_alpha*p_alpha*sensitivity
                                         temp.append(single_alpha_map)
@@ -6358,13 +6359,13 @@ class Plotting(object):
                                                 
                                             #these might not work
                                             
-                                            t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                            t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],secondary_reaction,self.T_P_min_max_dict))
                                             
                                             if target_press[i] ==0:
                                                 target_press_new = 1e-9
                                             else:
                                                 target_press_new=target_press[i]
-                                            p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                            p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,secondary_reaction,self.T_P_min_max_dict))
                                             #these might nowt work 
                                             single_alpha_map = t_alpha*p_alpha*sensitivity
                                             temp.append(single_alpha_map)
@@ -6412,13 +6413,13 @@ class Plotting(object):
                                             
                                         #these might not work
                                         
-                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],secondary_reaction,self.T_P_min_max_dict))
                                         
                                         if target_press[i] ==0:
                                             target_press_new = 1e-9
                                         else:
                                             target_press_new=target_press[i]
-                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,secondary_reaction,self.T_P_min_max_dict))
                                         #these might nowt work 
                                         single_alpha_map = t_alpha*p_alpha*sensitivity
                                         temp.append(single_alpha_map)
@@ -6571,13 +6572,13 @@ class Plotting(object):
                                                 
                                             #these might not work
                                             
-                                            t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                            t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],secondary_reaction,self.T_P_min_max_dict))
                                             
                                             if target_press[i] ==0:
                                                 target_press_new = 1e-9
                                             else:
                                                 target_press_new=target_press[i]
-                                            p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                            p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,secondary_reaction,self.T_P_min_max_dict))
                                             #these might nowt work 
                                             single_alpha_map = t_alpha*p_alpha*sensitivity
                                             temp.append(single_alpha_map)
@@ -6651,13 +6652,13 @@ class Plotting(object):
                                                 
                                             #these might not work
                                             
-                                            t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                            t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],secondary_reaction,self.T_P_min_max_dict))
                                             
                                             if target_press[i] ==0:
                                                 target_press_new = 1e-9
                                             else:
                                                 target_press_new=target_press[i]
-                                            p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                            p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,secondary_reaction,self.T_P_min_max_dict))
                                             #these might nowt work 
                                             single_alpha_map = t_alpha*p_alpha*sensitivity
                                             temp.append(single_alpha_map)
@@ -6724,6 +6725,12 @@ class Plotting(object):
                 S_target_values = np.vstack((S_target_values))
                 
                 return S_target_values
+
+
+
+
+
+
             
         def sort_rate_constant_target_values(parsed_csv,unique_reactions,gas):
             reaction_list_from_mechanism = gas.reaction_equations()

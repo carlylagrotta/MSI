@@ -11,16 +11,17 @@ import pandas as pd
 import re
 
 class Master_Equation(object):
-    def __init__(self,T_min=200,T_max=3000,P_min=1013.25,P_max=1.013e+6):
+    def __init__(self,T_min=200,T_max=3000,P_min=1013.25,P_max=1.013e+6,T_P_min_max_dict = {}):
         self.matrix = None
         self.T_min = T_min
         self.T_max = T_max
         self.P_min = P_min
         self.P_max = P_max
+        self.T_P_min_max_dict = T_P_min_max_dict
         
 
 
-    def multiply_by_sensitivites(self,array1,array_of_sensitivities,pressure_and_temp_array):
+    def multiply_by_sensitivites(self,array1,array_of_sensitivities,pressure_and_temp_array,reaction):
         sensitivity_multiplied_array = np.zeros((array_of_sensitivities.shape[0],array_of_sensitivities.shape[1],pressure_and_temp_array.shape[0]))
         tuple_list = []
         for ix,iy in np.ndindex(array_of_sensitivities.shape):
@@ -33,12 +34,13 @@ class Master_Equation(object):
             temp_coef = []
             pres_coef = []
             counter +=1
+            
             for p,value in enumerate(pressure_and_temp_array['temperature']):
                 
                 #should we have default T_min and T_max that can be passed in ?
-                t_coef = self.chebyshev_specific_poly(i,self.calc_reduced_T(value))
+                t_coef = self.chebyshev_specific_poly(i,self.calc_reduced_T(value,reaction,self.T_P_min_max_dict))
                 temp_coef.append(t_coef)
-                p_coef = self.chebyshev_specific_poly(j,self.calc_reduced_P(np.array(pressure_and_temp_array['pressure'])[p]))
+                p_coef = self.chebyshev_specific_poly(j,self.calc_reduced_P(np.array(pressure_and_temp_array['pressure'])[p],reaction,self.T_P_min_max_dict))
                 pres_coef.append(p_coef)
                 
                     
@@ -86,16 +88,27 @@ class Master_Equation(object):
                                            tensor = False)  
         return x-y
     #changed this to force it ot be a flaot 
-    def calc_reduced_T(self,T):
+    def calc_reduced_T(self,T,reaction,T_P_min_max_dict):
+        #print(self.T_P_min_max_dict)
+        T_min = T_P_min_max_dict[reaction]['T_min']
+        T_max = T_P_min_max_dict[reaction]['T_max']
         
-        numerator = (2*(float(T)**-1))-((float(self.T_min))**-1) - ((float(self.T_max))**-1)
-        denominator = ((float(self.T_max))**-1) - ((float(self.T_min))**-1)
-        T_reduced = np.divide(numerator,denominator)
+       
+        numerator = (2*(float(T)**-1))-((float(T_min))**-1) - ((float(T_max))**-1)
+        denominator = ((float(T_max))**-1) - ((float(T_min))**-1)
+        T_reduced = np.divide(numerator,denominator)        
+       
+
         return T_reduced
         
-    def calc_reduced_P(self,P):
-        numerator = 2*np.log10(P) - np.log10(self.P_min) - np.log10(self.P_max)
-        denominator = np.log10(self.P_max) - np.log10(self.P_min)
+    def calc_reduced_P(self,P,reaction,T_P_min_max_dict):
+        
+        P_min = T_P_min_max_dict[reaction]['P_min']
+        P_max = T_P_min_max_dict[reaction]['P_max']
+
+        
+        numerator = 2*np.log10(P) - np.log10(P_min) - np.log10(P_max)
+        denominator = np.log10(P_max) - np.log10(P_min)
         P_reduced = np.divide(numerator,denominator)
         return P_reduced
 
@@ -138,9 +151,9 @@ class Master_Equation(object):
                     for reaction in master_equation_reactions:
                         column = slicing_out_reactions(reaction,observable)
                         if re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']):
-                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['simulation'].pressureAndTemperatureToExperiment[xx]))
+                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['simulation'].pressureAndTemperatureToExperiment[xx],reaction))
                         elif re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']):
-                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0]))
+                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0],reaction))
                         temp.append(single_reaction_array)
                         observable_list.append(single_reaction_array)
                         
@@ -156,7 +169,7 @@ class Master_Equation(object):
                     observable_list = []
                     for reaction in master_equation_reactions:
                         column = slicing_out_reactions(reaction,exp['absorbance_ksens'][wl][0])
-                        single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['time_history_interpolated_against_abs'][wl]))
+                        single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['time_history_interpolated_against_abs'][wl],reaction))
                         temp.append(single_reaction_array)
                         observable_list.append(single_reaction_array)
                         

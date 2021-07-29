@@ -33,7 +33,8 @@ class MSI_optimization_chebyshev(object):
                  T_min=200,
                  T_max=3000,
                  P_min=1013.25,
-                 P_max=1.013e+6):
+                 P_max=1.013e+6,
+                 T_P_min_max_dict={}):
         
         
         
@@ -57,6 +58,7 @@ class MSI_optimization_chebyshev(object):
         self.T_max = T_max
         self.P_min = P_min
         self.P_max = P_max
+        self.T_P_min_max_dict=T_P_min_max_dict
         
         if bool(self.master_equation_reactions):
             self.master_equation_flag = True
@@ -168,7 +170,7 @@ class MSI_optimization_chebyshev(object):
         return
     def master_equation_s_matrix_building(self,loop_counter=0):
         #stub
-        master_equation_cheby_instance = mecheb.Master_Equation(T_min=self.T_min,T_max=self.T_max,P_min=self.P_min,P_max=self.P_max)
+        master_equation_cheby_instance = mecheb.Master_Equation(T_min=self.T_min,T_max=self.T_max,P_min=self.P_min,P_max=self.P_max,T_P_min_max_dict=self.T_P_min_max_dict)
         self.master_equation_cheby_instance = master_equation_cheby_instance
         
         
@@ -247,7 +249,8 @@ class MSI_optimization_chebyshev(object):
     def adding_k_target_values(self,loop_counter=0):
         
         ### This needs to be editied to accomidate chebychev 
-        adding_target_values_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,self.Y_data_frame,self.z_data_frame)
+        
+        adding_target_values_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,self.Y_data_frame,self.z_data_frame,self.T_P_min_max_dict)
         
         self.adding_target_values_instance = adding_target_values_instance
         

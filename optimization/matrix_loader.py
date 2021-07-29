@@ -1063,8 +1063,10 @@ class OptMatrix(object):
                         Y_data_Frame.append(str(reaction)+'_P'+'_'+str(j))
                 elif type(reaction)==tuple:
                     column_headers = master_equation_uncertainty_df.columns.to_list()
+                    
                     for sub_reaction in reaction:
                         if sub_reaction in column_headers:
+                            
                             for j,paramter in enumerate(master_equation_uncertainty_df[sub_reaction].dropna()):
                                 Y_data_Frame.append(str(reaction)+'_P'+'_'+str(j))
                         
@@ -1503,6 +1505,7 @@ class OptMatrix(object):
         
         
         Y_data_Frame = pd.DataFrame({'value': Y_data_Frame,'ln_difference': Y.reshape((Y.shape[0],))})  
+        
         self.Y_matrix = Y
         #print(Y.shape,'Y matrix without k targets')
         
@@ -2644,7 +2647,7 @@ class OptMatrix(object):
             return X,c,s_matrix,y_matrix,delta_X,z_matrix,X_data_frame,posterior_diag,posterior_diag_df,sorted_posterior_diag,covariance_posterior_df,posterior_sigmas_df
 
 class Adding_Target_Values(meq.Master_Equation):
-    def __init__(self,S_matrix,Y_matrix,z_matrix,sigma,Y_data_Frame,z_data_Frame):
+    def __init__(self,S_matrix,Y_matrix,z_matrix,sigma,Y_data_Frame,z_data_Frame,T_P_min_max_dict):
         self.S_matrix = S_matrix
         self.Y_matrix = Y_matrix
         self.z_matrix = z_matrix
@@ -2652,6 +2655,9 @@ class Adding_Target_Values(meq.Master_Equation):
         self.Y_data_Frame = Y_data_Frame
         self.z_data_Frame = z_data_Frame
         meq.Master_Equation.__init__(self)
+        self.T_P_min_max_dict = T_P_min_max_dict
+        
+        
         
          
         
@@ -2683,9 +2689,7 @@ class Adding_Target_Values(meq.Master_Equation):
             
             if reverse_reactants_in_target_reaction !=None:
                 for reaction_number_in_cti_file in range(gas.n_reactions):
-                    if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
-                        gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
-                        gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                    if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
                         gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' (+M)' or 
                         gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'  or 
                         gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' + M') : 
@@ -2693,9 +2697,7 @@ class Adding_Target_Values(meq.Master_Equation):
                             
             elif reverse_reactants_in_target_reaction==None:
                 for reaction_number_in_cti_file in range(gas.n_reactions):
-                    if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
-                        gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
-                        gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                    if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
                         gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'): 
                             list_to_append_to.append(reactions_in_cti_file[reaction_number_in_cti_file])  
   
@@ -2744,6 +2746,7 @@ class Adding_Target_Values(meq.Master_Equation):
                 
             #elif reaction in flattened_linked_channel_reactions:
             elif '*' in reaction and reaction != 'More Complex Combination Rule' and '/' not in reaction:
+                
                 reactions_in_cti_file_with_these_reactants = []
                 #might be a more comprehensive way to do this 
                             
@@ -2761,11 +2764,13 @@ class Adding_Target_Values(meq.Master_Equation):
                 for reaction_number_in_cti_file in range(gas.n_reactions):
                     if gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction:                        
                         reactions_in_cti_file_with_these_reactants.append(reactions_in_cti_file[reaction_number_in_cti_file])
-                    
+                
+
                 reactions_in_cti_file_with_these_reactants =  check_if_M_in_reactants(reactions_in_cti_file_with_these_reactants,
                                         gas,
                                         reactants_in_target_reactions,
                                         reactants_in_target_reactions)
+                
                 if target_press[i] == 0:
                     pressure = 1e-9
                 else:
@@ -3039,7 +3044,7 @@ class Adding_Target_Values(meq.Master_Equation):
                             master_equation_sensitivites = {}):
                 
                 
-                
+            
             target_value_csv = pd.read_csv(target_value_csv)
             target_reactions = target_value_csv['Reaction']
             target_temp = target_value_csv['temperature']
@@ -3275,9 +3280,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                         reverse_reactants_in_target_reaction):
                 if reverse_reactants_in_target_reaction !=None:
                     for reaction_number_in_cti_file in range(gas.n_reactions):
-                        if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
-                            gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
-                            gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                        if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
                             gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' (+M)' or 
                             gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'  or 
                             gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction + ' + M') : 
@@ -3285,9 +3288,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                 
                 elif reverse_reactants_in_target_reaction==None:
                     for reaction_number_in_cti_file in range(gas.n_reactions):
-                        if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions or 
-                            gas.reactants(reaction_number_in_cti_file) == reverse_reactants_in_target_reaction or 
-                            gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
+                        if (gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' (+M)'  or 
                             gas.reactants(reaction_number_in_cti_file) == reactants_in_target_reactions + ' + M'): 
                                 list_to_append_to.append(reactions_in_cti_file[reaction_number_in_cti_file])  
       
@@ -3329,6 +3330,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                         gas,
                                         reactants_in_target_reactions,
                                         reverse_reactants_in_target_reaction)
+                        
                         
                         
                         
@@ -3466,6 +3468,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                                                 gas,
                                                                 reactants_in_target_reactions,
                                                                 reverse_reactants_in_target_reaction)
+                    
 
                     for reaction_check in reactions_in_cti_file_with_these_reactants:
                         if reaction_check in flattened_master_equation_reaction_list:
@@ -3529,13 +3532,13 @@ class Adding_Target_Values(meq.Master_Equation):
                                         
                                     #these might not work
                                     
-                                    t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                    t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],reaction,self.T_P_min_max_dict))
                                     
                                     if target_press[i] ==0:
                                         target_press_new = 1e-9
                                     else:
                                         target_press_new=target_press[i]
-                                    p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                    p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,reaction,self.T_P_min_max_dict))
                                     #these might nowt work 
                                     single_alpha_map = t_alpha*p_alpha*sensitivity
                                     temp.append(single_alpha_map)
@@ -3578,13 +3581,13 @@ class Adding_Target_Values(meq.Master_Equation):
                                             
                                         #these might not work
                                         
-                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],secondary_reaction,self.T_P_min_max_dict))
                                         
                                         if target_press[i] ==0:
                                             target_press_new = 1e-9
                                         else:
                                             target_press_new=target_press[i]
-                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,secondary_reaction,self.T_P_min_max_dict))
                                         #these might nowt work 
                                         single_alpha_map = t_alpha*p_alpha*sensitivity
                                         temp.append(single_alpha_map)
@@ -3632,13 +3635,13 @@ class Adding_Target_Values(meq.Master_Equation):
                                         
                                     #these might not work
                                     
-                                    t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                    t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],secondary_reaction,self.T_P_min_max_dict))
                                     
                                     if target_press[i] ==0:
                                         target_press_new = 1e-9
                                     else:
                                         target_press_new=target_press[i]
-                                    p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                    p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,secondary_reaction,self.T_P_min_max_dict))
                                     #these might nowt work 
                                     single_alpha_map = t_alpha*p_alpha*sensitivity
                                     temp.append(single_alpha_map)
@@ -3791,13 +3794,13 @@ class Adding_Target_Values(meq.Master_Equation):
                                             
                                         #these might not work
                                         
-                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],secondary_reaction,self.T_P_min_max_dict))
                                         
                                         if target_press[i] ==0:
                                             target_press_new = 1e-9
                                         else:
                                             target_press_new=target_press[i]
-                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,secondary_reaction,self.T_P_min_max_dict))
                                         #these might nowt work 
                                         single_alpha_map = t_alpha*p_alpha*sensitivity
                                         temp.append(single_alpha_map)
@@ -3871,13 +3874,13 @@ class Adding_Target_Values(meq.Master_Equation):
                                             
                                         #these might not work
                                         
-                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i]))
+                                        t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],secondary_reaction,self.T_P_min_max_dict))
                                         
                                         if target_press[i] ==0:
                                             target_press_new = 1e-9
                                         else:
                                             target_press_new=target_press[i]
-                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325))
+                                        p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,secondary_reaction,self.T_P_min_max_dict))
                                         #these might nowt work 
                                         single_alpha_map = t_alpha*p_alpha*sensitivity
                                         temp.append(single_alpha_map)

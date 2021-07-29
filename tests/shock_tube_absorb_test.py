@@ -14,16 +14,15 @@ test_p = pr.Processor('MSI/data/branching_reaction_study/FFCM1_custom_cheb_extra
 
 
 
-test_tube = st.shockTube(pressure=0.772,
-                         temperature=2188,
+test_tube = st.shockTube(pressure=1.17051635825,
+                         temperature=1972,
                          observables=['OH'],
                          kineticSens=0,
                          physicalSens=0,
-                         conditions={'CH3I':0.000009954 ,
-                                     'CH3OH':0.000006016,
-                                     'Ar':.999984},
+                         conditions={ 'CH3OH':5.694252633828817e-06,
+                                     'Ar':0.9999943057473661},
                          initialTime=0,
-                         finalTime=0.004,
+                         finalTime=0.002,
                          thermalBoundary='Adiabatic',
                          mechanicalBoundary='constant pressure',
                          processor=test_p,
@@ -98,7 +97,10 @@ abs_instance = csp.Absorb()
 
 #exp_loaded = parser.load_to_obj('MSI/data/test_data/Hong_4.yaml')
 abs_loaded = parser.load_to_obj('MSI/data/branching_reaction_study/Krasnoperov_abs.yaml')
-abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,8.745*10,kinetic_sens=0)
+abs_data = abs_instance.superimpose_shock_tube(test_tube,abs_loaded,8.745,kinetic_sens=0)
+
+df = pd.read_csv('MSI/data/branching_reaction_study/Krasnoperov_abs_1.csv')
+
 
 #abs_loaded2 = parser2.load_to_obj('MSI/data/hong_H2O2_fake_data/Hong_HO2_fake_data_3_abs.yaml')
 #abs_data2 = abs_instance2.superimpose_shock_tube(test_tube2,abs_loaded2,15.2,kinetic_sens=0)
@@ -110,6 +112,7 @@ plt.figure()
 plt.xlabel('Time (ms)')
 plt.ylabel('Absorbance 210nm')
 plt.plot(test_tube.timeHistories[0]['time']*1e3,abs_data[308])
+plt.plot(df['time']*1e3,df['Absorbance_308'])
 #plt.plot(test_tube2.timeHistories[0]['time']*1e3,abs_data2[227],label='k1,k2=constant value  k3,k4=expression from paper')
 #plt.plot(test_tube3.timeHistories[0]['time']*1e3,abs_data3[227],label='k1,k2=derived A value  k3,k4=expression from paper')
 #plt.plot(abs_time*1e3,abs_values,color='r',label = 'Experimental Data')
