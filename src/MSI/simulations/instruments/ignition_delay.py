@@ -253,8 +253,8 @@ class ignition_delay(sim.Simulation):
                 #sens=self.BFM(delay)
 
                 #sens=self.direct_ksens('a',dk=self.dk)
-                sens=self.BFM(delay,simulation_type = '[Ss]hock[ -][Tt]ube')
-                #sens=self.BFM_pool(delay,self.n_processors)
+                #sens=self.BFM(delay,simulation_type = '[Ss]hock[ -][Tt]ube')
+                sens=self.BFM_pool(delay,self.n_processors)
                 ##############################################################
                 
                 
