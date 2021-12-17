@@ -51,10 +51,14 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
             done=True
             lineList=lineList[0:count-1]
         else:count+=1
+    
+    
     with open('tempcti.cti','w') as p:
         p.writelines(lineList)
     
     NewModel=ct.Solution('tempcti.cti')
+    
+    
     original_mechanism=ct.Solution(original_cti)
     original_rxn_count=0
     master_rxn_eqs=[]
@@ -66,6 +70,7 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
             f.writelines(lineList)
         master_reactions=ct.Solution('masterTemp.cti')
         master_rxn_eqs=master_reactions.reaction_equations()
+        
     original_rxn_eqs=[]
     for i in np.arange(original_mechanism.n_reactions):
         if master_index[i]:

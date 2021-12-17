@@ -485,17 +485,31 @@ def write(solution,cwd='',file_name='',original_cti=''):
                 efficiencies_string = replace_multiple(
                                                     str(trimmed_efficiencies),
                                                         replace_list_2)
+                
                 reaction_string = Template(
                             '#  Reaction $m\n'
                             'three_body_reaction( \"$equation_string\",  $Arr,\n'
-                            '       efficiencies = $Efficiencies) \n\n'
+                            '       efficiencies = $Efficiencies'
                             )
+                
+
+                
+                #reaction_string = reaction_string
                 f.write(reaction_string.substitute(
                         m=m,
                         equation_string=equation_string,
                         Arr=arrhenius,
                         Efficiencies=efficiencies_string
                         ))
+                
+                    
+                if equation_object.duplicate is True:
+                    f.write(', options = \'duplicate\')\n\n')
+
+                else:
+                    f.write(')\n\n')
+                    
+                    
             if equation_type == 'ElementaryReaction':
                 arrhenius = build_arrhenius(equation_object, equation_type)
                 if equation_object.duplicate is True:

@@ -1275,7 +1275,7 @@ class Plotting(object):
         return 
             
     def sort_top_uncertainty_weighted_sens(self,top_sensitivity=10):
-        S_matrix_copy = copy.deepcopy(self.S_matrix)
+        #S_matrix_copy = copy.deepcopy(self.S_matrix)
         S_matrix_copy = copy.deepcopy(self.S_matrix_original)
         self.shorten_sigma()
         sigma_csv = self.sigma_uncertainty_weighted_sensitivity_csv
@@ -1378,6 +1378,7 @@ class Plotting(object):
     def get_observables_list(self):
         #use this function to return observable list and uncertainty  pass in csv and get unc and csv
         sigma_csv = self.sigma_uncertainty_weighted_sensitivity_csv
+        
         gas = ct.Solution(self.new_cti)
         reaction_equations = gas.reaction_equations()
         
@@ -1464,7 +1465,7 @@ class Plotting(object):
                     #plt.legend(ncol=3, loc='upper left',bbox_to_anchor=(1.2,2),fontsize=2)
 
             if self.simulation_run==None:
-                
+
                 plt.savefig(self.working_directory+'/'+'Experiment_'+str(experiment_number+1)+'.pdf', bbox_inches='tight')
             else:
                 
@@ -6283,13 +6284,13 @@ class Plotting(object):
     
     
     
-    
+                Trigger = False
                 MP_stack = []
                 target_values_to_stack =  []
                 for i,reaction in enumerate(target_reactions):
                     type_of_reaction, reaction_tuple = check_if_reaction_is_theory_or_not(reaction)
     
-    
+                    
                     if type_of_reaction== 'master_equations_only':
                         
                         if len(reaction_tuple)==1:
@@ -6301,7 +6302,8 @@ class Plotting(object):
                                 for j, MP_array in enumerate(master_equation_sensitivites[reaction]):
                                     tuple_list = create_tuple_list(MP_array)
                                     temp = []
-                                    counter = 0    
+                                    counter = 0
+                                        
                                     for sensitivity in np.nditer(MP_array,order='C'):
                                         k = tuple_list[counter][0]
                                         l= tuple_list[counter][1]
@@ -6309,7 +6311,7 @@ class Plotting(object):
                                            #need to add reduced p and t, and check these units were using to map
                                             
                                         #these might not work
-                                        
+
                                         t_alpha= meq.Master_Equation.chebyshev_specific_poly(self,k,meq.Master_Equation.calc_reduced_T(self,target_temp[i],reaction,self.T_P_min_max_dict))
                                         
                                         if target_press[i] ==0:
@@ -6319,7 +6321,12 @@ class Plotting(object):
                                         p_alpha = meq.Master_Equation.chebyshev_specific_poly(self,l,meq.Master_Equation.calc_reduced_P(self,target_press_new*101325,reaction,self.T_P_min_max_dict))
                                         #these might nowt work 
                                         single_alpha_map = t_alpha*p_alpha*sensitivity
+
+                                            
                                         temp.append(single_alpha_map)
+                                    #if reaction =='2 HO2 <=> H2O2 + O2X' and j==0 and target_temp[i]==250 :
+                                        #print(sum(temp),'sum temp')
+                                        
                                     temp =sum(temp)
                                     #should there be an = temp here 
                                     #nested_reaction_list[master_equation_reaction_list.index(reaction)][j]=temp
@@ -7228,7 +7235,8 @@ class Plotting(object):
             unique_reactions_original = unique_list(unique_reactions_original)
             
 
-
+            #print(unique_reactions_optimized)
+            #print(unique_reactions_original)
             
             sigma_list_for_target_ks_optimized = calculate_sigmas_for_rate_constants(S_matrix_k_target_values_extra,k_target_value_csv_extra,unique_reactions_optimized,gas_optimized,self.covarience)
           
@@ -7390,6 +7398,7 @@ class Plotting(object):
             target_value_ks_calculated_with_cantera_original = calculating_target_value_ks_from_cantera_for_sigmas(k_target_value_csv_extra,gas_original,unique_reactions_original)    
             
             #print(unique_reactions_optimized)
+            self.unique_reactions_optimized = unique_reactions_optimized
             for i,reaction in enumerate(unique_reactions_optimized):
                 plt.figure()
                 
@@ -7494,14 +7503,23 @@ class Plotting(object):
                     high_error_original = np.exp(sigma_list_for_target_ks_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))])  
                     high_error_original = np.multiply(high_error_original,target_value_ks_calculated_with_cantera_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))])
                 
-                
+                   # print(high_error_original/ target_value_ks_calculated_with_cantera_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))])
+                    test =high_error_original/ target_value_ks_calculated_with_cantera_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))]
+
+                    
                     low_error_original = np.exp(np.array(sigma_list_for_target_ks_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))])*-1)
                     low_error_original = np.multiply(low_error_original,target_value_ks_calculated_with_cantera_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))])  
-                
+                    
+                    #print(target_value_ks_calculated_with_cantera_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))]/low_error_original)  
+                    test2= target_value_ks_calculated_with_cantera_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))]/low_error_original  
+                    
+                    #print(test/test2)
+
+
                     c, d = zip(*sorted(zip(target_value_temps_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))],high_error_original)))  
                     cc, dd = zip(*sorted(zip(target_value_temps_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))],low_error_original)))  
-
-                
+                    
+            
                     #UNCOMMENNT
                     plt.semilogy(c,d,'r--')
                     
@@ -7509,6 +7527,13 @@ class Plotting(object):
                        
                 # #plt.semilogy(target_value_temps_optimized[i],target_value_ks_optimized[i],'o',color='black')
                 plt.semilogy(target_value_temps_optimized_for_plotting[i],target_value_ks_optimized_for_plotting[i],'o',color='black')
+                
+                
+                self.target_value_temps_original = target_value_temps_original
+                self.unique_reactions_original  = unique_reactions_original
+                self.S_matrix_k_target_values_extra = S_matrix_k_target_values_extra
+                
+                
                 
                 if temperature_range_to_plot_over is not None:
                     low_value_axis , high_value_axis = filter_range_for_plotting(Temp_optimized,k_optimized,Temp_original,k_original,
@@ -7560,53 +7585,124 @@ class Plotting(object):
                     plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.pdf', bbox_inches='tight')
                     plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.svg', bbox_inches='tight')
                 
-    #     elif bool(self.target_value_rate_constant_csv) and self.k_target_values=='Off':
-            
-    #         unique_reactions_optimized=[]
-    #         unique_reactions_original = []
-    #         reaction_list_from_mechanism_original = gas_original.reaction_equations()
-    #         reaction_list_from_mechanism = gas_optimized.reaction_equations()
-            
-    #         k_target_value_csv = pd.read_csv(self.target_value_rate_constant_csv)     
-    #         for row in range(k_target_value_csv.shape[0]):
-    #             unique_reactions_optimized.append(reaction_list_from_mechanism.index(k_target_value_csv['Reaction'][row]))
-    #             unique_reactions_original.append(reaction_list_from_mechanism_original.index(k_target_value_csv['Reaction'][row]))
-    #         unique_reactions_optimized = unique_list(unique_reactions_optimized)
-    #         unique_reactions_original = unique_list(unique_reactions_original)
-            
-            
-    #       ######################  
-    #         target_value_temps_optimized,target_value_ks_optimized = sort_rate_constant_target_values(k_target_value_csv,unique_reactions_optimized,gas_optimized)
-    #         target_value_temps_original,target_value_ks_original = sort_rate_constant_target_values(k_target_value_csv,unique_reactions_original,gas_original)
-    #        ############################################# 
-    #         target_value_ks_calculated_with_cantera_optimized = calculating_target_value_ks_from_cantera_for_sigmas(k_target_value_csv,gas_optimized,unique_reactions_optimized)
-    #         target_value_ks_calculated_with_cantera_original = calculating_target_value_ks_from_cantera_for_sigmas(k_target_value_csv,gas_original,unique_reactions_original)
-           
-    #         for i,reaction in enumerate(unique_reactions_optimized):
-    #             plt.figure()
-    #             Temp_optimized,k_optimized = rate_constant_over_temperature_range_from_cantera(reaction,
-    #                                                               gas_optimized,
-    #                                                               initial_temperature=250,
-    #                                                               final_temperature=2500,
-    #                                                               pressure=1,
-    #                                                               conditions={'H2':2,'O2':1,'Ar':4})
-                
-    #             plt.semilogy(Temp_optimized,k_optimized,'b')
+    def plotting_uncertainty_weighted_sens_rate_constant(self,top_sensitivity=5,
+                                                         reactions_for_legend = [],
+                                                         observable_list_for_legend_csv_path=None):
+        
+        
+        df = pd.read_csv(observable_list_for_legend_csv_path)
+        column_name_list = df.columns.tolist()
+        
+        included_uncertainty_flag=False
+        if 'uncertainty' in column_name_list:
+            uncertainty_from_csv = df['uncertainty'].to_numpy()
+            uncertainty_from_csv = uncertainty_from_csv.reshape((uncertainty_from_csv.shape[0],1))
+            included_uncertainty_flag=True
+        self.target_value_temps_original
+        
+        self.unique_reactions_original
+        #print(len(self.target_value_temps_original[0]))
+        S_matrix_copy = copy.deepcopy(self.S_matrix_k_target_values_extra)
+        
+        #df_saving = pd.DataFrame(S_matrix_copy)
+        #df_saving.to_csv('/Users/carlylagrotta/Desktop/S_matrix_test.csv')
+        observables_list = self.get_observables_list()
+        
+        length_of_temperature_vectors =[[] for x in range(len(self.target_value_temps_original))]
+        for i,temperature_list in enumerate(self.target_value_temps_original):
+            length_of_temperature_vectors[i].append(len(temperature_list))
+        
+        #print(observables_list)
 
-    #             Temp_original,k_original = rate_constant_over_temperature_range_from_cantera(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]),
-    #                                                               gas_original,
-    #                                                               initial_temperature=250,
-    #                                                               final_temperature=2500,
-    #                                                               pressure=1,
-    #                                                               conditions={'H2':2,'O2':1,'Ar':4})
-                
-    #             plt.semilogy(Temp_original,k_original,'r')
+        if included_uncertainty_flag==True:
+            Sig = uncertainty_from_csv
+        else:
+            Sig = self.short_sigma
+        
+        for pp  in range(np.shape(S_matrix_copy)[1]):
+
+            S_matrix_copy[:,pp] *=Sig[pp]
+
+        sensitivitys =[[] for x in range(len(self.target_value_temps_original))]
+        topSensitivities = [[] for x in range(len(self.target_value_temps_original))]   
+        start=0
+        stop = 0
+        
+        for x in range(len(length_of_temperature_vectors)):
+            for y in range(len(length_of_temperature_vectors[x])):
+    
+                stop = length_of_temperature_vectors[x][y] + start
 
                 
-    #             plt.semilogy(target_value_temps_optimized[i],target_value_ks_optimized[i],'o',color='black')
+                temp = S_matrix_copy[int(start):int(stop),:]
+                sort_s= pd.DataFrame(temp).reindex(pd.DataFrame(temp).abs().max().sort_values(ascending=False).index, axis=1)
+                cc=pd.DataFrame(sort_s).iloc[:,:top_sensitivity]
+                top_five_reactions=cc.columns.values.tolist()
+                topSensitivities[x].append(top_five_reactions)
+                #ccn=pd.DataFrame(cc).as_matrix()
+                ccn=pd.DataFrame(cc).to_numpy()
+
+                sensitivitys[x].append(ccn)           
+                start = start + length_of_temperature_vectors[x][y]
                 
-    #             plt.xlabel('Temperature (K)')
-    #             plt.ylabel('Kmol/m^3-s')
-    #             plt.title(reaction_list_from_mechanism[reaction])
-    #             plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.pdf', bbox_inches='tight')
-    #             plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.svg', bbox_inches='tight')                        
+               
+        list_of_reaction_strings = []
+        gas = ct.Solution(self.nominal_cti)
+        reaction_equations_list = gas.reaction_equations()
+        for reaction_number in self.unique_reactions_original:
+            
+            if type(reaction_number) == tuple:
+                temp_tuple = []
+                for sub_reaction in reaction_number:
+                  temp_tuple.append(reaction_equations_list[sub_reaction])
+                list_of_reaction_strings.append(tuple(temp_tuple))
+                
+                
+            else:
+                
+                list_of_reaction_strings.append(reaction_equations_list[reaction_number])
+        
+                
+        
+        
+        for i,reaction in enumerate(self.unique_reactions_original):
+            plt.figure()
+            for c, top_columns in enumerate(topSensitivities[i][0]):
+                
+                c, d = zip(*sorted(zip(self.target_value_temps_original[i],sensitivitys[i][0][:,c])))  
+
+                #plt.plot(self.target_value_temps_original[i],sensitivitys[i][0][:,c],label = observables_list[top_columns] +'_'+str(Sig[top_columns])) 
+                if observable_list_for_legend_csv_path != None:
+                    df = pd.read_csv(observable_list_for_legend_csv_path)
+                    observable_list_for_legend = df['optimization_variable'].tolist()
+                    #print(observable_list_for_legend)
+                    plt.plot(c,d,label = observable_list_for_legend[top_columns] +'_'+str(Sig[top_columns])) 
+                else:
+                    plt.plot(c,d,label = observables_list[top_columns] +'_'+str(Sig[top_columns])) 
+                
+                
+                if bool(reactions_for_legend):
+                    plt.title(str(reactions_for_legend[i]))
+                else:
+                    plt.title(str(list_of_reaction_strings[i]))
+                plt.xlabel('Temperature [K]')
+                plt.legend()
+
+                plt.savefig(self.working_directory+'/'+'uncertainty_weighted_sens_'+str(list_of_reaction_strings[i])+'.pdf', bbox_inches='tight')
+
+        
+
+
+
+
+            # for plot_number in range(number_of_observables_in_simulation):
+            #     for c,top_columns in enumerate(top_sensitivity_single_exp[plot_number]):
+            #         plt.subplot(number_of_observables_in_simulation,1,plot_number+1)
+            #         if plot_number==0:
+            #             plt.title('Experiment_'+str(experiment_number+1))
+            #         plt.plot(time_profiles[plot_number],sensitivities[plot_number][:,c],label = observables_list[top_columns] +'_'+str(sigma_list[top_columns])) 
+            #         plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=1.5)
+            #         plt.ylabel(list_of_experiment_observables[plot_number])
+            #         top,bottom = plt.ylim()
+            #         left,right = plt.xlim()
+            #         plt.legend(ncol=5, loc='upper left',bbox_to_anchor=(-.5,-.3))                       

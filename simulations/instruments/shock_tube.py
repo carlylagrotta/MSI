@@ -324,6 +324,7 @@ class shockTube(sim.Simulation):
                             ignore_index=True)
             counter+=1
         
+ 
         
         if self.timeHistories != None:
 
@@ -473,12 +474,14 @@ class shockTube(sim.Simulation):
         #print(interpolated_time)
         #calculate which dk
         dk = self.dk[index]
+        
+        print()
         sensitivity = self.sensitivityCalculation(self.timeHistories[0][self.observables],
                                                   interpolated_time[self.observables],self.observables,dk)
         if self.physSensHistories != None:
             self.physSensHistories.append(sensitivity)
-#        print('this is sensitivity')
-#        print(sensitivity)
+        #print('this is sensitivity')
+        #print(sensitivity)
         return sensitivity
     
     #returns a 3D array of interpolated time histories corrosponding to physical sensitivities
