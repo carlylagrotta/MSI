@@ -2648,7 +2648,7 @@ class OptMatrix(object):
             return X,c,s_matrix,y_matrix,delta_X,z_matrix,X_data_frame,posterior_diag,posterior_diag_df,sorted_posterior_diag,covariance_posterior_df,posterior_sigmas_df
 
 class Adding_Target_Values(meq.Master_Equation):
-    def __init__(self,S_matrix,Y_matrix,z_matrix,sigma,Y_data_Frame,z_data_Frame,T_P_min_max_dict):
+    def __init__(self,S_matrix,Y_matrix,z_matrix,sigma,Y_data_Frame,z_data_Frame,T_P_min_max_dict={}):
         self.S_matrix = S_matrix
         self.Y_matrix = Y_matrix
         self.z_matrix = z_matrix

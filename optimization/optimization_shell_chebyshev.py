@@ -250,7 +250,8 @@ class MSI_optimization_chebyshev(object):
         
         ### This needs to be editied to accomidate chebychev 
         
-        adding_target_values_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,self.Y_data_frame,self.z_data_frame,self.T_P_min_max_dict)
+        adding_target_values_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,
+                                                                self.Y_data_frame,self.z_data_frame,T_P_min_max_dict = self.T_P_min_max_dict)
         
         self.adding_target_values_instance = adding_target_values_instance
         

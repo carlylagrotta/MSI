@@ -7400,6 +7400,7 @@ class Plotting(object):
             #print(unique_reactions_optimized)
             self.unique_reactions_optimized = unique_reactions_optimized
             for i,reaction in enumerate(unique_reactions_optimized):
+                
                 plt.figure()
                 
                 Temp_optimized,k_optimized = rate_constant_over_temperature_range_from_cantera(reaction,
@@ -7410,13 +7411,8 @@ class Plotting(object):
                                                                   conditions={'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237})
                     
                 
-                if type(reaction) != tuple:
-                    if reaction_list_from_mechanism[reaction] =='H + HO2 <=> 2 OH':
-                          df_og = pd.DataFrame()
-                          df_og['Temperature'] = Temp_optimized
-                          df_og['k_og'] = k_optimized
-                          df_og.to_csv('/Users/carlylagrotta/Desktop/k_optimized.csv')       
-                      
+       
+                     
                 plt.semilogy(Temp_optimized,k_optimized,'b')
 
                     #calculate sigmas 
@@ -7438,6 +7434,29 @@ class Plotting(object):
                 aa, bb = zip(*sorted(zip(target_value_temps_optimized[i],low_error_optimized)))  
                 plt.semilogy(aa,bb,'b--')
                 
+
+                if type(reaction) != tuple:
+                    if reaction_list_from_mechanism[reaction] =='2 HO2 <=> H2O2 + O2':
+                          df_og = pd.DataFrame()
+                          df_og['Temperature'] = list(Temp_optimized)
+                          
+                          df_og['k_og_optimized'] = list(k_optimized)
+                          df_og['target_vaue_temps_optimized'] = pd.Series(a)
+                          df_og['low_error_optimized'] = pd.Series(bb)
+                          df_og['high_error_optimized'] = pd.Series(b)
+                          
+                          
+                    if reaction_list_from_mechanism[reaction] =='2 HO2 <=> O2 + 2 OH':
+                          df_og2 = pd.DataFrame()
+                          df_og2['Temperature'] = list(Temp_optimized)
+                          
+                          df_og2['k_og_optimized'] = list(k_optimized)
+                          df_og2['target_vaue_temps_optimized'] = pd.Series(a)
+                          df_og2['low_error_optimized'] = pd.Series(bb)
+                          df_og2['high_error_optimized'] = pd.Series(b)     
+                          
+                          #df_og.to_csv('/Users/carlylagrotta/Desktop/k_optimized.csv')
+
 
                 
                 new_tuple=None
@@ -7464,20 +7483,19 @@ class Plotting(object):
                                                                           conditions={'H2O2':0.003094,'O2':0.000556,'H2O':0.001113,'Ar':0.995237})
                     
                     
-                    if reaction_list_from_mechanism_original[reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction])] =='H + HO2 <=> 2 OH':
-                        df_og = pd.DataFrame()
-                        df_og['Temperature'] = Temp_original
-                        df_og['k_og'] = k_original
-                        df_og.to_csv('/Users/carlylagrotta/Desktop/k_og.csv')
-                       
+                    if reaction_list_from_mechanism_original[reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction])] =='2 HO2 <=> H2O2 + O2':
+                        df_og['k_original'] = k_original
+
+                        
+                    if reaction_list_from_mechanism_original[reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction])] =='2 HO2 <=> O2 + 2 OH':
+                        df_og2['k_original'] = k_original
+
                 plt.semilogy(Temp_original,k_original,'r')
 
                 
                 
 
-                #print(reaction_list_from_mechanism_original,'reaction list from mechanism origingl')
-                #print(unique_reactions_original)
-                #print(new_tuple)
+
                 
                 if type(reaction) == tuple:
                     
@@ -7498,7 +7516,10 @@ class Plotting(object):
                     plt.semilogy(cc,dd,'r--')
 
 
+
+
                 else:
+                    
                     
                     high_error_original = np.exp(sigma_list_for_target_ks_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))])  
                     high_error_original = np.multiply(high_error_original,target_value_ks_calculated_with_cantera_original[unique_reactions_original.index(reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction]))])
@@ -7524,6 +7545,24 @@ class Plotting(object):
                     plt.semilogy(c,d,'r--')
                     
                     plt.semilogy(cc,dd,'r--')
+
+
+                    if type(reaction) != tuple:
+                        if reaction_list_from_mechanism[reaction] =='2 HO2 <=> H2O2 + O2':
+                              df_og['target_vaue_temps_original'] = pd.Series(c)
+                              df_og['low_error_original'] = pd.Series(d)
+                              df_og['high_error_original'] = pd.Series(dd)
+                          
+                              df_og.to_csv('/Users/carlylagrotta/Desktop/2 HO2 <=> H2O2 + O2_k_optimized.csv')
+
+
+                        if reaction_list_from_mechanism[reaction] =='2 HO2 <=> O2 + 2 OH':
+                              df_og2['target_vaue_temps_original'] = pd.Series(c)
+                              df_og2['low_error_original'] = pd.Series(d)
+                              df_og2['high_error_original'] = pd.Series(dd)
+                          
+                              df_og2.to_csv('/Users/carlylagrotta/Desktop/2 HO2 <=> O2 + 2 OH_k_optimized.csv')
+
                        
                 # #plt.semilogy(target_value_temps_optimized[i],target_value_ks_optimized[i],'o',color='black')
                 plt.semilogy(target_value_temps_optimized_for_plotting[i],target_value_ks_optimized_for_plotting[i],'o',color='black')
@@ -7544,8 +7583,9 @@ class Plotting(object):
                                   low_temp=temperature_range_to_plot_over[0],high_temp=temperature_range_to_plot_over[1])
 
                 
-                plt.xlabel('Temperature (K)')
-                plt.ylabel('mol/cm^3-s')
+                plt.xlabel('Temperature (K)',fontsize=15)
+                plt.ylabel(r'k [$\frac{cm^3}{mol s}$]',fontsize=15)
+                plt.tick_params(which='both',direction='in')
                 if type(reaction)==tuple:
                     if reaction==(309, 310):
                         print("INSDIE HERE")
@@ -7581,7 +7621,7 @@ class Plotting(object):
                         plt.xlim(temperature_range_to_plot_over[0],temperature_range_to_plot_over[1])
                         plt.ylim(low_value_axis,high_value_axis)
                     plt.title(reaction_list_from_mechanism[reaction])
-                    
+                    #print(reaction_list_from_mechanism[reaction])
                     plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.pdf', bbox_inches='tight')
                     plt.savefig(self.working_directory+'/'+reaction_list_from_mechanism[reaction]+'.svg', bbox_inches='tight')
                 
@@ -7666,17 +7706,28 @@ class Plotting(object):
         
         
         for i,reaction in enumerate(self.unique_reactions_original):
-            plt.figure()
-            for c, top_columns in enumerate(topSensitivities[i][0]):
+            
+            #plt.figure()
+            
+            fig = plt.figure(figsize=(6, 7))
+            plt.subplot(3,1,1)
+            #fig = plt.figure(figsize=(20, 10))
+            colors=['k','r','b','g','m']
+            line_type=['-.','-','--',(0,(5,10)),':']
+            marker_list = [None,None,None,None,None]
+            #line_type  = ['--', '-.', '-', ':','-']
+
+
+            for ccc, top_columns in enumerate(topSensitivities[i][0]):
                 
-                c, d = zip(*sorted(zip(self.target_value_temps_original[i],sensitivitys[i][0][:,c])))  
+                c, d = zip(*sorted(zip(self.target_value_temps_original[i],sensitivitys[i][0][:,ccc])))  
 
                 #plt.plot(self.target_value_temps_original[i],sensitivitys[i][0][:,c],label = observables_list[top_columns] +'_'+str(Sig[top_columns])) 
                 if observable_list_for_legend_csv_path != None:
                     df = pd.read_csv(observable_list_for_legend_csv_path)
                     observable_list_for_legend = df['optimization_variable'].tolist()
                     #print(observable_list_for_legend)
-                    plt.plot(c,d,label = observable_list_for_legend[top_columns] +'_'+str(Sig[top_columns])) 
+                    plt.plot(c,d,marker=marker_list[ccc],color=colors[ccc],linestyle=line_type[ccc],label = observable_list_for_legend[top_columns] +'_'+str(Sig[top_columns])) 
                 else:
                     plt.plot(c,d,label = observables_list[top_columns] +'_'+str(Sig[top_columns])) 
                 
@@ -7685,11 +7736,16 @@ class Plotting(object):
                     plt.title(str(reactions_for_legend[i]))
                 else:
                     plt.title(str(list_of_reaction_strings[i]))
-                plt.xlabel('Temperature [K]')
-                plt.legend()
+                plt.xlabel('Temperature [K]',fontsize=16)
+                plt.ylabel(r'$\frac{\partial(k)}{\partial(x_j)} \sigma_j$',fontsize=16)
+                plt.tick_params(direction='in')
+                plt.xticks(fontsize= 15)
+                plt.yticks(fontsize= 15)
+                plt.legend(fontsize= 8)
 
                 plt.savefig(self.working_directory+'/'+'uncertainty_weighted_sens_'+str(list_of_reaction_strings[i])+'.pdf', bbox_inches='tight')
 
+                plt.savefig(self.working_directory+'/'+'uncertainty_weighted_sens_'+str(list_of_reaction_strings[i])+'.svg', bbox_inches='tight')
         
 
 

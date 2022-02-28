@@ -224,7 +224,7 @@ class Parser(object):
         mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
         mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
         for i in range(len(mole_fraction_observables)):
-            if not mole_fraction_observables[i]:
+            if mole_fraction_observables[i] == False:
                 mole_fraction_observables[i]='NO'
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
@@ -233,15 +233,16 @@ class Parser(object):
 
                 
         concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']] 
-        if concentration_observables[0]!=None:
-            for i in range(len(concentration_observables)):
-                if not concentration_observables[i]:
-                    concentration_observables[i]='NO'    
+        
+        
+        for i in range(len(concentration_observables)):
+            if concentration_observables[i] == False:
+                concentration_observables[i]='NO'    
         #print(concentration_observables,len(concentration_observables))
         observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]                
-        for i in range(len(observables)):
-            if not observables[i]:
-                observables[i]='NO'                
+        # for i in range(len(observables)):
+        #     if not observables[i]:
+        #         observables[i]='NO'                
                 
                 
                 
@@ -289,7 +290,7 @@ class Parser(object):
                'residence_time': residence_time,
                'experimentType':experiment_type,
                'residenceTimeRelativeUncertainty':restime_relative_uncertainty,
-               'concentrationObservables': [None]
+               'concentrationObservables': concentration_observables
            }
         else:
             print('Placeholder: no JSR absorption')
@@ -337,10 +338,10 @@ class Parser(object):
         mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
         experiment_type = loaded_exp['experiment-type']
         mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
-        if mole_fraction_observables[0]!=None:
-            for i in range(len(mole_fraction_observables)):
-                if not mole_fraction_observables[i]:
-                    mole_fraction_observables[i]='NO'
+
+        for i in range(len(mole_fraction_observables)):
+            if mole_fraction_observables[i]==False:
+                mole_fraction_observables[i]='NO'
         #print(mole_fraction_observables, len(mole_fraction_observables))
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
@@ -348,10 +349,9 @@ class Parser(object):
         
         
         concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']] 
-        if concentration_observables[0]!=None:
-            for i in range(len(concentration_observables)):
-                if not concentration_observables[i]:
-                    concentration_observables[i]='NO'    
+        for i in range(len(concentration_observables)):
+            if concentration_observables[i] == False:
+                concentration_observables[i]='NO'      
         #print(concentration_observables,len(concentration_observables))
         observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]
         
@@ -466,10 +466,10 @@ class Parser(object):
         mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
         experiment_type = loaded_exp['experiment-type']
         mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
-        if mole_fraction_observables[0]!=None:
-            for i in range(len(mole_fraction_observables)):
-                if not mole_fraction_observables[i]:
-                    mole_fraction_observables[i]='NO'
+        
+        for i in range(len(mole_fraction_observables)):
+            if mole_fraction_observables[i]==False:
+                mole_fraction_observables[i]='NO'
         #print(mole_fraction_observables, len(mole_fraction_observables))
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
@@ -477,10 +477,10 @@ class Parser(object):
         
         
         concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']] 
-        if concentration_observables[0]!=None:
-            for i in range(len(concentration_observables)):
-                if not concentration_observables[i]:
-                    concentration_observables[i]='NO'    
+        
+        for i in range(len(concentration_observables)):
+            if concentration_observables[i]==False:
+                concentration_observables[i]='NO'    
         #print(concentration_observables,len(concentration_observables))
         observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]
         
@@ -1018,19 +1018,20 @@ class Parser(object):
         mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
         experiment_type = loaded_exp['experiment-type']
         mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
-        if mole_fraction_observables[0]!=None:
-            for i in range(len(mole_fraction_observables)):
-                if not mole_fraction_observables[i]:
-                    mole_fraction_observables[i]='NO'
+        
+        for i in range(len(mole_fraction_observables)):
+            if mole_fraction_observables[i]==False:
+                mole_fraction_observables[i]='NO'
+                
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
         species_uncertainties = dict(zip(species_names,species_uncertainties))
             
             
         concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']]
-        if concentration_observables[0]!=None:
-            for i in range(len(concentration_observables)):
-                if not concentration_observables[i]:
+        
+        for i in range(len(concentration_observables)):
+            if concentration_observables[i] == False:
                     concentration_observables[i]='NO'               
         observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]
      

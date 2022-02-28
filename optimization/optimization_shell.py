@@ -187,28 +187,98 @@ class MSI_optimization(object):
         
         return
     
-    def adding_k_target_values(self):
-        target_value_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,self.Y_data_frame,self.z_data_frame)
-        k_target_values_for_s = target_value_instance.target_values_for_S(self.data_directory +'/'+ self.k_target_values_csv,
-                                                                          self.experiment_dictonaries,
-                                                                          master_equation_reaction_list = self.master_equation_reactions, 
-                                                                          master_equation_sensitivites = self.sensitivity_dict)
+    # def adding_k_target_values(self):
+    #     target_value_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,self.Y_data_frame,self.z_data_frame)
         
-        k_targets_for_y,Y_data_frame = target_value_instance.target_values_Y(self.data_directory +'/'+ self.k_target_values_csv ,self.experiment_dictonaries)
-        k_targets_for_z,sigma,z_data_frame = target_value_instance.target_values_for_Z(self.data_directory +'/'+ self.k_target_values_csv)
-        S_matrix,Y_matrix,z_matrix,sigma = target_value_instance.appending_target_values(k_targets_for_z,k_targets_for_y,k_target_values_for_s,sigma)
+        
+        
+    #     k_target_values_for_s = target_value_instance.target_values_for_S(self.data_directory +'/'+ self.k_target_values_csv,
+    #                                                                       self.experiment_dictonaries,
+    #                                                                       self.S_matrix,
+    #                                                                       master_equation_reaction_list = self.master_equation_reactions, 
+    #                                                                       master_equation_sensitivites = self.sensitivity_dict)
+        
+    #     k_targets_for_y,Y_data_frame = target_value_instance.target_values_Y(self.data_directory +'/'+ self.k_target_values_csv ,self.experiment_dictonaries)
+    #     k_targets_for_z,sigma,z_data_frame = target_value_instance.target_values_for_Z(self.data_directory +'/'+ self.k_target_values_csv)
+    #     S_matrix,Y_matrix,z_matrix,sigma = target_value_instance.appending_target_values(k_targets_for_z,k_targets_for_y,k_target_values_for_s,sigma)
+        
+    #     self.S_matrix = S_matrix
+    #     self.Y_matrix = Y_matrix
+    #     self.z_matrix = z_matrix
+    #     self.sigma = sigma
+    #     self.Y_data_frame = Y_data_frame
+        
+                
+    #     self.z_data_frame = z_data_frame
+        
+        
+    #     self.k_target_values_for_s = k_target_values_for_s
+    #    return
+
+    def adding_k_target_values(self,loop_counter=0):
+        
+        ### This needs to be editied to accomidate chebychev 
+        
+        adding_target_values_instance = ml.Adding_Target_Values(self.S_matrix,self.Y_matrix,self.z_matrix,self.sigma,
+                                                                self.Y_data_frame,self.z_data_frame)
+        
+        self.adding_target_values_instance = adding_target_values_instance
+        
+
+        k_target_values_for_z,sigma_target_values,z_data_frame = self.adding_target_values_instance.target_values_for_Z(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                                                            self.z_data_frame)
+        
+        
+        if loop_counter == 0:
+    
+            
+            k_target_values_for_Y,Y_data_frame = self.adding_target_values_instance.target_values_Y(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                              self.experiment_dictonaries,self.Y_data_frame,self.master_equation_reactions)
+        else:
+            k_target_values_for_Y,Y_data_frame = self.adding_target_values_instance.target_values_Y(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                              self.experiment_dictonaries,self.Y_data_frame,self.master_equation_reactions)       
+        
+
+        
+        
+       
+
+        k_target_values_for_S = self.adding_target_values_instance.target_values_for_S(self.data_directory+'/'+ self.k_target_values_csv,
+                                                                                 self.experiment_dictonaries,
+                                                                                 self.S_matrix,
+                                                                                 master_equation_reaction_list = self.master_equation_reactions,
+                                                                                 master_equation_sensitivites = self.chebyshev_sensitivities)    
+
+        
+
+                                
+        S_matrix,Y_matrix,z_matrix,sigma = self.adding_target_values_instance.appending_target_values(k_target_values_for_z,
+                                                                                                               k_target_values_for_Y,
+                                                                                                               k_target_values_for_S,
+                                                                                                               sigma_target_values,
+                                                                                                               self.S_matrix,
+                                                                                                               self.Y_matrix,
+                                                                                                               self.z_matrix,
+                                                                                                               self.sigma)                        
+
+        
+        
+        
         self.S_matrix = S_matrix
         self.Y_matrix = Y_matrix
         self.z_matrix = z_matrix
         self.sigma = sigma
         self.Y_data_frame = Y_data_frame
-        
-                
         self.z_data_frame = z_data_frame
+
         
-        
-        self.k_target_values_for_s = k_target_values_for_s
+        self.k_target_values_for_S = k_target_values_for_S
         return
+
+
+
+
+
     
     def matrix_math(self,loop_counter = 0):
         if loop_counter ==0:
