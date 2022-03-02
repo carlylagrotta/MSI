@@ -4,7 +4,7 @@ import MSI.cti_core.cti_processor as pr
 import MSI.optimization.matrix_loader as ml
 import MSI.simulations.absorbance.curve_superimpose as csp
 import MSI.simulations.yaml_parser as yp
-import MSI.simulations.instruments.shock_tube as st
+import MSI.simulations.instruments.batch_reactor as st
 import MSI.simulations.instruments.jsr_steadystate as jsr
 import MSI.simulations.instruments.flames as fl
 import MSI.simulations.instruments.ignition_delay as ig
@@ -66,18 +66,18 @@ class Optimization_Utility(object):
         # start here 
         #print(exp_dict['simulation_type'])
         
-        if re.match('[Ss]pecies[- ][Pp]rofile',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ss]hock [Tt]ube',simulation.fullParsedYamlFile['simulationType']):
+        if re.match('[Ss]pecies[- ][Pp]rofile',simulation.fullParsedYamlFile['experimentType']) and re.match('[Bb]atch[- ][Rr]eactor',simulation.fullParsedYamlFile['simulationType']):
             exp_dict['concentration_observables'] = simulation.concentrationObservables
             exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
             exp_dict['time_shift'] = interpolated_time_shift_sens
-            exp_dict['uncertainty']        = self.build_uncertainty_shock_tube_dict(exp_dict['simulation'].fullParsedYamlFile)
+            exp_dict['uncertainty']        = self.build_uncertainty_batch_reactor_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
             exp_dict['flame_speed_observables']= [None]
             exp_dict['ignition_delay_observables'] = [None]
             #print('FUCK SPYDER')
 
         #decide how we want to build uncertainty dict and if we want to pass in the parsed yaml file?
-        elif re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']) and re.match('[Ss]hock[- ][Tt]ube',simulation.fullParsedYamlFile['simulationType']):
+        elif re.match('[Ii]gnition[- ][Dd]elay',simulation.fullParsedYamlFile['experimentType']) and re.match('[Bb]atch[- ][Rr]eactor',simulation.fullParsedYamlFile['simulationType']):
             exp_dict['time_shift'] = interpolated_time_shift_sens
             exp_dict['uncertainty']= self.build_uncertainty_ignition_delay_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['flame_speed_observables']= [None]
@@ -115,11 +115,11 @@ class Optimization_Utility(object):
             exp_dict['flame_speed_observables']= [None]
             exp_dict['ignition_delay_observables'] = [None]   
             
-        elif re.match('[Ss]pecies[- ][Pp]rofile',simulation.fullParsedYamlFile['experimentType']) and re.match('[Vv]ariable[ -][Pp]ressure[ -][Ss]hock [- ][Tt]ube',simulation.fullParsedYamlFile['simulationType']):
+        elif re.match('[Ss]pecies[- ][Pp]rofile',simulation.fullParsedYamlFile['experimentType']) and re.match('[Vv]ariable[ -][Pp]ressure[ -][Bb]atch[- ][Rr]eactor',simulation.fullParsedYamlFile['simulationType']):
             exp_dict['concentration_observables'] = simulation.concentrationObservables
             exp_dict['mole_fraction_observables'] = simulation.moleFractionObservables
             exp_dict['time_shift'] = interpolated_time_shift_sens
-            exp_dict['uncertainty']        = self.build_uncertainty_shock_tube_dict(exp_dict['simulation'].fullParsedYamlFile)
+            exp_dict['uncertainty']        = self.build_uncertainty_batch_reactor_dict(exp_dict['simulation'].fullParsedYamlFile)
             exp_dict['simulation_type'] = simulation.fullParsedYamlFile['simulationType']
             exp_dict['flame_speed_observables']= [None]
             exp_dict['ignition_delay_observables'] = [None]
@@ -159,7 +159,7 @@ class Optimization_Utility(object):
 
         uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['inletTemperatureRelativeUncertainty']
         uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
-        uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['relativeUncertaintyBySpecies'],
+        uncertainty_dict['species_relative_uncertainty'] = {'dictionary_of_values':experiment_dictionary['relativeUncertaintyBySpecies'],
                         'species':experiment_dictionary['species'], 'type_dict':experiment_dictionary['typeDict']}
         uncertainty_dict['flame_speed_relative_uncertainty'] = experiment_dictionary['flameSpeedRelativeUncertainity']
         uncertainty_dict['flame_speed_absolute_uncertainty'] = experiment_dictionary['flameSpeedAbsoluteUncertainty']        
@@ -171,7 +171,7 @@ class Optimization_Utility(object):
         
         uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['tempRelativeUncertainty']
         uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
-        uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['relativeUncertaintyBySpecies'],
+        uncertainty_dict['species_relative_uncertainty'] = {'dictionary_of_values':experiment_dictionary['relativeUncertaintyBySpecies'],
                         'type_dict':experiment_dictionary['typeToSpeciesDict']}
         uncertainty_dict['ignition_delay_relative_uncertainty'] = experiment_dictionary['ignitionDelayRelativeUncertainty']
         uncertainty_dict['ignition_delay_absolute_uncertainty'] = experiment_dictionary['ignitionDelayAbsoluteUncertainty']
@@ -185,7 +185,7 @@ class Optimization_Utility(object):
         #Don't worry about absorbance for now
         uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['tempRelativeUncertainty']
         uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
-        uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['speciesUncertaintys'],
+        uncertainty_dict['species_relative_uncertainty'] = {'dictionary_of_values':experiment_dictionary['speciesUncertaintys'],
                         'species':experiment_dictionary['speciesNames']}
         uncertainty_dict['restime_relative_uncertainty'] = experiment_dictionary['residenceTimeRelativeUncertainty']
         uncertainty_dict['mole_fraction_relative_uncertainty'] = experiment_dictionary['moleFractionRelativeUncertainty']
@@ -200,7 +200,7 @@ class Optimization_Utility(object):
         #Don't worry about absorbance for now
         uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictionary['tempRelativeUncertainty']
         uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictionary['pressureRelativeUncertainty']
-        uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictionary['speciesUncertaintys'],
+        uncertainty_dict['species_relative_uncertainty'] = {'dictionary_of_values':experiment_dictionary['speciesUncertaintys'],
                         'species':experiment_dictionary['speciesNames']}
         uncertainty_dict['mole_fraction_relative_uncertainty'] = experiment_dictionary['moleFractionRelativeUncertainty']
         uncertainty_dict['mole_fraction_absolute_uncertainty'] = experiment_dictionary['moleFractionAbsoluteUncertainty'] 
@@ -209,7 +209,7 @@ class Optimization_Utility(object):
         uncertainty_dict['time_shift_uncertainty'] = experiment_dictionary['timeShiftUncertainty']
         return uncertainty_dict    
     
-    def build_uncertainty_shock_tube_dict(self,experiment_dictonarie:dict={}):
+    def build_uncertainty_batch_reactor_dict(self,experiment_dictonarie:dict={}):
         uncertainty_dict = {}
         #need to make an exception to this if there is no absortpion in dict
         if 'coupledCoefficients' in experiment_dictonarie.keys():
@@ -224,10 +224,10 @@ class Optimization_Utility(object):
             uncertainty_dict['coupled_coef_and_uncertainty'] = dict_of_coupled_unc_and_param
             uncertainty_dict['absorbance_relative_uncertainty'] = experiment_dictonarie['absorbanceRelativeUncertainty']
             uncertainty_dict['absorbance_absolute_uncertainty'] = experiment_dictonarie['absorbanceAbsoluteUncertainty']
-        #finish making this dictonary
+        #finish making this dictionary
         uncertainty_dict['temperature_relative_uncertainty'] = experiment_dictonarie['tempRelativeUncertainty']
         uncertainty_dict['pressure_relative_uncertainty'] = experiment_dictonarie['pressureRelativeUncertainty']
-        uncertainty_dict['species_relative_uncertainty'] = {'dictonary_of_values':experiment_dictonarie['speciesUncertaintys'],
+        uncertainty_dict['species_relative_uncertainty'] = {'dictionary_of_values':experiment_dictonarie['speciesUncertaintys'],
                         'species':experiment_dictonarie['speciesNames']}
         uncertainty_dict['time_shift_absolute_uncertainty'] = experiment_dictonarie['timeShiftUncertainty']
         uncertainty_dict['mole_fraction_relative_uncertainty'] = experiment_dictonarie['moleFractionRelativeUncertainty']
@@ -458,29 +458,29 @@ class Optimization_Utility(object):
         
         
     def running_flow_reactor(self,processor=None,
-                             experiment_dictonary:dict={},
+                             experiment_dictionary:dict={},
                              kineticSens = 1,
                              physicalSens = 1,
                              dk = 0.01,
                              exp_number = 1):
-        flow_reactor = fr.flow_reactor_wrapper(pressure = experiment_dictonary['pressure'],
-                                                temperatures = experiment_dictonary['temperatures'],
-                                                observables = experiment_dictonary['observables'],
-                                                moleFractionObservables = experiment_dictonary['moleFractionObservables'],
-                                                concentrationObservables = experiment_dictonary['concentrationObservables'],
-                                                fullParsedYamlFile = experiment_dictonary,
+        flow_reactor = fr.flow_reactor_wrapper(pressure = experiment_dictionary['pressure'],
+                                                temperatures = experiment_dictionary['temperatures'],
+                                                observables = experiment_dictionary['observables'],
+                                                moleFractionObservables = experiment_dictionary['moleFractionObservables'],
+                                                concentrationObservables = experiment_dictionary['concentrationObservables'],
+                                                fullParsedYamlFile = experiment_dictionary,
                                                 kineticSens=kineticSens,
                                                 physicalSens=physicalSens,
-                                                conditions=experiment_dictonary['conditions'],
-                                                thermalBoundary=experiment_dictonary['thermalBoundary'],
-                                                mechanicalBoundary=experiment_dictonary['mechanicalBoundary'],
+                                                conditions=experiment_dictionary['conditions'],
+                                                thermalBoundary=experiment_dictionary['thermalBoundary'],
+                                                mechanicalBoundary=experiment_dictionary['mechanicalBoundary'],
                                                 processor=processor,
                                                 cti_path="", 
                                                 save_physSensHistories=1,
                                                 save_timeHistories=1,
-                                                timeshifts=experiment_dictonary['timeShift'],
-                                                initialTime=experiment_dictonary['initialTime'],
-                                                residenceTimes=experiment_dictonary['residenceTimes'])
+                                                timeshifts=experiment_dictionary['timeShift'],
+                                                initialTime=experiment_dictionary['initialTime'],
+                                                residenceTimes=experiment_dictionary['residenceTimes'])
         soln,ksen=flow_reactor.run(ksens_marker=kineticSens ,psens_marker=physicalSens)
 
         int_ksens_exp_mapped= flow_reactor.map_and_interp_ksens()
@@ -508,7 +508,7 @@ class Optimization_Utility(object):
         time_shift_sens_df = pd.concat(time_shift_sens,ignore_index=True)    
         #print(time_shift_sens_df)
             
-        csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
+        csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] + experiment_dictionary['concentrationCsvFiles'] if x is not None]
         #print(csv_paths)
         exp_data = flow_reactor.importExperimentalData(csv_paths)
         
@@ -519,7 +519,7 @@ class Optimization_Utility(object):
                                             ssens,
                                             interpolated_time_shift_sens = time_shift_sens_df,
                                             experimental_data = exp_data,
-                                            yaml_dict=experiment_dictonary)                                                
+                                            yaml_dict=experiment_dictionary)                                                
                                                
                                         
             
@@ -583,154 +583,154 @@ class Optimization_Utility(object):
                                            yaml_dict=experiment_dictionary)
         return experiment
         
-    def running_full_shock_tube(self,processor=None,
-                                           experiment_dictonary:dict={},
+    def running_full_batch_reactor(self,processor=None,
+                                           experiment_dictionary:dict={},
                                            kineticSens = 1,
                                            physicalSens = 1,
                                            dk = .01,
                                            exp_number=1):
-        shock_tube = st.shockTube(pressure = experiment_dictonary['pressure'],
-                     temperature = experiment_dictonary['temperature'],
-                     observables = experiment_dictonary['observables'],
+        batch_reactor = st.batchReactor(pressure = experiment_dictionary['pressure'],
+                     temperature = experiment_dictionary['temperature'],
+                     observables = experiment_dictionary['observables'],
                      kineticSens = kineticSens,
                      physicalSens = physicalSens,
-                     conditions = experiment_dictonary['conditions'],
-                     initialTime = experiment_dictonary['initialTime'],
-                     finalTime = experiment_dictonary['finalTime'],
-                     thermalBoundary = experiment_dictonary['thermalBoundary'],
-                     mechanicalBoundary = experiment_dictonary['mechanicalBoundary'],
+                     conditions = experiment_dictionary['conditions'],
+                     initialTime = experiment_dictionary['initialTime'],
+                     finalTime = experiment_dictionary['finalTime'],
+                     thermalBoundary = experiment_dictionary['thermalBoundary'],
+                     mechanicalBoundary = experiment_dictionary['mechanicalBoundary'],
                      processor = processor,
                      save_timeHistories = 1,
                      save_physSensHistories = 1,
-                     moleFractionObservables = experiment_dictonary['moleFractionObservables'],
-                     concentrationObservables = experiment_dictonary['concentrationObservables'],
-                     fullParsedYamlFile = experiment_dictonary,
-                     time_shift_value = experiment_dictonary['timeShift'])
+                     moleFractionObservables = experiment_dictionary['moleFractionObservables'],
+                     concentrationObservables = experiment_dictionary['concentrationObservables'],
+                     fullParsedYamlFile = experiment_dictionary,
+                     time_shift_value = experiment_dictionary['timeShift'])
         
-        csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
-        exp_data = shock_tube.importExperimentalData(csv_paths)
+        csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] + experiment_dictionary['concentrationCsvFiles'] if x is not None]
+        exp_data = batch_reactor.importExperimentalData(csv_paths)
         
-        shock_tube.run()
+        batch_reactor.run()
         ########################################################################
 
         
         ################################################################################
-        int_ksens_exp_mapped= shock_tube.map_and_interp_ksens()#ksens is wiped on rerun so int it before
-        shock_tube.sensitivity_adjustment(temp_del = dk)
-        shock_tube.sensitivity_adjustment(pres_del = dk)
-        shock_tube.species_adjustment(dk)
+        int_ksens_exp_mapped= batch_reactor.map_and_interp_ksens()#ksens is wiped on rerun so int it before
+        batch_reactor.sensitivity_adjustment(temp_del = dk)
+        batch_reactor.sensitivity_adjustment(pres_del = dk)
+        batch_reactor.species_adjustment(dk)
         ############################################### check to make sure these aren't effected 
-        int_tp_psen_against_experimental = shock_tube.interpolate_experimental([shock_tube.interpolate_physical_sensitivities(index=1),
-                                                                           shock_tube.interpolate_physical_sensitivities(index=2)])
+        int_tp_psen_against_experimental = batch_reactor.interpolate_experimental([batch_reactor.interpolate_physical_sensitivities(index=1),
+                                                                           batch_reactor.interpolate_physical_sensitivities(index=2)])
         
     
-        int_spec_psen_against_experimental = shock_tube.interpolate_experimental(pre_interpolated=shock_tube.interpolate_species_sensitivities())
+        int_spec_psen_against_experimental = batch_reactor.interpolate_experimental(pre_interpolated=batch_reactor.interpolate_species_sensitivities())
     ###############saving the shock tube experimental interpolated time history     
-        single_data = shock_tube.interpolate_experimental(single=shock_tube.timeHistories[0])
-        shock_tube.savingInterpTimeHistoryAgainstExp(single_data)
+        single_data = batch_reactor.interpolate_experimental(single=batch_reactor.timeHistories[0])
+        batch_reactor.savingInterpTimeHistoryAgainstExp(single_data)
         #tab starting here tomorrow
-        shock_tube.interpolatePressureandTempToExperiment(shock_tube,exp_data)
-        time_shift_sensitivity = shock_tube.calculate_time_shift_sensitivity(shock_tube,exp_data,dk)
+        batch_reactor.interpolatePressureandTempToExperiment(batch_reactor,exp_data)
+        time_shift_sensitivity = batch_reactor.calculate_time_shift_sensitivity(batch_reactor,exp_data,dk)
         
     ###############  ###############  
         experiment = self.build_single_exp_dict(exp_number,
-                                           shock_tube,
+                                           batch_reactor,
                                            int_ksens_exp_mapped,
                                            int_tp_psen_against_experimental,
                                            int_spec_psen_against_experimental,
                                            experimental_data = exp_data,
-                                           yaml_dict=experiment_dictonary,
+                                           yaml_dict=experiment_dictionary,
                                            interpolated_time_shift_sens = time_shift_sensitivity)
         
         #write test case and check if we can get as far as just returnign the experiment
         return experiment
     
-    def running_full_shock_tube_absorption(self,processor=None,
-                                           experiment_dictonary:dict={},
+    def running_full_batch_reactor_absorption(self,processor=None,
+                                           experiment_dictionary:dict={},
                                            absorbance_yaml_file_path = '',
                                            kineticSens = 1,
                                            physicalSens = 1,
                                            dk = .01,
                                            exp_number=1):
-        shock_tube = st.shockTube(pressure = experiment_dictonary['pressure'],
-                     temperature = experiment_dictonary['temperature'],
-                     observables = experiment_dictonary['observables'],
+        batch_reactor = st.batchReactor(pressure = experiment_dictionary['pressure'],
+                     temperature = experiment_dictionary['temperature'],
+                     observables = experiment_dictionary['observables'],
                      kineticSens = kineticSens,
                      physicalSens = physicalSens,
-                     conditions = experiment_dictonary['conditions'],
-                     initialTime = experiment_dictonary['initialTime'],
-                     finalTime = experiment_dictonary['finalTime'],
-                     thermalBoundary = experiment_dictonary['thermalBoundary'],
-                     mechanicalBoundary = experiment_dictonary['mechanicalBoundary'],
+                     conditions = experiment_dictionary['conditions'],
+                     initialTime = experiment_dictionary['initialTime'],
+                     finalTime = experiment_dictionary['finalTime'],
+                     thermalBoundary = experiment_dictionary['thermalBoundary'],
+                     mechanicalBoundary = experiment_dictionary['mechanicalBoundary'],
                      processor = processor,
                      save_timeHistories = 1,
                      save_physSensHistories = 1,
-                     moleFractionObservables = experiment_dictonary['moleFractionObservables'],
-                     absorbanceObservables = experiment_dictonary['absorbanceObservables'],
-                     concentrationObservables = experiment_dictonary['concentrationObservables'],
-                     fullParsedYamlFile = experiment_dictonary,
-                     time_shift_value = experiment_dictonary['timeShift'])
+                     moleFractionObservables = experiment_dictionary['moleFractionObservables'],
+                     absorbanceObservables = experiment_dictionary['absorbanceObservables'],
+                     concentrationObservables = experiment_dictionary['concentrationObservables'],
+                     fullParsedYamlFile = experiment_dictionary,
+                     time_shift_value = experiment_dictionary['timeShift'])
     
         
-        csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
+        csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] + experiment_dictionary['concentrationCsvFiles'] if x is not None]
         
-        exp_data = shock_tube.importExperimentalData(csv_paths)
-        shock_tube.run()
+        exp_data = batch_reactor.importExperimentalData(csv_paths)
+        batch_reactor.run()
         #this might be in the wrong spot 
-        int_ksens_exp_mapped= shock_tube.map_and_interp_ksens()
+        int_ksens_exp_mapped= batch_reactor.map_and_interp_ksens()
     
     
         abs_instance = csp.Absorb()
         parser = yp.Parser()
         abs_loaded = parser.load_to_obj(absorbance_yaml_file_path)
-        abs_data = abs_instance.superimpose_shock_tube(shock_tube,abs_loaded,experiment_dictonary['pathLength'],
+        abs_data = abs_instance.superimpose_batch_reactor(batch_reactor,abs_loaded,experiment_dictionary['pathLength'],
                                                        kinetic_sens=kineticSens)    
         
         
         perturbed_coef = abs_instance.perturb_abs_coef(dk,
-                                              shock_tube,
+                                              batch_reactor,
                                               abs_loaded,
-                                              experiment_dictonary['pathLength'],
+                                              experiment_dictionary['pathLength'],
                                               summed_data = abs_data[0]) 
         
         
         
-        shock_tube.sensitivity_adjustment(temp_del = dk)
-        shock_tube.sensitivity_adjustment(pres_del = dk)
-        shock_tube.species_adjustment(dk)
-        int_tp_psen_against_experimental = shock_tube.interpolate_experimental([shock_tube.interpolate_physical_sensitivities(index=1),
-                                                                                 shock_tube.interpolate_physical_sensitivities(index=2)])
+        batch_reactor.sensitivity_adjustment(temp_del = dk)
+        batch_reactor.sensitivity_adjustment(pres_del = dk)
+        batch_reactor.species_adjustment(dk)
+        int_tp_psen_against_experimental = batch_reactor.interpolate_experimental([batch_reactor.interpolate_physical_sensitivities(index=1),
+                                                                                 batch_reactor.interpolate_physical_sensitivities(index=2)])
 
         
-        int_spec_psen_against_experimental = shock_tube.interpolate_experimental(pre_interpolated=shock_tube.interpolate_species_sensitivities())
-        abs_phys_sens = abs_instance.absorb_phys_sensitivities(shock_tube,abs_data[0],abs_loaded,
-                                                               experiment_dictonary['pathLength'],
+        int_spec_psen_against_experimental = batch_reactor.interpolate_experimental(pre_interpolated=batch_reactor.interpolate_species_sensitivities())
+        abs_phys_sens = abs_instance.absorb_phys_sensitivities(batch_reactor,abs_data[0],abs_loaded,
+                                                               experiment_dictionary['pathLength'],
                                                                dk = dk)
        
 
 
-        loaded_experimental_data_absorbance = abs_instance.import_experimental_data(experiment_dictonary['absorbanceCsvFiles'])
+        loaded_experimental_data_absorbance = abs_instance.import_experimental_data(experiment_dictionary['absorbanceCsvFiles'])
         
-        interp_abs_exp= abs_instance.interpolate_experimental(shock_tube,loaded_experimental_data_absorbance,
+        interp_abs_exp= abs_instance.interpolate_experimental(batch_reactor,loaded_experimental_data_absorbance,
                                                             original_summed_absorption=abs_data[0],
                                                             abs_kinetic_sens = abs_data[1],
                                                             abs_phys_sens = abs_phys_sens,
                                                             abs_coef_sens = perturbed_coef)
 
-        time_history_interp_against_experiment_dict = abs_instance.interpolate_experimental(shock_tube,
+        time_history_interp_against_experiment_dict = abs_instance.interpolate_experimental(batch_reactor,
                                                                                             loaded_experimental_data_absorbance,
-                                                                                            time_history = shock_tube.timeHistories[0])
+                                                                                            time_history = batch_reactor.timeHistories[0])
      #################################################################################   
-        single_data = shock_tube.interpolate_experimental(single=shock_tube.timeHistories[0])
-        shock_tube.savingInterpTimeHistoryAgainstExp(single_data)
-        shock_tube.interpolatePressureandTempToExperiment(shock_tube,exp_data)
-        time_shift_sensitivity = shock_tube.calculate_time_shift_sensitivity(shock_tube,exp_data,dk)
+        single_data = batch_reactor.interpolate_experimental(single=batch_reactor.timeHistories[0])
+        batch_reactor.savingInterpTimeHistoryAgainstExp(single_data)
+        batch_reactor.interpolatePressureandTempToExperiment(batch_reactor,exp_data)
+        time_shift_sensitivity = batch_reactor.calculate_time_shift_sensitivity(batch_reactor,exp_data,dk)
     ####################################################################################    
         time_shift_abs_senstivity = abs_instance.calculate_time_shift_sensitivity_abs(abs_data[0],
                                                                                        loaded_experimental_data_absorbance,
-                                                                                       shock_tube,dk)
+                                                                                       batch_reactor,dk)
         experiment = self.build_single_exp_dict(exp_number,
-                                                shock_tube,
+                                                batch_reactor,
                                       int_ksens_exp_mapped,
                                       int_tp_psen_against_experimental,
                                       int_spec_psen_against_experimental,
@@ -739,7 +739,7 @@ class Optimization_Utility(object):
                                       absorbance_experimental_data = loaded_experimental_data_absorbance,
                                       time_history_interpolated_against_absorbance_experiment = time_history_interp_against_experiment_dict,
                                       absorbance_calculated_from_model = abs_data[0],
-                                      yaml_dict=experiment_dictonary,
+                                      yaml_dict=experiment_dictionary,
                                       interpolated_time_shift_sens = time_shift_sensitivity,
                                       interpolated_abs_time_shift = time_shift_abs_senstivity)
         
@@ -747,47 +747,47 @@ class Optimization_Utility(object):
     
     
     
-    def running_shock_tube_absorption_only(self,processor=None,
-                                           experiment_dictonary:dict={},
+    def running_batch_reactor_absorption_only(self,processor=None,
+                                           experiment_dictionary:dict={},
                                            absorbance_yaml_file_path = '',
                                            kineticSens = 1,
                                            physicalSens = 1,
                                            dk = .01,
                                            exp_number=1):
-        shock_tube = st.shockTube(pressure = experiment_dictonary['pressure'],
-                     temperature = experiment_dictonary['temperature'],
-                     observables = experiment_dictonary['observables'],
+        batch_reactor = st.batchReactor(pressure = experiment_dictionary['pressure'],
+                     temperature = experiment_dictionary['temperature'],
+                     observables = experiment_dictionary['observables'],
                      kineticSens = kineticSens,
                      physicalSens = physicalSens,
-                     conditions = experiment_dictonary['conditions'],
-                     initialTime = experiment_dictonary['initialTime'],
-                     finalTime = experiment_dictonary['finalTime'],
-                     thermalBoundary = experiment_dictonary['thermalBoundary'],
-                     mechanicalBoundary = experiment_dictonary['mechanicalBoundary'],
+                     conditions = experiment_dictionary['conditions'],
+                     initialTime = experiment_dictionary['initialTime'],
+                     finalTime = experiment_dictionary['finalTime'],
+                     thermalBoundary = experiment_dictionary['thermalBoundary'],
+                     mechanicalBoundary = experiment_dictionary['mechanicalBoundary'],
                      processor = processor,
                      save_timeHistories = 1,
                      save_physSensHistories = 1,
-                     moleFractionObservables = experiment_dictonary['moleFractionObservables'],
-                     absorbanceObservables = experiment_dictonary['absorbanceObservables'],
-                     concentrationObservables = experiment_dictonary['concentrationObservables'],
-                     fullParsedYamlFile = experiment_dictonary,
-                     time_shift_value = experiment_dictonary['timeShift'])
+                     moleFractionObservables = experiment_dictionary['moleFractionObservables'],
+                     absorbanceObservables = experiment_dictionary['absorbanceObservables'],
+                     concentrationObservables = experiment_dictionary['concentrationObservables'],
+                     fullParsedYamlFile = experiment_dictionary,
+                     time_shift_value = experiment_dictionary['timeShift'])
 
     
-        shock_tube.run()
+        batch_reactor.run()
         abs_instance = csp.Absorb()
         parser = yp.Parser()
         abs_loaded = parser.load_to_obj(absorbance_yaml_file_path)
-        abs_data = abs_instance.superimpose_shock_tube(shock_tube,abs_loaded,experiment_dictonary['pathLength'],
+        abs_data = abs_instance.superimpose_batch_reactor(batch_reactor,abs_loaded,experiment_dictionary['pathLength'],
                                                        kinetic_sens=kineticSens)
         
         #print('first go')
         
         
         perturbed_coef = abs_instance.perturb_abs_coef(dk,
-                                              shock_tube,
+                                              batch_reactor,
                                               abs_loaded,
-                                              experiment_dictonary['pathLength'],
+                                              experiment_dictionary['pathLength'],
                                               summed_data = abs_data[0]) 
         
         #print('second go')
@@ -795,35 +795,35 @@ class Optimization_Utility(object):
         #print(perturbed_coef)
         
         
-        shock_tube.sensitivity_adjustment(temp_del = dk)
-        shock_tube.sensitivity_adjustment(pres_del = dk)
-        shock_tube.species_adjustment(dk)        
-        abs_phys_sens = abs_instance.absorb_phys_sensitivities(shock_tube,abs_data[0],abs_loaded,
-                                                               experiment_dictonary['pathLength'],
+        batch_reactor.sensitivity_adjustment(temp_del = dk)
+        batch_reactor.sensitivity_adjustment(pres_del = dk)
+        batch_reactor.species_adjustment(dk)        
+        abs_phys_sens = abs_instance.absorb_phys_sensitivities(batch_reactor,abs_data[0],abs_loaded,
+                                                               experiment_dictionary['pathLength'],
                                                                dk = dk)
        
 
         
-        loaded_experimental_data_absorbance = abs_instance.import_experimental_data(experiment_dictonary['absorbanceCsvFiles'])
+        loaded_experimental_data_absorbance = abs_instance.import_experimental_data(experiment_dictionary['absorbanceCsvFiles'])
         
-        interp_abs_exp= abs_instance.interpolate_experimental(shock_tube,loaded_experimental_data_absorbance,
+        interp_abs_exp= abs_instance.interpolate_experimental(batch_reactor,loaded_experimental_data_absorbance,
                                                             original_summed_absorption=abs_data[0],
                                                             abs_kinetic_sens = abs_data[1],
                                                             abs_phys_sens = abs_phys_sens,
                                                             abs_coef_sens = perturbed_coef)
         
         
-        time_history_interp_against_experiment_dict = abs_instance.interpolate_experimental(shock_tube,
+        time_history_interp_against_experiment_dict = abs_instance.interpolate_experimental(batch_reactor,
                                                                                             loaded_experimental_data_absorbance,
-                                                                                            time_history = shock_tube.timeHistories[0])
+                                                                                            time_history = batch_reactor.timeHistories[0])
         time_shift_abs_senstivity = abs_instance.calculate_time_shift_sensitivity_abs(abs_data[0],
                                                                                        loaded_experimental_data_absorbance,
-                                                                                       shock_tube,dk)
+                                                                                       batch_reactor,dk)
         
         
                                 
         experiment = self.build_single_exp_dict(exp_number,
-                                                shock_tube,
+                                                batch_reactor,
                                       None,
                                       None,
                                       None,
@@ -831,71 +831,71 @@ class Optimization_Utility(object):
                                       absorbance_experimental_data = loaded_experimental_data_absorbance,
                                       time_history_interpolated_against_absorbance_experiment = time_history_interp_against_experiment_dict,
                                       absorbance_calculated_from_model = abs_data[0],
-                                      yaml_dict=experiment_dictonary,
+                                      yaml_dict=experiment_dictionary,
                                       interpolated_abs_time_shift = time_shift_abs_senstivity)
         
         return experiment    
     
     
-    def running_full_variable_pressure_shock_tube(self,processor=None,
-                                           experiment_dictonary:dict={},
+    def running_full_variable_pressure_batch_reactor(self,processor=None,
+                                           experiment_dictionary:dict={},
                                            kineticSens = 1,
                                            physicalSens = 1,
                                            dk = .01,
                                            exp_number=1):
-        shock_tube = st.shockTube(pressure = experiment_dictonary['pressure'],
-                     temperature = experiment_dictonary['temperature'],
-                     observables = experiment_dictonary['observables'],
+        batch_reactor = st.batchReactor(pressure = experiment_dictionary['pressure'],
+                     temperature = experiment_dictionary['temperature'],
+                     observables = experiment_dictionary['observables'],
                      kineticSens = kineticSens,
                      physicalSens = physicalSens,
-                     conditions = experiment_dictonary['conditions'],
-                     initialTime = experiment_dictonary['initialTime'],
-                     finalTime = experiment_dictonary['finalTime'],
-                     thermalBoundary = experiment_dictonary['thermalBoundary'],
-                     mechanicalBoundary = experiment_dictonary['mechanicalBoundary'],
+                     conditions = experiment_dictionary['conditions'],
+                     initialTime = experiment_dictionary['initialTime'],
+                     finalTime = experiment_dictionary['finalTime'],
+                     thermalBoundary = experiment_dictionary['thermalBoundary'],
+                     mechanicalBoundary = experiment_dictionary['mechanicalBoundary'],
                      processor = processor,
                      save_timeHistories = 1,
                      save_physSensHistories = 1,
-                     moleFractionObservables = experiment_dictonary['moleFractionObservables'],
-                     concentrationObservables = experiment_dictonary['concentrationObservables'],
-                     fullParsedYamlFile = experiment_dictonary,
-                     time_shift_value = experiment_dictonary['timeShift'],
-                     volumeTrace=experiment_dictonary['volumeTraceCsv'],
+                     moleFractionObservables = experiment_dictionary['moleFractionObservables'],
+                     concentrationObservables = experiment_dictionary['concentrationObservables'],
+                     fullParsedYamlFile = experiment_dictionary,
+                     time_shift_value = experiment_dictionary['timeShift'],
+                     volumeTrace=experiment_dictionary['volumeTraceCsv'],
                      exactDerivFlag=False)
         
-        csv_paths = [x for x in  experiment_dictonary['moleFractionCsvFiles'] + experiment_dictonary['concentrationCsvFiles'] if x is not None]
-        exp_data = shock_tube.importExperimentalData(csv_paths)
+        csv_paths = [x for x in  experiment_dictionary['moleFractionCsvFiles'] + experiment_dictionary['concentrationCsvFiles'] if x is not None]
+        exp_data = batch_reactor.importExperimentalData(csv_paths)
         
-        shock_tube.run()
+        batch_reactor.run()
         ########################################################################
 
         
         ################################################################################
-        int_ksens_exp_mapped= shock_tube.map_and_interp_ksens()#ksens is wiped on rerun so int it before
-        shock_tube.sensitivity_adjustment(temp_del = dk)
-        shock_tube.sensitivity_adjustment(pres_del = dk)
-        shock_tube.species_adjustment(dk)
+        int_ksens_exp_mapped= batch_reactor.map_and_interp_ksens()#ksens is wiped on rerun so int it before
+        batch_reactor.sensitivity_adjustment(temp_del = dk)
+        batch_reactor.sensitivity_adjustment(pres_del = dk)
+        batch_reactor.species_adjustment(dk)
         ############################################### check to make sure these aren't effected 
-        int_tp_psen_against_experimental = shock_tube.interpolate_experimental([shock_tube.interpolate_physical_sensitivities(index=1),
-                                                                           shock_tube.interpolate_physical_sensitivities(index=2)])
+        int_tp_psen_against_experimental = batch_reactor.interpolate_experimental([batch_reactor.interpolate_physical_sensitivities(index=1),
+                                                                           batch_reactor.interpolate_physical_sensitivities(index=2)])
         
     
-        int_spec_psen_against_experimental = shock_tube.interpolate_experimental(pre_interpolated=shock_tube.interpolate_species_sensitivities())
+        int_spec_psen_against_experimental = batch_reactor.interpolate_experimental(pre_interpolated=batch_reactor.interpolate_species_sensitivities())
     ###############saving the shock tube experimental interpolated time history     
-        single_data = shock_tube.interpolate_experimental(single=shock_tube.timeHistories[0])
-        shock_tube.savingInterpTimeHistoryAgainstExp(single_data)
+        single_data = batch_reactor.interpolate_experimental(single=batch_reactor.timeHistories[0])
+        batch_reactor.savingInterpTimeHistoryAgainstExp(single_data)
         #tab starting here tomorrow
-        shock_tube.interpolatePressureandTempToExperiment(shock_tube,exp_data)
-        time_shift_sensitivity = shock_tube.calculate_time_shift_sensitivity(shock_tube,exp_data,dk)
+        batch_reactor.interpolatePressureandTempToExperiment(batch_reactor,exp_data)
+        time_shift_sensitivity = batch_reactor.calculate_time_shift_sensitivity(batch_reactor,exp_data,dk)
         
     ###############  ###############  
         experiment = self.build_single_exp_dict(exp_number,
-                                           shock_tube,
+                                           batch_reactor,
                                            int_ksens_exp_mapped,
                                            int_tp_psen_against_experimental,
                                            int_spec_psen_against_experimental,
                                            experimental_data = exp_data,
-                                           yaml_dict=experiment_dictonary,
+                                           yaml_dict=experiment_dictionary,
                                            interpolated_time_shift_sens = time_shift_sensitivity)
         
         #write test case and check if we can get as far as just returnign the experiment
@@ -915,8 +915,8 @@ class Optimization_Utility(object):
 
                 
                     if 'absorbanceObservables' not in yamlDict.keys():
-                        experiment = self.running_full_shock_tube(processor=processor,
-                                           experiment_dictonary=yamlDict,
+                        experiment = self.running_full_batch_reactor(processor=processor,
+                                           experiment_dictionary=yamlDict,
                                            kineticSens = kineticSens,
                                            physicalSens = physicalSens,
                                            dk = dk,
@@ -926,8 +926,8 @@ class Optimization_Utility(object):
                     elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
                         path = list_of_yaml_paths[i][1]
                         
-                        experiment = self.running_shock_tube_absorption_only(processor=processor,
-                                                                             experiment_dictonary = yamlDict,
+                        experiment = self.running_batch_reactor_absorption_only(processor=processor,
+                                                                             experiment_dictionary = yamlDict,
                                                                              absorbance_yaml_file_path = path,
                                                                              kineticSens = kineticSens,
                                                                              physicalSens = physicalSens,
@@ -937,8 +937,8 @@ class Optimization_Utility(object):
                     
                     else:
                         path = list_of_yaml_paths[i][1]
-                        experiment = self.running_full_shock_tube_absorption(processor=processor,
-                                           experiment_dictonary=yamlDict,
+                        experiment = self.running_full_batch_reactor_absorption(processor=processor,
+                                           experiment_dictionary=yamlDict,
                                            absorbance_yaml_file_path = path,
                                            kineticSens = kineticSens,
                                            physicalSens = physicalSens,
@@ -960,8 +960,8 @@ class Optimization_Utility(object):
                  elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
 #                        path = list_of_yaml_paths[i][1]
 #                        print(path)
-#                        experiment = self.running_shock_tube_absorption_only(processor=processor,
-#                                                                             experiment_dictonary = yamlDict,
+#                        experiment = self.running_batch_reactor_absorption_only(processor=processor,
+#                                                                             experiment_dictionary = yamlDict,
 #                                                                             absorbance_yaml_file_path = path,
 #                                                                             kineticSens = kineticSens,
 #                                                                             physicalSens = physicalSens,
@@ -971,8 +971,8 @@ class Optimization_Utility(object):
                         print('Absorbance currently not enabled for ignition delay')
                  else:
 #                        path = list_of_yaml_paths[i][1]
-#                        experiment = self.running_full_shock_tube_absorption(processor=processor,
-#                                           experiment_dictonary=yamlDict,
+#                        experiment = self.running_full_batch_reactor_absorption(processor=processor,
+#                                           experiment_dictionary=yamlDict,
 #                                           absorbance_yaml_file_path = path,
 #                                           kineticSens = kineticSens,
 #                                           physicalSens = physicalSens,
@@ -996,8 +996,8 @@ class Optimization_Utility(object):
                  elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
 #                        path = list_of_yaml_paths[i][1]
 #                        print(path)
-#                        experiment = self.running_shock_tube_absorption_only(processor=processor,
-#                                                                             experiment_dictonary = yamlDict,
+#                        experiment = self.running_batch_reactor_absorption_only(processor=processor,
+#                                                                             experiment_dictionary = yamlDict,
 #                                                                             absorbance_yaml_file_path = path,
 #                                                                             kineticSens = kineticSens,
 #                                                                             physicalSens = physicalSens,
@@ -1007,8 +1007,8 @@ class Optimization_Utility(object):
                         print('Absorbance currently not enabled for ignition delay')
                  else:
 #                        path = list_of_yaml_paths[i][1]
-#                        experiment = self.running_full_shock_tube_absorption(processor=processor,
-#                                           experiment_dictonary=yamlDict,
+#                        experiment = self.running_full_batch_reactor_absorption(processor=processor,
+#                                           experiment_dictionary=yamlDict,
 #                                           absorbance_yaml_file_path = path,
 #                                           kineticSens = kineticSens,
 #                                           physicalSens = physicalSens,
@@ -1034,8 +1034,8 @@ class Optimization_Utility(object):
                     elif 'absorbanceObservables' in yamlDict.keys() and yamlDict['moleFractionObservables'][0] == None and yamlDict['concentrationObservables'][0]==None:
 #                        path = list_of_yaml_paths[i][1]
 #                        print(path)
-#                        experiment = self.running_shock_tube_absorption_only(processor=processor,
-#                                                                             experiment_dictonary = yamlDict,
+#                        experiment = self.running_batch_reactor_absorption_only(processor=processor,
+#                                                                             experiment_dictionary = yamlDict,
 #                                                                             absorbance_yaml_file_path = path,
 #                                                                             kineticSens = kineticSens,
 #                                                                             physicalSens = physicalSens,
@@ -1045,8 +1045,8 @@ class Optimization_Utility(object):
                         print('Absorbance currently not enabled for jsr')
                     else:
 #                        path = list_of_yaml_paths[i][1]
-#                        experiment = self.running_full_shock_tube_absorption(processor=processor,
-#                                           experiment_dictonary=yamlDict,
+#                        experiment = self.running_full_batch_reactor_absorption(processor=processor,
+#                                           experiment_dictionary=yamlDict,
 #                                           absorbance_yaml_file_path = path,
 #                                           kineticSens = kineticSens,
 #                                           physicalSens = physicalSens,
@@ -1064,7 +1064,7 @@ class Optimization_Utility(object):
                 
                     if 'absorbanceObservables' not in yamlDict.keys():
                         experiment= self.running_flow_reactor(processor=processor,
-                                           experiment_dictonary=yamlDict,
+                                           experiment_dictionary=yamlDict,
                                            kineticSens = kineticSens,
                                            physicalSens = physicalSens,
                                            dk = dk,

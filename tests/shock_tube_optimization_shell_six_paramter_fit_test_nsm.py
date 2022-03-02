@@ -32,7 +32,7 @@ files_to_include = [['Hong_0.yaml'],
 
 
 
-numer_of_iterations = 10
+numer_of_iterations = 2
 cti_file = 'FFCM1_custom.cti'
 #cti_file = 'FFCM1_custom_1_collider.cti'
 
@@ -56,7 +56,7 @@ master_equation_reactions = ['H2O2 + OH <=> H2O + HO2',
 master_index = [2,3,4,5,6,7]
 
 master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df.csv')
-#master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df_rebuttle_uncertainty.csv')
+master_equation_uncertainty_df = pd.read_csv('MSI/data/test_data/six_parameter_fit_uncertainty_df_frequency_test.csv')
 
 #this could be 'On'
 

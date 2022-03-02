@@ -35,21 +35,23 @@ import pandas as pd
 # #test_tube.printVars()
 # time_History = test_tube.timeHistory
 
-test_p = pr.Processor('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/branching_reaction_study/ffcm1_branching_reactions_CH3OH.cti')
-test_p2 = pr.Processor('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/branching_reaction_study/ffcm1_branching_reactions_theory.cti')
+test_p = pr.Processor('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/Burke_atmospheric_chemistry/burke_atmospheric_chemistry_model.cti')
+#test_p2 = pr.Processor('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/branching_reaction_study/ffcm1_branching_reactions_theory.cti')
 
 
-test_tube = st.shockTube(pressure=0.31232922337880797414 ,
-                         temperature=1226, 
-                         observables=['OH'],
+test_tube = st.shockTube(pressure=1 ,
+                         temperature=298, 
+                         observables=['H2CO'],
                          kineticSens=0,
                          physicalSens=0,
-                         conditions={'C4H10O2': 0.000013636,
-                                     'Ar':0.999986364},
+                         conditions={'CH2O': .00131,
+                                     'Pin': 0.01,
+                                     'O2':.209,
+                                     'N2':.791},
                          initialTime=0,
-                         finalTime=0.0003,
-                         thermalBoundary='Adiabatic',
-                         mechanicalBoundary='constant volume',
+                         finalTime=300,
+                         thermalBoundary='isothermal',
+                         mechanicalBoundary='constant pressure',
                          processor=test_p,
                          save_timeHistories=1,
                          save_physSensHistories=1
@@ -60,34 +62,17 @@ test_tube.run()
 time_History = test_tube.timeHistory
 
 
-test_tube2 = st.shockTube(pressure=0.31232922337880797414 ,
-                         temperature=1226, 
-                         observables=['OH'],
-                         kineticSens=0,
-                         physicalSens=0,
-                         conditions={'C4H10O2': 0.000013636,
-                                     'Ar':0.999986364},
-                         initialTime=0,
-                         finalTime=0.0003,
-                         thermalBoundary='Adiabatic',
-                         mechanicalBoundary='constant volume',
-                         processor=test_p2,
-                         save_timeHistories=1,
-                         save_physSensHistories=1
-                         )
-test_tube2.run()
-time_History2 = test_tube2.timeHistory
 
 
-plt.figure() 
-df_experiment = pd.read_csv('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/branching_reaction_study/Hong_H2O_raw_data_fig_1_2_OH_O.csv')
-concentration = np.true_divide(1,time_History['temperature'].to_numpy())*time_History['pressure'].to_numpy()
-                           
-concentration *= (1/(8.314e6))*time_History['H2O'].dropna().to_numpy()
-plt.plot(time_History['time'],time_History['OH']*1e6,label='no theory')
-plt.plot(time_History2['time'],time_History2['OH']*1e6,label=' theory')
+
+
+#print(time_History['time'])
+
+#plt.figure() 
+
+#plt.plot(time_History['time'],time_History['H2CO']*1e6)
 #plt.plot(df_experiment['Time'],df_experiment['H2O_ppm'])
 
-plt.legend( )
+#plt.legend( )
 
-plt.savefig('/Users/carlylagrotta/Desktop/OH_new.pdf')
+#plt.savefig('/Users/carlylagrotta/Dropbox/Columbia/MSI/data/Burke_atmospheric_chemistry/test.pdf')

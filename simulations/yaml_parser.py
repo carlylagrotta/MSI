@@ -295,7 +295,7 @@ class Parser(object):
         else:
             print('Placeholder: no JSR absorption')
             
-    def parse_variable_pressure_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+    def parse_variable_pressure_batch_reactor_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         
         """
         Takes in an unorganized dictonary for a yaml file containing 
@@ -418,7 +418,7 @@ class Parser(object):
         
         else: 
             print('Placeholder: no JSR absorption')
-    def parse_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+    def parse_batch_reactor_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         
         
         """
@@ -1183,14 +1183,14 @@ class Parser(object):
 
             #simtype = 'shock tube'
             #if simtype=='shock tube' or simtype=='Shock Tube' or simtype=='Shock tube':
-            if re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
+            if re.match('[Bb]atch[ -][Rr]eactor',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
                 if len(tup)>1:
-                    experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0],
+                    experiment_dictonaries.append(self.parse_batch_reactor_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
     
                 else:
                     
-                    experiment_dictonaries.append(self.parse_shock_tube_obj(loaded_exp = tup[0]))
+                    experiment_dictonaries.append(self.parse_batch_reactor_obj(loaded_exp = tup[0]))
             elif re.match('[Jj][Ss][Rr]',simtype) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
                 if len(tup)>1:
                     experiment_dictonaries.append(self.parse_jsr_obj(loaded_exp = tup[0],
@@ -1206,7 +1206,7 @@ class Parser(object):
                 else:
                     experiment_dictonaries.append(self.parse_flame_speed_obj(loaded_exp = tup[0]))
                 
-            elif re.match('[Ss]hock [Tt]ube',simtype) and re.match('[Ii]gnition[ -][Dd]elay',experiment_type):
+            elif re.match('[Bb]atch[ -][Rr]eactor',simtype) and re.match('[Ii]gnition[ -][Dd]elay',experiment_type):
                 if len(tup)>1:
                     experiment_dictonaries.append(self.parse_ignition_delay_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
@@ -1221,12 +1221,12 @@ class Parser(object):
                 else:
                     experiment_dictonaries.append(self.parse_RCM_obj(loaded_exp = tup[0]))                     
                 
-            elif re.match('[Vv]ariable[ -][Pp]ressure[ -][Ss]hock [- ][Tt]ube',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
+            elif re.match('[Vv]ariable[ -][Pp]ressure[ -][Bb]atch[ -][Rr]eactor',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
                 if len(tup)>1:
-                    experiment_dictonaries.append(self.parse_variable_pressure_shock_tube_obj(loaded_exp = tup[0],
+                    experiment_dictonaries.append(self.parse_variable_pressure_batch_reactor_obj(loaded_exp = tup[0],
                                                                             loaded_absorption = tup[1]))
                 else:
-                    experiment_dictonaries.append(self.parse_variable_pressure_shock_tube_obj(loaded_exp = tup[0]))                     
+                    experiment_dictonaries.append(self.parse_variable_pressure_batch_reactor_obj(loaded_exp = tup[0]))                     
                     
             elif  re.match('[Ff]low[- ][Rr]eactor',simtype) and re.match('[Ss]pecies[ -][Pp]rofile',experiment_type):
                 if len(tup)>1:
@@ -1408,13 +1408,13 @@ class Parser(object):
                 new_file_name = file_name_list[yaml_file][0]
     
             if experiment_dict_list[0]['simulation'].physicalSens ==1 :
-                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
+                if re.match('[Bb]atch[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperature']
                     time_shift = self.original_experimental_conditions[yaml_file]['timeShift']
                     press = self.original_experimental_conditions[yaml_file]['pressure']
                     conditions = self.original_experimental_conditions[yaml_file]['conditions']
                     
-                elif re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
+                elif re.match('[Bb]atch[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
                     temp = self.original_experimental_conditions[yaml_file]['temperatures']
                     time_shift = self.original_experimental_conditions[yaml_file]['time_shift']
                     press = self.original_experimental_conditions[yaml_file]['pressures']
@@ -1451,7 +1451,7 @@ class Parser(object):
                 if re.match('[Jj][Ss][Rr]', self.original_experimental_conditions[yaml_file]['simulationType']):
                     print(res)
                 print('__________________________________________________________________________')
-                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
+                if re.match('[Bb]atch[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
                     updatedTemp = np.exp(physical_observables_updates_list[yaml_file]['T_experiment_'+str(yaml_file)]) * temp
                     updatedTemp = round(updatedTemp,9)
                     #updatedTimeShift =  (np.exp(physical_observables_updates_list[yaml_file]['Time_shift_experiment_'+str(yaml_file)]) * experiment_dict_list[yaml_file]['average_time']) - experiment_dict_list[yaml_file]['average_time']
@@ -1537,7 +1537,7 @@ class Parser(object):
                     updated_mole_fraction_list = []
                     for specie in species_to_loop:
                         updated_mole_fraction_list.append(updated_mole_fractions[specie])                    
-                elif re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
+                elif re.match('[Bb]atch[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
                     updatedTemp=[]
                     diluent=[]   
                     if 'Diluent' in experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in experiment_dict_list[yaml_file]['uncertainty']['species_relative_uncertainty']['type_dict'].keys():
@@ -1596,7 +1596,7 @@ class Parser(object):
                     config2 = yaml.safe_load(f)
                 
                 
-                if re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
+                if re.match('[Bb]atch[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ss]pecies[- ][Pp]rofile',self.original_experimental_conditions[yaml_file]['experimentType']):
                     config2['common-properties']['temperature']['value']=float(updatedTemp)
                     config2['common-properties']['time-shift']['value']=float(updatedTimeShift)
                     config2['common-properties']['pressure']['value']=float(updatedPress)
@@ -1616,7 +1616,7 @@ class Parser(object):
                     for i,moleFraction in enumerate(updated_mole_fraction_list):
                         config2['common-properties']['composition'][i]['mole-fraction']=float(moleFraction)
                 
-                elif re.match('[Ss]hock [Tt]ube',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
+                elif re.match('[Bb]atch[ -][Rr]eactor',self.original_experimental_conditions[yaml_file]['simulationType']) and re.match('[Ii]gnition[- ][Dd]elay',self.original_experimental_conditions[yaml_file]['experimentType']):
                     config2['common-properties']['temperature']['value-list']=updatedTemp
                     config2['common-properties']['pressure']['value-list']=updatedPress
                     

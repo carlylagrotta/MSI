@@ -17,11 +17,54 @@ class Master_Equation(object):
         self.T_max = T_max
         self.P_min = P_min
         self.P_max = P_max
+
+
         self.T_P_min_max_dict = T_P_min_max_dict
         
 
+        '''
+        Class pertaining to mapping master equation sensitivities to molecular theory parameters. This will
+        allow them to be put into the S matrix correctly. 
+    
 
-    def multiply_by_sensitivites(self,array1,array_of_sensitivities,pressure_and_temp_array,reaction):
+        Parameters
+        ----------
+        T_P_min_max_dict : dict
+        Dictonary of reactions being treated with theory which contains the min and max temperatures
+        and min and max pressures for which the chebyshev fits were normalized by. These
+        values must match what is in the cti file. 
+
+        Returns
+        -------
+        None.
+
+        '''
+
+
+    def multiply_by_sensitivities(self,array1,array_of_sensitivities,pressure_and_temp_array,reaction):
+        '''
+        Helper for taking the kinetic sens values calculated by cantera and mapping them to alpha values.
+    
+
+        Parameters
+        ----------
+        array1 : np.array
+        Array of sensitivity from cantera.
+        array_of_sensitivities: np.array
+        Array of sensitivities for a specefic paramter and a specefic reaction
+        pressure_and_temp_array: np.array
+        Array of pressure and temperature values sensitivies of a given observable were calculated at
+        for each time step
+        reaction: str
+        Reaction string for the specefic reaction being calculated
+
+        Returns
+        -------
+        Columns of S matrix pertaining to a specefic reaction and theory paramter.
+
+        '''
+        
+
         sensitivity_multiplied_array = np.zeros((array_of_sensitivities.shape[0],array_of_sensitivities.shape[1],pressure_and_temp_array.shape[0]))
         tuple_list = []
         for ix,iy in np.ndindex(array_of_sensitivities.shape):
@@ -60,6 +103,22 @@ class Master_Equation(object):
 
     
     def array_reshape(self,three_d_array):
+
+        '''
+        Helper function to reshape array.
+    
+
+        Parameters
+        ----------
+        three_d_array : np.array
+        Original 3d array.
+        Returns
+        -------
+        2d numpy array.
+
+        '''
+
+
         temp_array = []
         for row in range(three_d_array.shape[0]):
             for column in range(three_d_array.shape[1]):
@@ -71,6 +130,25 @@ class Master_Equation(object):
 
     
     def chebyshev_specific_poly(self,order_needed,value):
+
+        '''
+        Helper function to calculate the value of a specefic index in a chebyshev polynomial.
+    
+
+        Parameters
+        ----------
+        order_needed : int
+        Order of chebyshev polynomial to calculate value of
+        value: float
+        Value that chebyshev polynomial is being calculated at
+
+        Returns
+        -------
+        Value of a chebyshev polynomial at a specefic index.
+
+        '''
+
+
         #this function starts indexing at 1 
         if order_needed ==0:
             x=1
@@ -89,6 +167,27 @@ class Master_Equation(object):
         return x-y
     #changed this to force it ot be a flaot 
     def calc_reduced_T(self,T,reaction,T_P_min_max_dict):
+
+        '''
+        Helper function to calculate the reduced temperature.
+    
+
+        Parameters
+        ----------
+        reaction: str
+        Reaction reduced temperature being calucated for
+
+        T_P_min_max_dict : dict
+        Dictonary of reactions being treated with theory which contains the min and max temperatures
+        and min and max pressures for which the chebyshev fits were normalized by. These
+        values must match what is in the cti file. 
+
+        Returns
+        -------
+        Value of a reduced temperature
+
+        '''
+
         #print(self.T_P_min_max_dict)
         T_min = T_P_min_max_dict[reaction]['T_min']
         T_max = T_P_min_max_dict[reaction]['T_max']
@@ -102,7 +201,25 @@ class Master_Equation(object):
         return T_reduced
         
     def calc_reduced_P(self,P,reaction,T_P_min_max_dict):
-        
+        '''
+        Helper function to calculate the reduced pressure.
+    
+
+        Parameters
+        ----------
+        reaction: str
+        Reaction reduced pressure being calucated for
+
+        T_P_min_max_dict : dict
+        Dictonary of reactions being treated with theory which contains the min and max temperatures
+        and min and max pressures for which the chebyshev fits were normalized by. These
+        values must match what is in the cti file. 
+
+        Returns
+        -------
+        Value of a reduced pressure
+
+        '''        
         P_min = T_P_min_max_dict[reaction]['P_min']
         P_max = T_P_min_max_dict[reaction]['P_max']
 
@@ -120,6 +237,35 @@ class Master_Equation(object):
                  parsed_yaml_file_list,
                  master_equation_reactions:list):
         
+        '''
+        Function to map kinetic sensitivites calculated by cantera to the "alpha" values in the chebyshev reaction.
+    
+
+        Parameters
+        ----------
+        sensitivty_dict: dict
+        Dictonary of reactions that are being treated with theory paramters, along with the sensitivity values
+        that correspond with a given reaction and a given parameter. 
+
+        exp_dict_list : dict
+        Dictonary of cantera simulations run for the input yaml files. 
+
+        parsed_yaml_file_list : list
+        List of parsed yaml files. 
+
+        master_equation_reactions: list
+        List of master equation reactions. 
+
+        Returns
+        -------
+        Portion of S matrix (for reactions being treated with theory and corresponding observables) mapped to alpha paramters in the chebyshev 
+        reaction polynomial as matrix and as list groupd by individual reaction.
+
+        '''
+
+
+
+
         
         #flatten master euqation reactions
         flatten = lambda *n: (e for a in n
@@ -150,10 +296,14 @@ class Master_Equation(object):
                     observable_list = []
                     for reaction in master_equation_reactions:
                         column = slicing_out_reactions(reaction,observable)
-                        if re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']):
-                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['simulation'].pressureAndTemperatureToExperiment[xx],reaction))
-                        elif re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']):
-                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0],reaction))
+                        if re.match('[Bb]atch[- ][Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']):
+                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivities(column,sensitivty_dict[reaction][0],exp['simulation'].pressureAndTemperatureToExperiment[xx],reaction))
+                        elif re.match('[Bb]atch[- ][Rr]eactor',exp['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']):
+                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivities(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0],reaction))
+                        elif re.match('[Jj][Ss][Rr]',exp['simulation_type']) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',exp['simulation_type']):
+                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivities(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0],reaction))                        
+
+
                         temp.append(single_reaction_array)
                         observable_list.append(single_reaction_array)
                         
@@ -169,7 +319,7 @@ class Master_Equation(object):
                     observable_list = []
                     for reaction in master_equation_reactions:
                         column = slicing_out_reactions(reaction,exp['absorbance_ksens'][wl][0])
-                        single_reaction_array = self.array_reshape(self.multiply_by_sensitivites(column,sensitivty_dict[reaction][0],exp['time_history_interpolated_against_abs'][wl],reaction))
+                        single_reaction_array = self.array_reshape(self.multiply_by_sensitivities(column,sensitivty_dict[reaction][0],exp['time_history_interpolated_against_abs'][wl],reaction))
                         temp.append(single_reaction_array)
                         observable_list.append(single_reaction_array)
                         
@@ -195,6 +345,32 @@ class Master_Equation(object):
     def  map_parameters_to_s_matrix(self,mapped_to_alpha_full_simulation,
                                    sensitivity_dict:dict,
                                    master_equation_reactions:list):
+
+
+
+        '''
+        Function to take kinetic sensitivities mapped to alpha and finish mapping them to theory paramters. 
+        This is done by multiplying by d(alpha)/d(theory parameter) 
+    
+
+        Parameters
+        ----------
+        mapped_to_alpha_full_simulation: np.array
+        Portion of the S matrix concerning theory reactions mapped to alpha. 
+
+        sensitivity_dict : dict
+        Dictonary of theory reactions and corresponding sensitivites for parameters. 
+
+
+        master_equation_reactions: list
+        List of master equation reactions. 
+
+        Returns
+        -------
+        Portion of S matrix (for reactions being treated with theory and corresponding observables) mapped to d(obs)/d(theory parameter)
+
+        '''
+
         
         
         #flatten master euqation reactions
@@ -281,6 +457,30 @@ class Master_Equation(object):
                                   master_equation_sensitivity_dict:dict,
                                   master_equation_reactions_list:list):
         
+        '''
+        Function to take kinetic sensitivities and combine them if they belong to the same theory parameters. 
+    
+
+        Parameters
+        ----------
+        S_matrix_mapped_MP: np.array
+        Portion of the S matrix concerning theory reactions mapped to theory parameters
+
+        master_equation_sensitivity_dict : dict
+        Dictonary of theory reactions and corresponding sensitivites for parameters. 
+
+
+        master_equation_reactions: list
+        List of master equation reactions. 
+
+        Returns
+        -------
+        Portion of S matrix (for reactions being treated with theory and corresponding observables) where 
+        channels that correspond to the same theory parameters are added together.
+
+        '''
+
+
         #first check what parts of the matrix should be combined 
         counter = 0
         previous = 0
@@ -307,10 +507,41 @@ class Master_Equation(object):
         return new_S_matrix
     
     def surrogate_model_molecular_parameters_chevy(self,master_equation_sensitivity_dict:dict,
-                                                   master_equation_sensitivites_new:dict,
+                                                   master_equation_sensitivities_new:dict,
                                                    master_equation_reactions:list,
                                                    delta_x_molecular_params_by_reaction_dict,
                                                    exp_dict_list):
+
+
+        '''
+        Function to take determine the updates to apply to theory reactions with
+        linear surrogate model. 
+    
+
+        Parameters
+        ----------
+
+        master_equation_sensitivity_dict : dict
+        Dictonary of theory reactions and corresponding sensitivites for parameters. 
+
+        master_equation_sensitivities_new: dict
+        Dictonary of theory reactions and corresponding sensitivites for parameters. 
+
+        master_equation_reactions: list
+        List of master equation reactions.
+
+        delta_x_molecular_params_by_reaction_dict: dict
+        Delta x updates from optimization. 
+
+        exp_dict_list: list
+        List of simulations run by cantera based on input yaml files.
+
+        Returns
+        -------
+        Dictonary of updates for chebyshev reactions to be applied to cti file.
+
+        '''
+
         
         
         flatten = lambda *n: (e for a in n
@@ -345,12 +576,7 @@ class Master_Equation(object):
                     summation = sum(temp_array)
                     temp_dict[secondary_reaction] = summation                        
                     
-                
-            #print(temp_array)
-            #summation = sum(temp_array)
-            #if reaction=='H2O2 + OH <=> H2O + HO2':
-                #print(summation)
-            #temp_dict[reaction] = summation
+
             
         Keys =[]
         for x in np.arange(number_of_reactions-len(master_equation_reactions_flattened),number_of_reactions):

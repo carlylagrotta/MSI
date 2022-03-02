@@ -47,7 +47,7 @@ class Plotting(object):
                   working_directory='',
                   sigma_uncertainty_weighted_sensitivity_csv='',
                   simulation_run=None,
-                  shock_tube_instance = None,
+                  batch_reactor_instance = None,
                   cheby_sensitivity_dict = None,
                   mapped_to_alpha_full_simulation=None,
                   optimized_cti_file='',
@@ -81,7 +81,7 @@ class Plotting(object):
         self.working_directory = working_directory
         self.sigma_uncertainty_weighted_sensitivity_csv  = sigma_uncertainty_weighted_sensitivity_csv
         self.simulation_run = simulation_run
-        self.shock_tube_instance = shock_tube_instance
+        self.batch_reactor_instance = batch_reactor_instance
         self.cheby_sensitivity_dict=cheby_sensitivity_dict
         self.mapped_to_alpha_full_simulation = mapped_to_alpha_full_simulation,
         self.new_cti=optimized_cti_file
@@ -106,7 +106,7 @@ class Plotting(object):
                 if observable == None:
                     continue
                 if observable in exp['mole_fraction_observables']:
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                    if re.match('[Bb]atch[ -][Rr]eactor',exp['simulation_type']):
                         length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Time'].shape[0])
                         observable_counter+=1
                     elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
@@ -117,7 +117,7 @@ class Plotting(object):
                         observable_counter+=1                        
                 if observable in exp['concentration_observables']:
                     
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                    if re.match('[Bb]atch[ -][Rr]eactor',exp['simulation_type']):
                         length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Time'].shape[0])
                         observable_counter+=1
                     elif re.match('[Jj][Ss][Rr]',exp['simulation_type']):
@@ -128,7 +128,7 @@ class Plotting(object):
                         length_of_experimental_data.append(exp['experimental_data'][observable_counter]['Temperature'].shape[0])
                         observable_counter+=1                         
                 if observable in exp['ignition_delay_observables']:
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[iI]gnition[- ][Dd]elay',exp['experiment_type']):
+                    if re.match('[Bb]atch[ -][Rr]eactor',exp['simulation_type']) and re.match('[iI]gnition[- ][Dd]elay',exp['experiment_type']):
                         if 'temperature' in list(exp['experimental_data'][observable_counter].columns):
                             length_of_experimental_data.append(exp['experimental_data'][observable_counter]['temperature'].shape[0])
                             observable_counter+=1
@@ -358,7 +358,7 @@ class Plotting(object):
                 plt.figure()
                 
                 if observable in exp['mole_fraction_observables']:
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
+                    if re.match('[Bb]atch[ -][Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
                         plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable],'b',label='MSI')
                         plt.plot(self.exp_dict_list_original[i]['simulation'].timeHistories[0]['time']*1e3,self.exp_dict_list_original[i]['simulation'].timeHistories[0][observable],'r',label= "$\it{A priori}$ model")
                         plt.plot(exp['experimental_data'][observable_counter]['Time']*1e3,exp['experimental_data'][observable_counter][observable],'o',color='black',label='Experimental Data')
@@ -485,7 +485,7 @@ class Plotting(object):
                         
                 if observable in exp['concentration_observables']:
                     #print(observable_counter,'THIS IS OBSERVABLE COUNTER')
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
+                    if re.match('[Bb]atch[ -][Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp['experiment_type']):
                         #print(observable_counter)
                         if observable+'_ppm' in exp['experimental_data'][observable_counter].columns:
                             plt.plot(exp['simulation'].timeHistories[0]['time']*1e3,exp['simulation'].timeHistories[0][observable]*1e6,'b',label='MSI')
@@ -597,7 +597,7 @@ class Plotting(object):
                         #plt.savefig(self.working_directory+'/'+'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf', bbox_inches='tight',dpi=1000)                     
                         observable_counter+=1                        
                 if observable in exp['ignition_delay_observables']:
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                    if re.match('[Bb]atch[ -][Rr]eactor',exp['simulation_type']):
                         if len(exp['simulation'].temperatures)>1:
                             nominal=self.run_ignition_delay(self.exp_dict_list_original[i], self.nominal_cti)
                             MSI_model=self.run_ignition_delay(exp, self.new_cti)
@@ -1332,7 +1332,7 @@ class Plotting(object):
                 if observable == None:
                     continue                                
                 if observable in exp['mole_fraction_observables']:
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                    if re.match('[Bb]atch[ -][Rr]eactor',exp['simulation_type']):
                         time_profiles[i].append(exp['experimental_data'][observable_counter]['Time']*1e3)
                         observables[i].append(observable)
                         observable_counter+=1
@@ -1345,7 +1345,7 @@ class Plotting(object):
                         observables[i].append(observable)
                         observable_counter+=1                        
                 elif observable in exp['concentration_observables']:
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                    if re.match('[Bb]atch[ -][Rr]eactor',exp['simulation_type']):
                         time_profiles[i].append(exp['experimental_data'][observable_counter]['Time']*1e3)        
                         observables[i].append(observable)                                
                         observable_counter+=1
@@ -1358,7 +1358,7 @@ class Plotting(object):
                         observables[i].append(observable)
                         observable_counter+=1    
                 elif observable in exp['ignition_delay_observables']:
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
+                    if re.match('[Bb]atch[ -][Rr]eactor',exp['simulation_type']):
                         time_profiles[i].append(exp['experimental_data'][observable_counter]['temperature'])        
                         observables[i].append(observable)                                
                         observable_counter+=1
@@ -1904,10 +1904,10 @@ class Plotting(object):
                                       paramter_list,
                                       optimized_cti_file='',
                                       pdf_distribution_file='',
-                                      shock_tube_instance=None):
+                                      batch_reactor_instance=None):
         
-        all_parameters = shock_tube_instance.posterior_diag_df['parameter'].tolist()
-        df = shock_tube_instance.posterior_diag_df
+        all_parameters = batch_reactor_instance.posterior_diag_df['parameter'].tolist()
+        df = batch_reactor_instance.posterior_diag_df
         gas_optimized = ct.Solution(optimized_cti_file)
         
         for parameter in paramter_list:
@@ -1974,8 +1974,8 @@ class Plotting(object):
                                             optimized_cti_file='',
                                             joint_data_csv=''):
                 
-        all_parameters = self.shock_tube_instance.posterior_diag_df['parameter'].tolist()
-        df = self.shock_tube_instance.posterior_diag_df
+        all_parameters = self.batch_reactor_instance.posterior_diag_df['parameter'].tolist()
+        df = self.batch_reactor_instance.posterior_diag_df
         gas_optimized = ct.Solution(optimized_cti_file)
         for couple in coupled_parameters:
             indx1 = all_parameters.index(couple[0])
@@ -2223,7 +2223,7 @@ class Plotting(object):
                 plt.savefig(self.working_directory+'/'+couple[0]+'_'+couple[1]+'_distribution'+'_.pdf',bbox_inches='tight')
     def plotting_physical_model_parameter_distributions(self,
                            paramter_list,
-                           shock_tube_instance,
+                           batch_reactor_instance,
                            optimized_X,
                            original_experimental_conditions,
                            T_uncertainty=.005,
@@ -2235,9 +2235,9 @@ class Plotting(object):
         if bool(experiments_want_to_plot_data_from)==False:
             experiments_want_to_plot_data_from = np.arange(0,len(self.exp_dict_list_optimized))
         try:
-            all_parameters = shock_tube_instance.posterior_diag_df['parameter'].tolist()
+            all_parameters = batch_reactor_instance.posterior_diag_df['parameter'].tolist()
         except:
-            all_parameters = shock_tube_instance.prior_diag_df['parameter'].tolist()
+            all_parameters = batch_reactor_instance.prior_diag_df['parameter'].tolist()
 
         parameter_groups = ['T','P','Time']
         #print(all_parameters)
@@ -2357,8 +2357,8 @@ class Plotting(object):
                            pdf_distribution_file=''):
                         
             
-        all_parameters = self.shock_tube_instance.posterior_diag_df['parameter'].tolist()
-        df = self.shock_tube_instance.posterior_diag_df
+        all_parameters = self.batch_reactor_instance.posterior_diag_df['parameter'].tolist()
+        df = self.batch_reactor_instance.posterior_diag_df
         gas_optimized = ct.Solution(optimized_cti_file)
         
         for parameter in paramter_list:

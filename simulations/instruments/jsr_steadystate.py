@@ -444,6 +444,11 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         if self.timeHistories != None:
             self.timeHistories.append(solution)
         self.kineticSensitivities=ksens
+
+        if self.pressureAndTemperatureToExperiment == None:
+            self.pressureAndTemperatureToExperiment = solution[['temperature','pressure']]
+
+
         return (solution,ksens)
         
         

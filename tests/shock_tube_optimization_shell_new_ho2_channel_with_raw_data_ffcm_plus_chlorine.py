@@ -107,7 +107,7 @@ files_to_include = [['Hong_0.yaml'],
 #                     ['Lightfoot_6.yaml','Lightfoot_0_abs.yaml']]
 
 
-# files_to_include = [['Lightfoot_0.yaml','Lightfoot_0_abs.yaml'],
+files_to_include = [['Kircher_20.yaml','Hong_fake_data_new_fitted_abs.yaml']]
 #                     ['Lightfoot_1.yaml','Lightfoot_0_abs.yaml']]
 
                   
@@ -145,7 +145,17 @@ T_min=200
 T_max = 2400
 P_min=1013.25
 P_max=1.013e+6
-numer_of_iterations = 5
+
+T_P_min_max_dict = {'H2O2 + OH <=> H2O + HO2':{'T_min':200,'T_max':3000,'P_min':10.1325,'P_max':1.013e6},
+                             'HO2 + OH <=> H2O + O2':{'T_min':200,'T_max':3000,'P_min':10.1325,'P_max':1.013e+6},
+                             '2 OH <=> H2O + O':{'T_min':200,'T_max':3000,'P_min':10.1325,'P_max':1.013e+6},
+                             'CH3 + HO2 <=> CH3O + OH':{'T_min':200,'T_max':2400,'P_min':10.1325,'P_max':1.013e+6},
+                             'CH3 + HO2 <=> CH4 + O2':{'T_min':200,'T_max':2400,'P_min':10.1325,'P_max':1.013e+6}}
+T_min=200.0
+T_max = 3000.0
+P_min=10132.5
+P_max=10132500
+numer_of_iterations = 2
 cheb_sensitivity_dict = {'2 OH <=> H2O + O': [np.array([[-1.01166,0],
          [0.73383,0],
          [ 0.145363,0],
@@ -692,7 +702,8 @@ MSI_st_instance_one = stMSIcheb.MSI_optimization_chebyshev(cti_file,
                                                    T_min = T_min,
                                                    T_max = T_max,
                                                    P_min=P_min,
-                                                   P_max=P_max)
+                                                   P_max=P_max,
+                                                   T_P_min_max_dict = T_P_min_max_dict)
 MSI_st_instance_one.one_run_optimization()
 
 
@@ -726,7 +737,8 @@ MSI_st_instance_two = stMSIcheb.MSI_optimization_chebyshev(cti_file,
                                                    T_min = T_min,
                                                    T_max = T_max,
                                                    P_min=P_min,
-                                                   P_max=P_max)
+                                                   P_max=P_max,
+                                                   T_P_min_max_dict = T_P_min_max_dict)
 
 delta_X_list = MSI_st_instance_two.multiple_runs(numer_of_iterations)
 
@@ -800,13 +812,16 @@ plotting_instance = plotter.Plotting(S_matrix,
                                      sigma_uncertainty_weighted_sensitivity_csv=csv_file_sigma,
                                      cheby_sensitivity_dict = cheb_sensitivity_dict,
                                      mapped_to_alpha_full_simulation=MSI_st_instance_two.mapped_to_alpha_full_simulation,
+                                     optimized_cti_file=MSI_st_instance_two.new_cti_file,
+                                     original_cti_file=original_cti_file,
                                      T_min=T_min,
                                      T_max=T_max,
                                      P_min=P_min,
-                                     P_max=P_max)
+                                     P_max=P_max,
+                                     T_P_min_max_dict = T_P_min_max_dict)
 
 #csv_file_sigma = MSI_st_instance_two.data_directory +'/'+'sigma_for_uncertainty_weighted_sensitivity_updated.csv'
-observable_counter_and_absorbance_wl,length_of_experimentalf_data = plotting_instance.lengths_of_experimental_data()
+observable_counter_and_absorbance_wl,length_of_experimental_data = plotting_instance.lengths_of_experimental_data()
 sigmas_optimized,test = plotting_instance.calculating_sigmas(S_matrix,covarience)
 sigmas_original,test2 = plotting_instance.calculating_sigmas(S_matrix_original,original_covariance)
 plotting_instance.plotting_observables(sigmas_original = sigmas_original,sigmas_optimized= sigmas_optimized)
@@ -823,3 +838,5 @@ plotting_instance.plotting_rate_constants_combined_channels(optimized_cti_file=M
 sensitivity, top_sensitivity = plotting_instance.sort_top_uncertainty_weighted_sens()
 obs = plotting_instance.plotting_uncertainty_weighted_sens()
 
+
+plotting_instance.plotting_uncertainty_weighted_sens_rate_constant()

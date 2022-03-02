@@ -9,7 +9,7 @@ import numpy.polynomial.polynomial as poly
 from .. import simulation as sim
 from ...cti_core import cti_processor as ctp
 
-class VariablePressureShockTube(sim.Simulation):
+class VariablePressurebatchReactor(sim.Simulation):
     
     def __init__(self,pressure:float,temperature:float,observables:list,
                  kineticSens:int,physicalSens:int,conditions:dict,
@@ -29,10 +29,10 @@ class VariablePressureShockTube(sim.Simulation):
         Input:
             - initialTime = float, time the simulation will begin at in [s]
             - finalTime = float, time the simulation will end at in [s]
-            - thermalBoundary = string, the boundary condtion for the shocktube.
+            - thermalBoundary = string, the boundary condtion for the batchReactor.
               For example, adiabatic, or isothermal
             - mechanicalBoundary = string, the thermal boundary condition for
-              the shocktube. For example, constant pressure or constant volume
+              the batchReactor. For example, constant pressure or constant volume
             - histories: save the timehistories of all runs of the simulation
         '''
         sim.Simulation.__init__(self,pressure,temperature,observables,kineticSens,physicalSens,
@@ -90,7 +90,7 @@ class VariablePressureShockTube(sim.Simulation):
             finalTime = self.finalTime
         self.timeHistory = None
         self.kineticSensitivities= None #3D numpy array, columns are reactions with timehistories, depth gives the observable for those histories
-        conditions = self.settingVariablePressureShockTubeConditions()
+        conditions = self.settingVariablePressurebatchReactorConditions()
         mechanicalBoundary = conditions[1]
         #same solution for both cp and cv sims
         if mechanicalBoundary == 'constant pressure':
@@ -180,7 +180,7 @@ class VariablePressureShockTube(sim.Simulation):
     #interpolate the most recent time history against the oldest by default
     #working_data used if have list not pandas frame
     #return more data about what was interpolated in a tuple?
-    def settingVariablePressureShockTubeConditions(self):
+    def settingVariablePressurebatchReactorConditions(self):
         '''
         Determine the mechanical and thermal boundary conditions for a 
         shock tube.

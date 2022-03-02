@@ -7,7 +7,7 @@ import pickle
 from .. import simulation as sim
 from ...cti_core import cti_processor as ctp
 
-class shockTube(sim.Simulation):
+class batchReactor(sim.Simulation):
     
     def __init__(self,pressure:float,temperature:float,observables:list,
                  kineticSens:int,physicalSens:int,conditions:dict,
@@ -179,7 +179,7 @@ class shockTube(sim.Simulation):
             path = './time_histories.time'
         pickle.load(self.timeHistories,open(path,'wb'))
         return 0
-    def settingShockTubeConditions(self):
+    def settingbatchReactorConditions(self):
         '''
         Determine the mechanical and thermal boundary conditions for a 
         shock tube based on what was initialized.
@@ -271,31 +271,31 @@ class shockTube(sim.Simulation):
             finalTime = self.finalTime
         self.timeHistory = None
         self.kineticSensitivities= None #3D numpy array, columns are reactions with timehistories, depth gives the observable for those histories
-        conditions = self.settingShockTubeConditions()
+        conditions = self.settingbatchReactorConditions()
         mechanicalBoundary = conditions[1]
         #same solution for both cp and cv sims
         if mechanicalBoundary == 'constant pressure':
-            shockTube = ct.IdealGasConstPressureReactor(self.processor.solution,
+            batchReactor = ct.IdealGasConstPressureReactor(self.processor.solution,
                                                         name = 'R1',
                                                         energy = conditions[0])
         else:
-            shockTube = ct.IdealGasReactor(self.processor.solution,
+            batchReactor = ct.IdealGasReactor(self.processor.solution,
                                            name = 'R1',
                                            energy = conditions[0])
-        sim = ct.ReactorNet([shockTube])
+        sim = ct.ReactorNet([batchReactor])
         sim.rtol=self.rtol
         sim.atol=self.atol
         #print(sim.rtol_sensitivity,sim.atol_sensitivity)
         sim.rtol_sensitivity=self.rtol_sensitivity
         sim.atol_sensitivity=self.atol_sensitivity
         
-        columnNames = [shockTube.component_name(item) for item in range(shockTube.n_vars)]
+        columnNames = [batchReactor.component_name(item) for item in range(batchReactor.n_vars)]
         columnNames = ['time']+['pressure']+columnNames
         self.timeHistory = pd.DataFrame(columns=columnNames)
 
         if self.kineticSens == 1:
             for i in range(self.processor.solution.n_reactions):
-                shockTube.add_sensitivity_reaction(i)
+                batchReactor.add_sensitivity_reaction(i)
             dfs = [pd.DataFrame() for x in range(len(self.observables))]
             tempArray = [np.zeros(self.processor.solution.n_reactions) for x in range(len(self.observables))]
 
@@ -305,11 +305,11 @@ class shockTube(sim.Simulation):
         while t < self.finalTime:
             t = sim.step()
             if mechanicalBoundary =='constant volume':
-                state = np.hstack([t,shockTube.thermo.P,shockTube.mass,shockTube.volume,
-                               shockTube.T, shockTube.thermo.X])
+                state = np.hstack([t,batchReactor.thermo.P,batchReactor.mass,batchReactor.volume,
+                               batchReactor.T, batchReactor.thermo.X])
             else:
-                state = np.hstack([t,shockTube.thermo.P, shockTube.mass,
-                               shockTube.T, shockTube.thermo.X])
+                state = np.hstack([t,batchReactor.thermo.P, batchReactor.mass,
+                               batchReactor.T, batchReactor.thermo.X])
 
             self.timeHistory.loc[counter] = state
             if self.kineticSens == 1:

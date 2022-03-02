@@ -6,7 +6,26 @@ Created on Thu Aug 03 14:32:24 2017
 """
 """Active parameter CTI writer.  Function takes a subset of reactions from an already modified cti file and
 writes them to internal memory.  It then reads an input from a portion of the code dealing with master equation simulation 
-and adds those reactions to create a complete internal mechanism
+and adds those reactions to create a complete internal mechanism. This internal mechanism is also updated with x vector values if provided.
+
+Parameters
+    ----------
+    x : dict
+        Dictonary of kinetic paramter updates for non theory treated reactions.
+    original_cti : str
+        Name of original cti.
+    master_rxns : str
+        Name of cti file with master reactions.
+    master_index : list
+        List of index(s) of master reactions in original cti file.
+    MP : dict
+        Dictonary of kinetic paramter updates for theory treated reactions.
+    working_directory: str
+        Working directory in which the cti files reside.
+    file_name: str
+        File name of original cti file. This will get passed to the next function which writes
+        the updated cti file with the name ...original_cti_updated.
+
 """
 
 import numpy as np
@@ -21,9 +40,6 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
         for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))  
     #flatten master index 
     master_index = list(flatten(master_index))
-    
-     
-    
 
     print(bool(x))
     if not original_cti:
@@ -122,10 +138,10 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
                elif 'ChebyshevReaction' in str(type(NewModel.reaction(j))):
                    NewModel.reaction(j).set_parameters(NewModel.reaction(j).Tmin,NewModel.reaction(j).Tmax,NewModel.reaction(j).Pmin,NewModel.reaction(j).Pmax,NewModel.reaction(j).coeffs)
                    
-    #Rinv = 1/R #cal/mol*K
+    
     E = 1 #going test for energy
-    #T = 4184
-    #T= 4.186e3
+    
+    #change x value to update Ea/R to just Ea
     T=ct.gas_constant 
     if x!={}:
         

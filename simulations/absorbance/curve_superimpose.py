@@ -8,7 +8,7 @@ class Absorb:
         self.saved_abs_data = []
         self.saved_perturb_data = [] 
         self.timeHistoryInterpToAbsorbaceExperiment = None
-    def perturb_abs_coef(self,del_param:float,simulation:sim.instruments.shock_tube.shockTube,
+    def perturb_abs_coef(self,del_param:float,simulation:sim.instruments.batch_reactor.batchReactor,
                     absorb:dict,pathlength:float,
                     absorbance_csv_files:list=[],
                     absorbance_csv_wavelengths:list=[],
@@ -93,12 +93,12 @@ class Absorb:
                 
         return self.saved_perturb_data
     
-    def superimpose_shock_tube(self,simulation:sim.instruments.shock_tube.shockTube,
+    def superimpose_batch_reactor(self,simulation:sim.instruments.batch_reactor.batchReactor,
                                absorb:dict,pathlength:float,
                                kinetic_sens=0):
         '''Input:
             time_history: time history from some run used to get temperature matrix
-            absorb: dict of yaml parsed absorbance data ie yaml_parser.parse_shock_tube_obj was run
+            absorb: dict of yaml parsed absorbance data ie yaml_parser.parse_batch_reactor_obj was run
             pathLenth: diameter of shock tube, integer
             absorbanceCsvWavelengths: list of wavelengths absorbances were measured at, in nm
         '''
@@ -111,7 +111,7 @@ class Absorb:
         self.saved_abs_data.append(abs_data)
         return abs_data 
     
-    def absorb_phys_sensitivities(self,simulation:sim.instruments.shock_tube.shockTube,
+    def absorb_phys_sensitivities(self,simulation:sim.instruments.batch_reactor.batchReactor,
                                   summed_data:dict,
                                   absorb:dict,
                                   pathlength:float,

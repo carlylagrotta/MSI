@@ -30,7 +30,7 @@ class OptMatrix(object):
         Builds the Z vector. 
         
         Arguments:
-            exp_dic_list -- the dictonary that is built after a simulation
+            exp_dic_list -- the dictionary that is built after a simulation
             that contains things like sensitivity coefficients
             parsed_yaml_file_list -- a list of dictonaries that contain the 
             information stored in the yaml files. 
@@ -475,7 +475,7 @@ class OptMatrix(object):
                     Z_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
                     active_parameters.append('P'+'_'+'experiment'+'_'+str(i))
                     #Species Uncertainty
-                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
                     species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
                     dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
                     
@@ -516,7 +516,7 @@ class OptMatrix(object):
                     Z_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
                     active_parameters.append('P'+'_'+'experiment'+'_'+str(i))
                     #Species Uncertainty
-                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
                     species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
                     dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
                     
@@ -551,7 +551,7 @@ class OptMatrix(object):
                     active_parameters.append('P'+'_'+'experiment'+'_'+str(i))*len(press_uncertainties)
                     #Species Uncertainty
                     conditions = exp_dic['conditions']
-                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
                     species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
                     
                     list_with_most_species_in_them = []
@@ -594,7 +594,7 @@ class OptMatrix(object):
                     Z_data_Frame.append('P'+'_'+'experiment'+'_'+str(i))
                     active_parameters.append('P'+'_'+'experiment'+'_'+str(i))
                     #Species Uncertainty
-                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
                     species_to_loop =  exp_dic['uncertainty']['species_relative_uncertainty']['species']
                     dilluant = ['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']
                     
@@ -619,7 +619,7 @@ class OptMatrix(object):
                     sigma = np.vstack((sigma,experiment_physical_uncertainty))                   
                
                
-               elif re.match('[Ss]hock[- ][Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
+               elif re.match('[Bb]atch[- ][Rr]eactor',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
                 #for i,exp_dic in enumerate(exp_dict_list):
 
                     if len(exp_dic['simulation'].temperatures) == len(exp_dic['simulation'].pressures) and len(exp_dic['simulation'].temperatures) >1 and len(exp_dic['simulation'].pressures) >1:
@@ -648,7 +648,7 @@ class OptMatrix(object):
                         #print(len(press_uncertainties))
                         #Species Uncertainty
                         conditions = exp_dic['conditions_dict_list']
-                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
                         species_to_loop =  list(exp_dic['conditions_dict_list'].keys())
                         
                         list_with_most_species_in_them = []
@@ -711,7 +711,7 @@ class OptMatrix(object):
                         #print(len(press_uncertainties))
                         #Species Uncertainty
                         conditions = exp_dic['conditions_dict_list']
-                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
                         species_to_loop =  list(exp_dic['conditions_dict_list'].keys())
                         
                         list_with_most_species_in_them = []
@@ -784,7 +784,7 @@ class OptMatrix(object):
                     #print(len(press_uncertainties))
                     #Species Uncertainty
                     conditions = exp_dic['conditions_dict_list']
-                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                    species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
                     species_to_loop =  list(exp_dic['conditions_dict_list'].keys())
                     
                     list_with_most_species_in_them = []
@@ -832,7 +832,7 @@ class OptMatrix(object):
                     
                     
                #print(exp_dict_list[i]['simulation_type'],exp_dict_list[i]['experiment_type']) 
-        #building dictonary to keep track of independtend coupled coefficients 
+        #building dictionary to keep track of independtend coupled coefficients 
         count = 0
         coef_dict = {} 
         
@@ -840,11 +840,11 @@ class OptMatrix(object):
         for i,exp_dic in enumerate(exp_dict_list):
             if 'perturbed_coef' not in exp_dic.keys():
                 continue
-            dictonary_of_coef_and_uncertainty = exp_dic['uncertainty']['coupled_coef_and_uncertainty']
+            dictionary_of_coef_and_uncertainty = exp_dic['uncertainty']['coupled_coef_and_uncertainty']
             
-            for x in dictonary_of_coef_and_uncertainty:
+            for x in dictionary_of_coef_and_uncertainty:
                 if x not in coef_dict.keys():
-                    coef_dict[x] = dictonary_of_coef_and_uncertainty[x]
+                    coef_dict[x] = dictionary_of_coef_and_uncertainty[x]
                     
         for x in coef_dict:       
             for y in coef_dict[x]:
@@ -880,7 +880,29 @@ class OptMatrix(object):
                master_equation_reactions = [],
                master_equation_uncertainty_df = None,
                master_equation_flag = False):
+
+
+        '''
+        Builds the Y vector. 
         
+        Arguments:
+            exp_dic_list -- the dictionary that is built after a simulation
+            that contains things like sensitivity coefficients
+            parsed_yaml_file_list -- a list of dictonaries that contain the 
+            information stored in the yaml files. 
+        Keyword Arguments:
+            loop_counter -- keeps track of the iteration number for the optimization (default 0)
+             X -- a dict that holds the updates for optimization variables (default empty)
+            master_equation_uncertainty_df -- a pandas dataframe that contains 
+            the reactions being treated with theory paramters along with the 
+            associated uncertainty values of those paramters (default None)
+            master_equation_reaction_list -- a list of the reactions being treated
+            with theory paramters (default [])
+            master_equation_flag -- a boolean that indicates if reactions being
+            represented by theory parameters are being used in the optimization (default False)
+            
+        '''
+       
         
         def natural_log_difference(experiment,model):
             natural_log_diff = np.log(np.array(experiment)) - np.log(np.array(model))
@@ -1039,7 +1061,7 @@ class OptMatrix(object):
             
             #addint the zeros to the Y array 
             
-            #adding the strings to the dictonary 
+            #adding the strings to the dictionary 
             ## making a,n and Ea zero list 
         A_n_Ea_zeros = np.zeros((A_n_Ea_length,1))  
         
@@ -1177,7 +1199,7 @@ class OptMatrix(object):
                     elif re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
 
                         conditions = exp_dic['conditions_dict_list']
-                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
                         species_to_loop =  list(exp_dic['conditions_dict_list'].keys())
                         
                         list_with_most_species_in_them = []
@@ -1234,7 +1256,7 @@ class OptMatrix(object):
                     elif re.match('[Rr][Cc][Mm]',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
 
                         conditions = exp_dic['conditions_dict_list']
-                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictonary_of_values']
+                        species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
                         species_to_loop =  list(exp_dic['conditions_dict_list'].keys())
                         
                         list_with_most_species_in_them = []
@@ -1515,11 +1537,30 @@ class OptMatrix(object):
     def load_S(self, exp_dict_list:list,parsed_yaml_list:list,
                dk=.01,
                master_equation_reactions = [],
-               mapped_master_equation_sensitivites=np.array(()),
+               mapped_master_equation_sensitivities=np.array(()),
                master_equation_uncertainty_df = None,
                master_equation_flag = False):
         
-
+        '''
+        Builds the S vector. 
+        
+        Arguments:
+            exp_dic_list -- the dictionary that is built after a simulation
+            that contains things like sensitivity coefficients
+            parsed_yaml_file_list -- a list of dictonaries that contain the 
+            information stored in the yaml files. 
+        Keyword Arguments:
+            dk -- pertabation percent (defalut 0.01)
+            mapped_master_equation_sensitivities -- numpy matrix of theory parameter sensitivity values (default empty array)
+            master_equation_uncertainty_df -- a pandas dataframe that contains 
+            the reactions being treated with theory paramters along with the 
+            associated uncertainty values of those paramters (default None)
+            master_equation_reaction_list -- a list of the reactions being treated
+            with theory paramters (default [])
+            master_equation_flag -- a boolean that indicates if reactions being
+            represented by theory parameters are being used in the optimization (default False)
+            
+        '''
         
         #preprocessing for padding
         num_exp = len(exp_dict_list)
@@ -1559,10 +1600,7 @@ class OptMatrix(object):
             for j,observable in enumerate(exp['mole_fraction_observables'] + exp['concentration_observables']+ exp['ignition_delay_observables']):
                 if observable == None:
                     continue
-                #return exp['ksens']['A']
-                #print(np.shape(exp['ksens']['A'][obs_counter]))
-                #print(np.shape(exp['ksens']['N'][obs_counter]))
-                #print(np.shape(exp['ksens']['Ea'][obs_counter]))
+
 
                 single_obs_matrix = np.hstack((exp['ksens']['A'][obs_counter],
                                         exp['ksens']['N'][obs_counter],
@@ -1649,7 +1687,7 @@ class OptMatrix(object):
                             time_shift_sensitivity = time_shift_sensitivity.reshape((time_shift_sensitivity.shape[0], 1))
 
                         
-                    elif re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']) and re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']):
+                    elif re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']) and re.match('[Bb]atch[- ][Rr]eactor',exp['simulation_type']):
 
 
 
@@ -1906,7 +1944,7 @@ class OptMatrix(object):
                         single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty,time_shift_sensitivity)) 
 
     
-                    elif re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']) and re.match('[Ss]hock[- ][Tt]ube',exp['simulation_type']):
+                    elif re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']) and re.match('[Bb]atch[- ][Rr]eactor',exp['simulation_type']):
                         single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty,time_shift_sensitivity))
                         #print("INSIDE HERE")
                     
@@ -2030,7 +2068,7 @@ class OptMatrix(object):
            
             S_ksens = np.hstack((A_k,N_k,Ea_k))
             #print(np.shape(S_ksens),'this is the shape of the S matrix before MP')
-            S_ksens = np.hstack((S_ksens,mapped_master_equation_sensitivites))
+            S_ksens = np.hstack((S_ksens,mapped_master_equation_sensitivities))
             
 
         else:
@@ -2107,21 +2145,13 @@ class OptMatrix(object):
         S_abs_coef  = absorb_coef_whole_simulation_with_padding
 
         
-        #return((S_ksens,S_psens,S_abs_coef))
-        #print(np.shape(S_ksens),np.shape(S_psens),np.shape(S_abs_coef))
+ 
         S_matrix = np.hstack((S_ksens,S_psens,S_abs_coef))
         shape = np.shape(S_matrix)[1]
         #append identy matrix
         identity_matrix = np.identity(shape)
                
-#        identity_matrix[1,0]=.1
-#        identity_matrix[0,1]=.1
-#        identity_matrix[0,20]=.1
-#        identity_matrix[20,0]=.1
-#        identity_matrix[39,0]=.1
-#        identity_matrix[0,39]=.1
-        
-        ####making edits to this just for masten test 
+
         
         
         
@@ -2147,54 +2177,45 @@ class OptMatrix(object):
                         master_equation_uncertainty_df=None,
                         master_equation_reactions = [],
                         master_equation_flag = False):
+
+
+        '''
+        Breaks up X vector into various  
+        
+        Arguments:
+            exp_dic_list -- the dictionary that is built after a simulation
+            that contains things like sensitivity coefficients
+            exp_uncertainty_dict_list_original -- the dictonary that is built after the first
+            set of simulations that contains all relevent information
+
+        Keyword Arguments:
+            loop_counter -- the iteration numbe rthe code is on
+            mapped_master_equation_sensitivities -- numpy matrix of theory parameter sensitivity values (default empty array)
+            master_equation_uncertainty_df -- a pandas dataframe that contains 
+            the reactions being treated with theory paramters along with the 
+            associated uncertainty values of those paramters (default None)
+            master_equation_reactions -- a list of the reactions being treated
+            with theory paramters (default [])
+            master_equation_flag -- a boolean that indicates if reactions being
+            represented by theory parameters are being used in the optimization (default False)
+            
+        '''
+
+
         
         
         X_to_subtract_from_Y = {}
         reactions_in_cti_file = exp_dict_list[0]['simulation'].processor.solution.reaction_equations()
         number_of_reactions = len(reactions_in_cti_file)
         
-        ####Grab off updates directly for the CTI file 
-        ####need to add master equation reactions 
-        
 
-        
-        ##################################################################
         if loop_counter !=0:
             X_new = X 
         
             
         else:
             X_new = X
-        ##################################################################
-        #print('USING BURKE X VALUES')
-        #X = pd.read_csv('MSI/data/test_data/burke_X_values.csv')
-        #X= X['Burke_Value'].values
-        #X = X.reshape(X.shape[0],1)
-        
-        ################################################################
-
-        ##################################################################
-        #print('RUNNING TEST')
-        #X_new = np.zeros(np.shape(X_new))
-        #X_new[79] = .01
-        
-        
-        # print(X_new)
-#        X_new[847] = -0.007258986471821074
-#        X_new[848] = -0.07160891432785314
-#        X_new[849] = -0.038747789992729584
-#        X_new[850] = -0.09184808671928052
-#        X_new[851] = -0.13343314153597205
-#        X_new[852] = 0.0046931837946472
-#        X_new[853] = -0.007191276020250346
-
-        #X= X['Burke_Value'].values
-        #X = X.reshape(X.shape[0],1)
-        #zeros = np.zeros((X_new.shape))
-        #X_new = zeros
-       # X_new[873,0] = .01
-       # print("X_NEW")       
-        ################################################################        
+      
         flatten = lambda *n: (e for a in n
             for e in (flatten(*a) if isinstance(a, (tuple, list)) else (a,)))        
         
@@ -2475,13 +2496,13 @@ class OptMatrix(object):
         for i,exp_dic in enumerate(exp_uncertainty_dict_list_original):
             if 'coupled_coef_and_uncertainty' not in exp_dic.keys():
                 continue
-            dictonary_of_coef_and_uncertainty = exp_dic['coupled_coef_and_uncertainty']
+            dictionary_of_coef_and_uncertainty = exp_dic['coupled_coef_and_uncertainty']
             #tab start working here tomorrow, need to pass in the original version of this dict 
-            #dictonary_of_coef_and_uncertainty = {(140000, 0.0): ([0.7], [0.0]), (1270000, 0.0): ([0.7], [0.0])}
+            #dictionary_of_coef_and_uncertainty = {(140000, 0.0): ([0.7], [0.0]), (1270000, 0.0): ([0.7], [0.0])}
 
-            for x in dictonary_of_coef_and_uncertainty:
+            for x in dictionary_of_coef_and_uncertainty:
                 if x not in coef_dict.keys():
-                    coef_dict[x] = dictonary_of_coef_and_uncertainty[x]
+                    coef_dict[x] = dictionary_of_coef_and_uncertainty[x]
                 if x not in coef_dict_list:
                     coef_dict_list.append(x)
                     
@@ -2511,7 +2532,7 @@ class OptMatrix(object):
             
             
 
-        # return everything in a dictonary??   
+        # return everything in a dictionary??   
         absorbance_coefficients_for_Y = [item for sublist in absorbance_coefficients_for_Y for item in sublist] 
         X_to_subtract_from_Y['absorbance_coefficent_observables'] = absorbance_coefficients_for_Y
 #       
@@ -2523,25 +2544,19 @@ class OptMatrix(object):
     
     def matrix_manipulation(self,runCounter,S_matrix,Y_matrix,z_matrix,XLastItteration = np.array(()),active_parameters=[]):
 
-        #RUnning test to link up to paramters 
-    ##################################################
-        #s_temp = np.zeros((1,S_matrix.shape[1]))
-        #s_temp[0,886]=1
-        #s_temp[0,888]=-1
-        #y_temp = np.zeros((1,1))
-        #y_temp[0,0]=0
-        #z_temp=np.zeros((1,1))
-        #z_temp[0,0]=.00001
+        '''
+        Solve for the X and covariance matrix.   
         
-        #S_matrix=np.vstack((S_matrix,s_temp))
-        #Y_matrix = np.vstack((Y_matrix,y_temp))
-        #z_matrix = np.vstack((z_matrix,z_temp))
-        
-        ##################################################
-       # print("ONLY CONSIDERING RATE CONSTANT TARGETS")
-       # for value in np.arange(0,401):
-        #    z_matrix[value,0] =1000000 
-        ##################################################
+        Arguments:
+            runCounter -- the iteration number the code is on
+            S_matrix -- S matrix
+            Y_matrix -- Y matrix
+            z_matrix -- z_matrix
+            XLastItteration -- numpy array that contains the last x values
+            loop_counter -- the iteration numbe rthe code is on
+            active_parameters -- list of active parameters
+            
+        '''
 
         one_over_z = np.true_divide(1,z_matrix)
         y_matrix = Y_matrix * one_over_z
@@ -2585,30 +2600,7 @@ class OptMatrix(object):
                     posterior_sigmas_df = pd.DataFrame({'parameter': active_parameters,'value': posterior_sigmas.reshape((posterior_sigmas.shape[0],))})
                     posterior_diag_df =  pd.DataFrame({'parameter': active_parameters,'value': posterior_diag.reshape((posterior_diag.shape[0],))})
                     sorted_posterior_diag  = posterior_diag_df.sort_values(by=['value'])
-        # except:
-        #     #stub
-        #     print('WE ARE IN THE EXCEPT STATMENT')
-        #     if runCounter==0:
-              
-        #         c = -1
-        #         c = -1
-        #         prior_diag = -1
-        #         prior_sigmas = -1
-        #         covariance_prior_df = -1
-        #         prior_diag_df = -1
-        #         sorted_prior_diag = -1
-        #         prior_sigmas_df = -1
-        #     else:
-        #         c = -1
-        #         c =-1
-                
-        #         covariance_posterior_df = -1
-        #         posterior_diag = -1
-        #         posterior_sigmas = -1
-        #         posterior_sigmas_df = -1
-        #         posterior_diag_df =  -1
-        #         sorted_posterior_diag  = -1
-        
+
         
         self.covariance = c
 
@@ -2630,11 +2622,7 @@ class OptMatrix(object):
             XlastItteration = XLastItteration
 
         X = XlastItteration + delta_X
-        #STUB THIS IS FOR A TESTING ITTERATION 
-        #####################################################################
-        #X = np.zeros(np.shape(delta_X))
-       # X[564] = .01
-        #####################################################################
+
         self.X = X
        
         #STUB THIS
@@ -2658,7 +2646,22 @@ class Adding_Target_Values(meq.Master_Equation):
         meq.Master_Equation.__init__(self)
         self.T_P_min_max_dict = T_P_min_max_dict
         
+        '''
+        Class to calculate and add k target values.   
         
+        Arguments:
+            S_matrix -- S matrix
+            Y_matrix -- Y matrix
+            z_matrix -- z_matrix
+            sigma -- sigma
+            Y_data_Frame -- Y_data_Frame
+            z_data_Frame -- z_data_Frame
+            XLastItteration -- numpy array that contains the last x values
+            T_P_min_max_dict -- Dict that contains reactions and the max and min values for 
+            chebyshev poly
+            active_parameters -- list of active parameters
+            
+        '''        
         
          
         
@@ -2666,6 +2669,21 @@ class Adding_Target_Values(meq.Master_Equation):
                         exp_dict_list:list,
                         Y_data_Frame,
                         master_equation_reactions):
+
+        '''
+        Function to add k target values to y matrix.   
+        
+        Arguments:
+            target_value_csv -- csv that contains list of k target values 
+            exp_dict_list -- list of experiment dic built after simulation run
+            Y_matrix -- Y matrix
+            master_equation_reactions -- list of master equation reactions
+            
+        '''   
+
+
+
+
         import cantera as ct
         Y_df_list = []
         Y_values = []
@@ -3014,6 +3032,17 @@ class Adding_Target_Values(meq.Master_Equation):
         return k_targets_for_y,Y_data_Frame
     
     def target_values_for_Z(self,target_value_csv,z_data_Frame):
+
+        '''
+        Function to add k target values to Z matrix.   
+        
+        Arguments:
+            target_value_csv -- csv that contains list of k target values
+            z_data_Frame -- Y z_data_Frame
+            
+        '''
+
+
         z_over_w = []
         sigma = []
         target_value_csv = pd.read_csv(target_value_csv)
@@ -3042,8 +3071,17 @@ class Adding_Target_Values(meq.Master_Equation):
                             exp_dict_list,
                             S_matrix,
                             master_equation_reaction_list = [],
-                            master_equation_sensitivites = {}):
-                
+                            master_equation_sensitivities = {}):
+        '''
+        Function to add k target values to S matrix.   
+        
+        Arguments:
+            target_value_csv -- csv that contains list of k target values
+            exp_dict_list -- list of dicts created after cantera simulations are run
+            S_matrix -- S matrix
+            master_equation_reaction_list -- list of master equation reactions
+            master_equation_sensitivities -- dict of master equation sensitivities
+        '''                
                 
             
             target_value_csv = pd.read_csv(target_value_csv)
@@ -3260,7 +3298,7 @@ class Adding_Target_Values(meq.Master_Equation):
                 nested_reaction_list = [[] for x in range(len(flattened_master_equation_reaction_list))]
                 
                 for reaction in flattened_master_equation_reaction_list:
-                    for i,MP in enumerate(master_equation_sensitivites[reaction]):
+                    for i,MP in enumerate(master_equation_sensitivities[reaction]):
                         nested_reaction_list[flattened_master_equation_reaction_list.index(reaction)].append(0)
                         
                 return nested_reaction_list   
@@ -3521,7 +3559,7 @@ class Adding_Target_Values(meq.Master_Equation):
                             
 
                             nested_reaction_list = create_empty_nested_reaction_list()
-                            for j, MP_array in enumerate(master_equation_sensitivites[reaction]):
+                            for j, MP_array in enumerate(master_equation_sensitivities[reaction]):
                                 tuple_list = create_tuple_list(MP_array)
                                 temp = []
                                 counter = 0    
@@ -3562,7 +3600,7 @@ class Adding_Target_Values(meq.Master_Equation):
 
                         elif len(reaction_tuple[0])>1:
                             reactions_in_cti_file_with_these_reactants = reaction_tuple[0]
-                            weighting_factor_dictonary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
+                            weighting_factor_dictionary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
                                                                                           gas,
                                                                                           target_temp[i],
                                                                                           target_press[i],
@@ -3570,7 +3608,7 @@ class Adding_Target_Values(meq.Master_Equation):
                             nested_reaction_list = create_empty_nested_reaction_list()
                         
                             for secondary_reaction in reactions_in_cti_file_with_these_reactants:
-                                for j, MP_array in enumerate(master_equation_sensitivites[secondary_reaction]):
+                                for j, MP_array in enumerate(master_equation_sensitivities[secondary_reaction]):
                                     tuple_list = create_tuple_list(MP_array)
                                     temp = []
                                     counter = 0    
@@ -3595,7 +3633,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                     temp =sum(temp)
                                     nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)][j]=temp
                                     
-                                sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictonary[secondary_reaction])
+                                sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictionary[secondary_reaction])
                                 nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)] = sub_array_to_apply_weighting_factor_to
                                 
                                 
@@ -3615,7 +3653,7 @@ class Adding_Target_Values(meq.Master_Equation):
                         reactions_in_cti_file_with_these_reactants_numerator = reaction_tuple[0]
                         reactions_in_cti_file_with_these_reactants_denominator= reaction_tuple[1]
 
-                        weighting_factor_dictonary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
+                        weighting_factor_dictionary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
                                                                                           reactions_in_cti_file_with_these_reactants_denominator,                 
                                                                                           gas,
                                                                                           target_temp[i],
@@ -3624,7 +3662,7 @@ class Adding_Target_Values(meq.Master_Equation):
 
                         #now need to add to S matrix 
                         for secondary_reaction in (reactions_in_cti_file_with_these_reactants_numerator+reactions_in_cti_file_with_these_reactants_denominator):
-                            for j, MP_array in enumerate(master_equation_sensitivites[secondary_reaction]):
+                            for j, MP_array in enumerate(master_equation_sensitivities[secondary_reaction]):
                                 tuple_list = create_tuple_list(MP_array)
                                 temp = []
                                 counter = 0    
@@ -3649,7 +3687,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                 temp =sum(temp)
                                 nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)][j]=temp
                                 
-                            sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictonary[secondary_reaction])
+                            sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictionary[secondary_reaction])
                             nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)] = sub_array_to_apply_weighting_factor_to
                             
                             
@@ -3696,7 +3734,7 @@ class Adding_Target_Values(meq.Master_Equation):
                             reactions_in_cti_file_with_these_reactants = reaction_tuple[0]
 
 
-                            weighting_factor_dictonary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
+                            weighting_factor_dictionary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
                                                                                               gas,
                                                                                               target_temp[i],
                                                                                               target_press[i],
@@ -3709,9 +3747,9 @@ class Adding_Target_Values(meq.Master_Equation):
                             for secondary_reaction in reactions_in_cti_file_with_these_reactants:
                                 #need to multiply by the weighting factor for the reaction
                                 
-                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
-                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
-                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictionary[secondary_reaction]
+                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictionary[secondary_reaction]
+                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictionary[secondary_reaction]
                             As.append(A_temp)
                             Ns.append(N_temp)
                             Eas.append(Ea_temp)
@@ -3724,7 +3762,7 @@ class Adding_Target_Values(meq.Master_Equation):
 
                         reactions_in_cti_file_with_these_reactants_numerator = reaction_tuple[0]
                         reactions_in_cti_file_with_these_reactants_denominator= reaction_tuple[1]
-                        weighting_factor_dictonary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
+                        weighting_factor_dictionary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
                                                                                           reactions_in_cti_file_with_these_reactants_denominator,                 
                                                                                           gas,
                                                                                           target_temp[i],
@@ -3738,9 +3776,9 @@ class Adding_Target_Values(meq.Master_Equation):
                         for secondary_reaction in (reactions_in_cti_file_with_these_reactants_numerator+reactions_in_cti_file_with_these_reactants_denominator):
                             
                             if reaction not in flattened_master_equation_reaction_list:
-                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
-                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
-                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictionary[secondary_reaction]
+                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictionary[secondary_reaction]
+                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictionary[secondary_reaction]
                                 
                         
                         As.append(A_temp)
@@ -3760,7 +3798,7 @@ class Adding_Target_Values(meq.Master_Equation):
                     if len(reaction_tuple) == 1:
                         
                         reactions_in_cti_file_with_these_reactants = reaction_tuple[0]
-                        weighting_factor_dictonary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
+                        weighting_factor_dictionary = calculate_weighting_factor_summation(reactions_in_cti_file_with_these_reactants,
                                                                                             gas,
                                                                                             target_temp[i],
                                                                                             target_press[i],
@@ -3777,13 +3815,13 @@ class Adding_Target_Values(meq.Master_Equation):
                         for secondary_reaction in reactions_in_cti_file_with_these_reactants:
 
                             if secondary_reaction not in flattened_master_equation_reaction_list:
-                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
-                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
-                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictionary[secondary_reaction]
+                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictionary[secondary_reaction]
+                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictionary[secondary_reaction]
                   
                             
                             elif secondary_reaction in flattened_master_equation_reaction_list:
-                                for j, MP_array in enumerate(master_equation_sensitivites[secondary_reaction]):
+                                for j, MP_array in enumerate(master_equation_sensitivities[secondary_reaction]):
                                     tuple_list = create_tuple_list(MP_array)
                                     temp = []
                                     counter = 0    
@@ -3808,7 +3846,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                     temp =sum(temp)
                                     nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)][j]=temp
                                     
-                                sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictonary[secondary_reaction])
+                                sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictionary[secondary_reaction])
                                 nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)] = sub_array_to_apply_weighting_factor_to
                                 
                                 
@@ -3840,7 +3878,7 @@ class Adding_Target_Values(meq.Master_Equation):
                         reactions_in_cti_file_with_these_reactants_numerator = reaction_tuple[0]
                         reactions_in_cti_file_with_these_reactants_denominator = reaction_tuple[1]
 
-                        weighting_factor_dictonary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
+                        weighting_factor_dictionary = calculate_weighting_factor_summation_with_denominator(reactions_in_cti_file_with_these_reactants_numerator,
                                                                                           reactions_in_cti_file_with_these_reactants_denominator,                 
                                                                                           gas,
                                                                                           target_temp[i],
@@ -3857,13 +3895,13 @@ class Adding_Target_Values(meq.Master_Equation):
                         for secondary_reaction in (reactions_in_cti_file_with_these_reactants_numerator+reactions_in_cti_file_with_these_reactants_denominator):
 
                             if secondary_reaction not in flattened_master_equation_reaction_list:
-                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictonary[secondary_reaction]
-                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
-                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictonary[secondary_reaction]
+                                A_temp[0,reactions_in_cti_file.index(secondary_reaction)] = 1 * weighting_factor_dictionary[secondary_reaction]
+                                N_temp [0,reactions_in_cti_file.index(secondary_reaction)] = np.log(target_temp[i]) * weighting_factor_dictionary[secondary_reaction]
+                                Ea_temp[0,reactions_in_cti_file.index(secondary_reaction)] = (-1/target_temp[i]) * weighting_factor_dictionary[secondary_reaction]
                   
                             
                             elif secondary_reaction in flattened_master_equation_reaction_list:
-                                for j, MP_array in enumerate(master_equation_sensitivites[secondary_reaction]):
+                                for j, MP_array in enumerate(master_equation_sensitivities[secondary_reaction]):
                                     tuple_list = create_tuple_list(MP_array)
                                     temp = []
                                     counter = 0    
@@ -3888,7 +3926,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                     temp =sum(temp)
                                     nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)][j]=temp
                                     
-                                sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictonary[secondary_reaction])
+                                sub_array_to_apply_weighting_factor_to = list(np.array(nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)])*weighting_factor_dictionary[secondary_reaction])
                                 nested_reaction_list[flattened_master_equation_reaction_list.index(secondary_reaction)] = sub_array_to_apply_weighting_factor_to
                                 
                                 

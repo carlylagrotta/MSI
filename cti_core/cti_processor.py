@@ -18,6 +18,8 @@ class Processor(object): #handles one optimization but may add support for multi
         self.param_path = ''#may give option to load in a param file
         if p_flag == 1:
             self.set_default_parameters()
+
+
     #v flag for verbose output, may add out for A=, n= , Ea = etc later, and rate list for plog support, flag for outputting all later
     def get_active_parameter(self,r_index, verbose=0):
         if len(self.active_parameter_dictionary) == 0:
