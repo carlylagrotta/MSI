@@ -2,7 +2,7 @@
 import sys
 sys.path.append('.') #get rid of this at some point with central test script or when package is built
 
-import MSI.simulations.instruments.shock_tube as st
+import MSI.simulations.instruments.batch_reactor as st
 import MSI.cti_core.cti_processor as pr
 import MSI.optimization.matrix_loader as ml
 import MSI.optimization.opt_runner as opt
