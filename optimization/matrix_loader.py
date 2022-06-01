@@ -868,7 +868,7 @@ class OptMatrix(object):
         self.z_matrix = Z
         self.sigma = sigma
         #print(Z.shape)
- #      Z_data_Frame.to_csv('/Users/carlylagrotta/Desktop/Zdf.csv')
+        #Z_data_Frame.to_csv('/Users/carlylagrotta/Desktop/Zdf.csv')
  #       print(Z_data_Frame)
         return Z,Z_data_Frame,sigma,active_parameters
 
@@ -1509,7 +1509,7 @@ class OptMatrix(object):
         self.Y_matrix = Y
         #print(Y.shape,'Y matrix without k targets')
         
-        #Y_data_Frame.to_csv('/Users/carlylagrotta/Desktop/Ydf.csv')
+       # Y_data_Frame.to_csv('/Users/carlylagrotta/Desktop/Ydf.csv')
         return Y, Y_data_Frame       
 
     def load_S(self, exp_dict_list:list,parsed_yaml_list:list,
@@ -2544,6 +2544,7 @@ class OptMatrix(object):
         ##################################################
 
         one_over_z = np.true_divide(1,z_matrix)
+        print(one_over_z.shape)
         y_matrix = Y_matrix * one_over_z
         
         s_matrix = S_matrix * (one_over_z.flatten()[:,np.newaxis])

@@ -597,6 +597,7 @@ class Plotting(object):
                         #plt.savefig(self.working_directory+'/'+'Experiment_'+str(i+1)+'_'+str(observable)+'.pdf', bbox_inches='tight',dpi=1000)                     
                         observable_counter+=1                        
                 if observable in exp['ignition_delay_observables']:
+                    print('INSIDE IGNITION DELAY OBSERVABLES')
                     if re.match('[Ss]hock [Tt]ube',exp['simulation_type']):
                         if len(exp['simulation'].temperatures)>1:
                             nominal=self.run_ignition_delay(self.exp_dict_list_original[i], self.nominal_cti)
@@ -1276,6 +1277,9 @@ class Plotting(object):
             
     def sort_top_uncertainty_weighted_sens(self,top_sensitivity=10):
         #S_matrix_copy = copy.deepcopy(self.S_matrix)
+        
+        #make_equal_ones=1
+        #print('make_equal_ones')
         S_matrix_copy = copy.deepcopy(self.S_matrix_original)
         self.shorten_sigma()
         sigma_csv = self.sigma_uncertainty_weighted_sensitivity_csv
@@ -1297,6 +1301,7 @@ class Plotting(object):
         for pp  in range(np.shape(S_matrix_copy)[1]):
 
             S_matrix_copy[:,pp] *=Sig[pp]
+           # S_matrix_copy[:,pp] *=1
 
         sensitivitys =[[] for x in range(len(self.simulation_lengths_of_experimental_data))]
         topSensitivities = [[] for x in range(len(self.simulation_lengths_of_experimental_data))]   
@@ -1320,6 +1325,40 @@ class Plotting(object):
                
         return sensitivitys,topSensitivities
     
+    def sort_top_uncertainty_weighted_sens_perturbed(self,top_sensitivity=10):
+        #S_matrix_copy = copy.deepcopy(self.S_matrix)
+        S_matrix_copy = copy.deepcopy(self.S_matrix_original)
+        X_matrix = self.X
+
+            
+            
+        #Sig = self.sigma
+        for pp  in range(np.shape(S_matrix_copy)[1]):
+
+            S_matrix_copy[:,pp] *=X_matrix[pp]
+
+        sensitivitys =[[] for x in range(len(self.simulation_lengths_of_experimental_data))]
+        topSensitivities = [[] for x in range(len(self.simulation_lengths_of_experimental_data))]   
+        start=0
+        stop = 0
+        for x in range(len(self.simulation_lengths_of_experimental_data)):
+            for y in range(len(self.simulation_lengths_of_experimental_data[x])):           
+    
+                stop = self.simulation_lengths_of_experimental_data[x][y] + start
+                temp = S_matrix_copy[start:stop,:]
+                sort_s= pd.DataFrame(temp).reindex(pd.DataFrame(temp).abs().max().sort_values(ascending=False).index, axis=1)
+                cc=pd.DataFrame(sort_s).iloc[:,:top_sensitivity]
+                top_five_reactions=cc.columns.values.tolist()
+                topSensitivities[x].append(top_five_reactions)
+                #ccn=pd.DataFrame(cc).as_matrix()
+                ccn=pd.DataFrame(cc).to_numpy()
+
+                sensitivitys[x].append(ccn)           
+                start = start + self.simulation_lengths_of_experimental_data[x][y]
+                
+               
+        return sensitivitys,topSensitivities
+        
     
     def getting_time_profiles_for_experiments(self, exp_dict_list_optimized):
         time_profiles =[[] for x in range(len(self.simulation_lengths_of_experimental_data))]
@@ -1480,7 +1519,78 @@ class Plotting(object):
         return 
             
             
-         
+
+    def plotting_perturbed_weighted_sens(self,observable_list_for_legend_csv_path=None):
+        sensitivities,top_sensitivities = self.sort_top_uncertainty_weighted_sens_perturbed()
+        observables_list = self.get_observables_list()
+        
+        if bool(self.sigma_uncertainty_weighted_sensitivity_csv):
+            
+            sigma_list = self.sigma_list
+        else:
+            sigma_list = list(self.short_sigma)
+        #start here
+        time_profiles = self.getting_time_profiles_for_experiments(self.exp_dict_list_optimized)
+        list_of_experiment_observables = self.observable_list
+        
+        observable_list_for_legend=None
+        if observable_list_for_legend_csv_path != None:
+            df = pd.read_csv(observable_list_for_legend_csv_path)
+            
+            observable_list_for_legend = df['optimization_variable'].tolist()
+                    
+        
+        
+        def subplot_function(number_of_observables_in_simulation,
+                             time_profiles,sensitivities,
+                             top_sensitivity_single_exp,
+                             observables_list,
+                             list_of_experiment_observables,
+                             experiment_number,observable_list_for_legend_csv_path=None):
+            #plt.figure(figsize=(2,6))
+            #stub
+            plt.figure()
+            for plot_number in range(number_of_observables_in_simulation):
+                for c,top_columns in enumerate(top_sensitivity_single_exp[plot_number]):
+                    plt.subplot(number_of_observables_in_simulation,1,plot_number+1)
+                    if plot_number==0:
+                        plt.title('Experiment_'+str(experiment_number+1))
+                    if observable_list_for_legend_csv_path == None:
+                        plt.plot(time_profiles[plot_number],sensitivities[plot_number][:,c],label = observables_list[top_columns] +'_'+str(self.X[top_columns])) 
+                        plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=1.5)
+                        plt.ylabel(list_of_experiment_observables[plot_number])
+                        top,bottom = plt.ylim()
+                        left,right = plt.xlim()
+                        plt.legend(ncol=5, loc='upper left',bbox_to_anchor=(-.5,-.3))
+                    else:
+                        plt.plot(time_profiles[plot_number],sensitivities[plot_number][:,c],label = observable_list_for_legend[top_columns] +'_'+str(self.X[top_columns])) 
+                        plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=1.5)
+                        plt.ylabel(list_of_experiment_observables[plot_number])
+                        top,bottom = plt.ylim()
+                        left,right = plt.xlim()
+                        plt.legend(ncol=5, loc='upper left',bbox_to_anchor=(-.5,-.3))                        
+                    #plt.legend(ncol=3, loc='upper left',bbox_to_anchor=(1.2,2),fontsize=2)
+
+            if self.simulation_run==None:
+
+                plt.savefig(self.working_directory+'/'+'Perturbed_Experiment_'+str(experiment_number+1)+'.pdf', bbox_inches='tight')
+            else:
+                
+                plt.title('Perturbed_Experiment_'+str(self.simulation_run))
+                plt.savefig(self.working_directory+'/'+'Perturbed_Experiment_'+str(self.simulation_run)+'.pdf', bbox_inches='tight')
+
+               
+        for x in range(len(sensitivities)):            
+            number_of_observables_in_simulation = len(sensitivities[x])
+            subplot_function(number_of_observables_in_simulation,
+                             time_profiles[x],sensitivities[x],
+                             top_sensitivities[x],observables_list,
+                             list_of_experiment_observables[x],x,
+                             observable_list_for_legend_csv_path=observable_list_for_legend)
+            
+        return             
+
+
             
     def plotting_rate_constants_six_paramter_fit(self,optimized_cti_file='',
                                 original_cti_file='',
@@ -7387,7 +7497,10 @@ class Plotting(object):
             
             unique_reactions_optimized_for_plotting = unique_list(unique_reactions_optimized)
             
-            unique_reactions_original_for_plotting = unique_list(unique_reactions_original)            
+            unique_reactions_original_for_plotting = unique_list(unique_reactions_original)   
+            
+            print(unique_reactions_original_for_plotting,'THESE ARE THE REACIONS FOR PLOTTING')
+    
             
             target_value_temps_optimized_for_plotting,target_value_ks_optimized_for_plotting = sort_rate_constant_target_values(k_target_value_csv,unique_reactions_optimized_for_plotting,gas_optimized)
             target_value_temps_original_for_plotting,target_value_ks_original_for_plotting = sort_rate_constant_target_values(k_target_value_csv,unique_reactions_original_for_plotting,gas_original)
@@ -7454,6 +7567,17 @@ class Plotting(object):
                           df_og2['target_vaue_temps_optimized'] = pd.Series(a)
                           df_og2['low_error_optimized'] = pd.Series(bb)
                           df_og2['high_error_optimized'] = pd.Series(b)     
+
+
+                    if reaction_list_from_mechanism[reaction] =='2 HO2 => HOOOOH':
+                          df_og3 = pd.DataFrame()
+                          df_og3['Temperature'] = list(Temp_optimized)
+                          
+                          df_og3['k_og_optimized'] = list(k_optimized)
+                          df_og3['target_vaue_temps_optimized'] = pd.Series(a)
+                          df_og3['low_error_optimized'] = pd.Series(bb)
+                          df_og3['high_error_optimized'] = pd.Series(b) 
+
                           
                           #df_og.to_csv('/Users/carlylagrotta/Desktop/k_optimized.csv')
 
@@ -7490,6 +7614,10 @@ class Plotting(object):
                     if reaction_list_from_mechanism_original[reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction])] =='2 HO2 <=> O2 + 2 OH':
                         df_og2['k_original'] = k_original
 
+
+                    if reaction_list_from_mechanism_original[reaction_list_from_mechanism_original.index(reaction_list_from_mechanism[reaction])] =='2 HO2 => HOOOOH':
+                        df_og3['k_original'] = k_original
+
                 plt.semilogy(Temp_original,k_original,'r')
 
                 
@@ -7501,6 +7629,7 @@ class Plotting(object):
                     
                     
                     high_error_original = np.exp(sigma_list_for_target_ks_original[unique_reactions_original.index(new_tuple)])
+                    
                     high_error_original = np.multiply(high_error_original,target_value_ks_calculated_with_cantera_original[unique_reactions_original.index(new_tuple)])
 
 
@@ -7557,12 +7686,20 @@ class Plotting(object):
 
 
                         if reaction_list_from_mechanism[reaction] =='2 HO2 <=> O2 + 2 OH':
+                              
                               df_og2['target_vaue_temps_original'] = pd.Series(c)
                               df_og2['low_error_original'] = pd.Series(d)
                               df_og2['high_error_original'] = pd.Series(dd)
                           
                               df_og2.to_csv('/Users/carlylagrotta/Desktop/2 HO2 <=> O2 + 2 OH_k_optimized.csv')
 
+                        if reaction_list_from_mechanism[reaction] =='2 HO2 => HOOOOH':
+                              
+                              df_og3['target_vaue_temps_original'] = pd.Series(c)
+                              df_og3['low_error_original'] = pd.Series(d)
+                              df_og3['high_error_original'] = pd.Series(dd)
+                          
+                              df_og3.to_csv('/Users/carlylagrotta/Desktop/2 HO2 <=> HOOOOH_k_optimized.csv')
                        
                 # #plt.semilogy(target_value_temps_optimized[i],target_value_ks_optimized[i],'o',color='black')
                 plt.semilogy(target_value_temps_optimized_for_plotting[i],target_value_ks_optimized_for_plotting[i],'o',color='black')
