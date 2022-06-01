@@ -175,7 +175,7 @@ class MSI_optimization_six_parameter_fit(object):
                                                   self.list_of_parsed_yamls,
                                                   dk=self.perturbment,
                                                   master_equation_reactions = self.master_equation_reactions,
-                                                  mapped_master_equation_sensitivites=self.MP_for_S_matrix,
+                                                  mapped_master_equation_sensitivities=self.MP_for_S_matrix,
                                                   master_equation_flag = self.master_equation_flag)
         self.S_matrix = S_matrix
 
