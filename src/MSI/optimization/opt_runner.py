@@ -920,7 +920,7 @@ class Optimization_Utility(object):
             simulation_type = yamlDict['simulationType']
             experiment_type = yamlDict['experimentType']
             
-            if re.match('[Ss]hock [Tt]ube',simulation_type) and re.match('[Ss]pecies[- ][Pp]rofile',experiment_type):
+            if re.match('[Bb]atch[ _-][Rr]eactor',simulation_type) and re.match('[Ss]pecies[- ][Pp]rofile',experiment_type):
                 
 
                 
@@ -957,7 +957,7 @@ class Optimization_Utility(object):
                         experiment_list.append(experiment)
                         
                         
-            elif re.match('[Ss]hock [Tt]ube',simulation_type) and re.match('[Ii]gnition[- ][Dd]elay',experiment_type):
+            elif re.match('[Bb]atch[ _-][Rr]eactor',simulation_type) and re.match('[Ii]gnition[- ][Dd]elay',experiment_type):
                  if 'absorbanceObservables' not in yamlDict.keys():
                         experiment = self.running_ignition_delay(processor=processor,
                                            experiment_dictionary=yamlDict,

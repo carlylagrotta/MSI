@@ -305,7 +305,7 @@ class Parser(object):
         else:
             print('Placeholder: no JSR absorption')
         
-    def parse_variable_pressure_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+    def parse_variable_pressure_batch_reactor_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         
         """
         Takes in an unorganized dictonary for a yaml file containing 
