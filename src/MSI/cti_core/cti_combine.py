@@ -62,18 +62,22 @@ def cti_write2(x={},original_cti='',master_rxns='',master_index=[],MP={},working
     done=False
     count=0
     while not done or count<len(lineList):
-        if 'Reaction data' in lineList[count] or 'Reaction Data' in lineList[count] or 'reaction data' in lineList[count]:
-            done=True
-            lineList=lineList[0:count-1]
-        else:count+=1
+         if 'Reaction data' in lineList[count] or 'Reaction Data' in lineList[count] or 'reaction data' in lineList[count]:
+             done=True
+             lineList=lineList[0:count-1]
+         else:count+=1
+    #with open('tempcti.cti','w') as p:
+         #p.writelines(lineList)
+        
+   #Attempt to get rid of temp cti files:
+    NewModelSpecies=ct.Species.listFromFile(original_cti)
+    NewModel=ct.Solution(thermo='IdealGas',kinetics='GasKinetics',
+                         species=NewModelSpecies)
+        
+        
     
-    
-    with open('tempcti.cti','w') as p:
-        p.writelines(lineList)
-    
-    NewModel=ct.Solution('tempcti.cti')
-    
-    
+    #NewModel=ct.Solution('tempcti.cti')
+
     original_mechanism=ct.Solution(original_cti)
     original_rxn_count=0
     master_rxn_eqs=[]

@@ -217,6 +217,7 @@ class OptMatrix(object):
                 
                 
                 absolute_uncertainty_array = copy.deepcopy(x_dependent_a_uncertainty)
+                #Fix this to deal with 0 data.
                 absolute_uncertainty_array = np.divide(absolute_uncertainty_array,data)
                 absolute_uncertainty_array = absolute_uncertainty_array.reshape((absolute_uncertainty_array.shape[0],1))
                 
@@ -263,6 +264,7 @@ class OptMatrix(object):
                 else:
                     if observable in exp_dic['mole_fraction_observables']:
                         ## add ppm statment here ? check if it exists? and add concentration statment below just for parcing 
+                        
                         total_uncertainty,un_weighted_uncertainty = uncertainty_calc(exp_dic['uncertainty']['mole_fraction_relative_uncertainty'][counter],
                             exp_dic['uncertainty']['mole_fraction_absolute_uncertainty'][counter],
                             exp_dic['experimental_data'][counter][observable].values,exp_dic['experimental_data'][counter])
@@ -868,8 +870,7 @@ class OptMatrix(object):
         self.z_matrix = Z
         self.sigma = sigma
         #print(Z.shape)
- #      Z_data_Frame.to_csv('/Users/carlylagrotta/Desktop/Zdf.csv')
- #       print(Z_data_Frame)
+
         return Z,Z_data_Frame,sigma,active_parameters
 
 
@@ -920,7 +921,8 @@ class OptMatrix(object):
                 if observable == None:
                     pass
                 else:
-                    #if you need to add something with concentration add it here 
+                    #if you need to add something with concentration add it here
+
                     if 'ppm' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
                         if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_ppm'].values,
@@ -1530,8 +1532,7 @@ class OptMatrix(object):
         
         self.Y_matrix = Y
         #print(Y.shape,'Y matrix without k targets')
-        
-        #Y_data_Frame.to_csv('/Users/carlylagrotta/Desktop/Ydf.csv')
+
         return Y, Y_data_Frame       
 
     def load_S(self, exp_dict_list:list,parsed_yaml_list:list,
@@ -2559,6 +2560,7 @@ class OptMatrix(object):
         '''
 
         one_over_z = np.true_divide(1,z_matrix)
+        #print(Y_matrix)
         y_matrix = Y_matrix * one_over_z
         
         s_matrix = S_matrix * (one_over_z.flatten()[:,np.newaxis])
@@ -2789,7 +2791,7 @@ class Adding_Target_Values(meq.Master_Equation):
                                         gas,
                                         reactants_in_target_reactions,
                                         reactants_in_target_reactions)
-                
+
                 if target_press[i] == 0:
                     pressure = 1e-9
                 else:
@@ -2869,8 +2871,6 @@ class Adding_Target_Values(meq.Master_Equation):
                     
 
                 if '*' in reactants_in_denominator:
-                    
-                    
 
                     reactants_in_target_reactions_denominator = reactants_in_denominator.split('<=>')[0].rstrip()
                     reverse_reactants_in_target_reaction_in_denominator=None
@@ -3987,10 +3987,6 @@ class Adding_Target_Values(meq.Master_Equation):
             
             return S_target_values
         
-
-                
-
-            
 
 
     def preprocessing_rate_constant_target_csv(self,target_value_csv,

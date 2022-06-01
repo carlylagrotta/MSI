@@ -214,7 +214,6 @@ class Parser(object):
 
         simulation_type = loaded_exp['apparatus']['kind']
         pressure = loaded_exp['common-properties']['pressure']['value']
-        experiment_type = loaded_exp['experiment-type']
         temperatures = loaded_exp['common-properties']['temperature']['value-list']
         mole_fractions = [((concentration['mole-fraction'])) for concentration in loaded_exp['common-properties']['composition']]
         mole_fractions = [float(elm) for elm in mole_fractions]
@@ -222,22 +221,27 @@ class Parser(object):
         conditions = dict(zip(species_names,mole_fractions))
         thermal_boundary = loaded_exp['common-properties']['assumptions']['thermal-boundary']
         mechanical_boundary = loaded_exp['common-properties']['assumptions']['mechanical-boundary']
+        experiment_type = loaded_exp['experiment-type']
+        
         mole_fraction_observables = [point['targets'][0]['name'] for point in loaded_exp['datapoints']['mole-fraction']]
-        for i in range(len(mole_fraction_observables)):
-            if mole_fraction_observables[i] == False:
-                mole_fraction_observables[i]='NO'
+
+        if mole_fraction_observables[0]!=None:
+            for i in range(len(mole_fraction_observables)):
+                if not mole_fraction_observables[i]:
+                    mole_fraction_observables[i]='NO'
+
         species_uncertainties = [uncert['relative-uncertainty'] for uncert in loaded_exp['common-properties']['composition']]
         species_uncertainties = [float(elm) for elm in species_uncertainties]
         species_uncertainties = dict(zip(species_names,species_uncertainties))
         #observables = [x for x in mole_fraction_observables if x is not None]
-
-                
+     
         concentration_observables = [datapoint['targets'][0]['name'] for datapoint in loaded_exp['datapoints']['concentration']] 
-        
-        
-        for i in range(len(concentration_observables)):
-            if concentration_observables[i] == False:
-                concentration_observables[i]='NO'    
+
+        if concentration_observables[0]!=None:
+            for i in range(len(concentration_observables)):
+                if not concentration_observables[i]:
+                    concentration_observables[i]='NO'    
+
         #print(concentration_observables,len(concentration_observables))
         observables = [x for x in (mole_fraction_observables + concentration_observables) if x is not None]                
         # for i in range(len(observables)):
@@ -251,6 +255,7 @@ class Parser(object):
         concentration_csv_files = [csvfile['csvfile'] for csvfile in loaded_exp['datapoints']['concentration']]
         
         csv_files = [x for x in (mole_fraction_csv_files+concentration_csv_files) if x is not None]
+
         temp_relative_uncertainty = loaded_exp['common-properties']['temperature']['relative-uncertainty']
         temp_relative_uncertainty = float(temp_relative_uncertainty)
         pressure_relative_uncertainty = loaded_exp['common-properties']['pressure']['relative-uncertainty']
@@ -259,10 +264,14 @@ class Parser(object):
         concentration_absolute_uncertainty = [point['targets'][0]['absolute-uncertainty'] for point in loaded_exp['datapoints']['concentration']]
         volume=loaded_exp['apparatus']['reactor-volume']['value']
         mole_fraction_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['mole-fraction']] 
-        concentration_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['concentration']] 
+        concentration_relative_uncertainty = [point['targets'][0]['relative-uncertainty'] for point in loaded_exp['datapoints']['concentration']]       
 
         residence_time=loaded_exp['apparatus']['residence-time']['value']
         restime_relative_uncertainty=loaded_exp['apparatus']['residence-time']['relative-uncertainty']
+        #print(csv_files)
+        #print(mole_fraction_csv_files,'MOLE FRACTION')
+        #print(concentration_csv_files,'CONCENTATIOn')
+        
         if loaded_absorption == {}:
              #build dict and return information for flame speed simulation
             return{
@@ -273,6 +282,7 @@ class Parser(object):
                'thermalBoundary':thermal_boundary,
                'mechanicalBoundary':mechanical_boundary,
                'moleFractionObservables':mole_fraction_observables,
+               'concentrationObservables':concentration_observables,
                'observables':observables,
                'speciesNames':species_names,
                'MoleFractions':mole_fractions,
@@ -289,13 +299,13 @@ class Parser(object):
                'volume': volume,
                'residence_time': residence_time,
                'experimentType':experiment_type,
-               'residenceTimeRelativeUncertainty':restime_relative_uncertainty,
-               'concentrationObservables': concentration_observables
+               'residenceTimeRelativeUncertainty':restime_relative_uncertainty
+               #'concentrationObservables': [None]
            }
         else:
             print('Placeholder: no JSR absorption')
-            
-    def parse_variable_pressure_batch_reactor_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
+        
+    def parse_variable_pressure_shock_tube_obj(self,loaded_exp:dict={}, loaded_absorption:dict={}):
         
         """
         Takes in an unorganized dictonary for a yaml file containing 

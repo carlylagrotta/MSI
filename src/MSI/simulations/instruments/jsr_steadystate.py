@@ -184,7 +184,7 @@ class JSR_steadystate(sim.Simulation):
             ###################################################################
             #reactorNetwork.advance_to_steady_state()
             #reactorNetwork.reinitialize()
-        #print(tempgas.TPX)
+        
         elif self.kineticSens and bool(self.observables)==False:
             #except:
                 print('Please supply a non-empty list of observables for sensitivity analysis or set kinetic_sens=0')        
@@ -209,7 +209,8 @@ class JSR_steadystate(sim.Simulation):
         if bool(self.observables) and self.kineticSens==1:
             for i in range(gas.n_reactions):
                 stirredReactor.add_sensitivity_reaction(i)
-        reactorNetwork.rtol_sensitivity=0.00001
+        reactorNetwork.rtol_sensitivity=0.0000001
+        reactorNetwork.atol_sensitivity=0.00000001
         print('Sens tols:'+str(reactorNetwork.atol_sensitivity)+', '+str(reactorNetwork.rtol_sensitivity))
         # now compile a list of all variables for which we will store data
         columnNames = [stirredReactor.component_name(item) for item in range(stirredReactor.n_vars)]
@@ -387,8 +388,6 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         self.atol=atol
             
     def run(self):
-        
-        
         solution=[]
         ksens=[]
         ksens_1stIter=False
@@ -431,7 +430,6 @@ class JSR_multiTemp_steadystate(sim.Simulation):
             temp1=[]
             temp=copy.deepcopy(a)
             temp1=copy.deepcopy(b)
-            #print(a)
             solution.append(temp)
             if not ksens_1stIter and self.kineticSens==1:
                 ksens=temp1
@@ -450,7 +448,6 @@ class JSR_multiTemp_steadystate(sim.Simulation):
 
 
         return (solution,ksens)
-        
         
     def sensitivity_adjustment(self,temp_del:float=0.0,
                                pres_del:float=0.0,
