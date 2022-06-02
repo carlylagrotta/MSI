@@ -248,7 +248,7 @@ class MSI_optimization(object):
                                                                                  self.experiment_dictonaries,
                                                                                  self.S_matrix,
                                                                                  master_equation_reaction_list = self.master_equation_reactions,
-                                                                                 master_equation_sensitivites = self.chebyshev_sensitivities)    
+                                                                                 master_equation_sensitivities = self.chebyshev_sensitivities)    
 
         
 

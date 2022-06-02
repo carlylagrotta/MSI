@@ -465,7 +465,7 @@ class OptMatrix(object):
         #This is going to have to be simulation specific 
         if exp_dict_list[0]['simulation'].physicalSens ==1:
            for i, exp_dic in enumerate(exp_dict_list):
-               if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
+               if re.match('[Bb]atch[ _-][Rr]eactor',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
                #for i,exp_dic in enumerate(exp_dict_list):
                     experiment_physical_uncertainty = []
                     #Temperature Uncertainty 
@@ -924,7 +924,7 @@ class OptMatrix(object):
                     #if you need to add something with concentration add it here
 
                     if 'ppm' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
-                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']):
+                        if re.match('[Bb]atch[ _-][Rr]eactor',exp_dict_list[i]['simulation_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable+'_ppm'].values,
                                                                   (exp_dic['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)*1e6)
                         
@@ -947,7 +947,7 @@ class OptMatrix(object):
 
                         
                     elif 'mol/cm^3' in exp_dic['experimental_data'][counter].columns.tolist()[1]:
-                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
+                        if re.match('[Bb]atch[ _-][Rr]eactor',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
                             
                             concentration = np.true_divide(1,exp_dic['simulation'].pressureAndTemperatureToExperiment[counter]['temperature'].to_numpy())*exp_dic['simulation'].pressureAndTemperatureToExperiment[counter]['pressure'].to_numpy()
                            
@@ -992,7 +992,7 @@ class OptMatrix(object):
                                                                       exp_dic['simulation'].timeHistories[0]['delay'])
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
                     else:
-                        if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
+                        if re.match('[Bb]atch[ _-][Rr]eactor',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
                             natural_log_diff = natural_log_difference(exp_dic['experimental_data'][counter][observable].values,
                                                                   exp_dic['simulation'].timeHistoryInterpToExperiment[observable].dropna().values)
                             natural_log_diff =  natural_log_diff.reshape((natural_log_diff.shape[0], 1))
@@ -1136,7 +1136,7 @@ class OptMatrix(object):
             for i,exp_dic in enumerate(exp_dict_list):
                 
                 if loop_counter ==0:
-                    if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp_dict_list[i]['experiment_type']):
+                    if re.match('[Bb]atch[ _-][Rr]eactor',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[ -][Pp]rofile',exp_dict_list[i]['experiment_type']):
                         dic_of_conditions = exp_dic['simulation'].conditions
                         #subtract out the dilluant 
                         species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
@@ -1198,7 +1198,7 @@ class OptMatrix(object):
                         for variable in range(species_in_simulation):
                             Y_data_Frame.append('X'+'_'+str(variable)+'_'+'experiment'+'_'+str(i))  
                             
-                    elif re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
+                    elif re.match('[Bb]atch[ _-][Rr]eactor',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
 
                         conditions = exp_dic['conditions_dict_list']
                         species_uncertainties = exp_dic['uncertainty']['species_relative_uncertainty']['dictionary_of_values']
@@ -1336,7 +1336,7 @@ class OptMatrix(object):
                         
                         
                 else:
-                    if re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
+                    if re.match('[Bb]atch[ _-][Rr]eactor',exp_dict_list[i]['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dict_list[i]['experiment_type']):
                         dic_of_conditions = exp_dic['simulation'].conditions
                         #subtract out the dilluant 
                         species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
@@ -1408,7 +1408,7 @@ class OptMatrix(object):
                     
                     
                     
-                    elif re.match('[Ss]hock [Tt]ube',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
+                    elif re.match('[Bb]atch[ _-][Rr]eactor',exp_dict_list[i]['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dict_list[i]['experiment_type']):
                         conditions = exp_dic['conditions_dict_list']
                         species_to_loop =  list(exp_dic['conditions_dict_list'].keys())
                         temperatures_in_simulation = len(exp_dic['simulation'].temperatures)
@@ -1632,7 +1632,7 @@ class OptMatrix(object):
                     if observable == None:
                         continue
                     
-                    if re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']):
+                    if re.match('[Bb]atch[ _-][Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']):
                         temperature_sensitivity = exp['temperature'][observable].dropna().values
                         temperature_sensitivity = temperature_sensitivity.reshape((temperature_sensitivity.shape[0], 1))
                         
@@ -1936,7 +1936,7 @@ class OptMatrix(object):
                         single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty,restime_sensitivity))
 
                        
-                    elif re.match('[Ss]hock [Tt]ube',exp['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']):
+                    elif re.match('[Bb]atch[ _-][Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']):
                         single_obs_physical = np.hstack((temperature_sensitivity,pressure_sensitivity,species_sensitivty,time_shift_sensitivity)) 
                         
                         
@@ -2319,7 +2319,7 @@ class OptMatrix(object):
         physical_observables_for_Y = []
         if exp_dict_list[0]['simulation'].physicalSens ==1:
             for i,exp_dic in enumerate(exp_dict_list):
-                if re.match('[Ss]hock [Tt]ube',exp_dic['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dic['experiment_type']):
+                if re.match('[Bb]atch[ _-][Rr]eactor',exp_dic['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp_dic['experiment_type']):
                     dic_of_conditions = exp_dic['simulation'].conditions
                         #subtract out the dilluant 
                     species_in_simulation = len(set(dic_of_conditions.keys()).difference(['Ar','AR','ar','HE','He','he','Kr','KR','kr','Xe','XE','xe','NE','Ne','ne']))
@@ -2342,7 +2342,7 @@ class OptMatrix(object):
                     ##come back to this and do a test on paper
                     previous_value = new_value
                     
-                elif re.match('[Ss]hock [Tt]ube',exp_dic['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dic['experiment_type']):
+                elif re.match('[Bb]atch[ _-][Rr]eactor',exp_dic['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp_dic['experiment_type']):
 
                     diluent=[]   
                     if 'Diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys() or 'diluent' in exp_dic['uncertainty']['species_relative_uncertainty']['type_dict'].keys():

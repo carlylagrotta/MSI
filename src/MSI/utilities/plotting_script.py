@@ -7592,21 +7592,21 @@ class Plotting(object):
                     plt.semilogy(cc,dd,'r--')
 
 
-                    if type(reaction) != tuple:
-                        if reaction_list_from_mechanism[reaction] =='2 HO2 <=> H2O2 + O2':
-                              df_og['target_vaue_temps_original'] = pd.Series(c)
-                              df_og['low_error_original'] = pd.Series(d)
-                              df_og['high_error_original'] = pd.Series(dd)
+                    # if type(reaction) != tuple:
+                    #     if reaction_list_from_mechanism[reaction] =='2 HO2 <=> H2O2 + O2':
+                    #           df_og['target_vaue_temps_original'] = pd.Series(c)
+                    #           df_og['low_error_original'] = pd.Series(d)
+                    #           df_og['high_error_original'] = pd.Series(dd)
                           
-                              df_og.to_csv('/Users/carlylagrotta/Desktop/2 HO2 <=> H2O2 + O2_k_optimized.csv')
+                    #           df_og.to_csv('/Users/carlylagrotta/Desktop/2 HO2 <=> H2O2 + O2_k_optimized.csv')
 
 
-                        if reaction_list_from_mechanism[reaction] =='2 HO2 <=> O2 + 2 OH':
-                              df_og2['target_vaue_temps_original'] = pd.Series(c)
-                              df_og2['low_error_original'] = pd.Series(d)
-                              df_og2['high_error_original'] = pd.Series(dd)
+                    #     if reaction_list_from_mechanism[reaction] =='2 HO2 <=> O2 + 2 OH':
+                    #           df_og2['target_vaue_temps_original'] = pd.Series(c)
+                    #           df_og2['low_error_original'] = pd.Series(d)
+                    #           df_og2['high_error_original'] = pd.Series(dd)
                           
-                              df_og2.to_csv('/Users/carlylagrotta/Desktop/2 HO2 <=> O2 + 2 OH_k_optimized.csv')
+                    #           df_og2.to_csv('/Users/carlylagrotta/Desktop/2 HO2 <=> O2 + 2 OH_k_optimized.csv')
 
                        
                 # #plt.semilogy(target_value_temps_optimized[i],target_value_ks_optimized[i],'o',color='black')
