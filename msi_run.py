@@ -426,7 +426,7 @@ class multiscale_informatics:
                                           k_target_value_S_matrix =self.k_target_value_S_matrix,
                                           k_target_values=self.run_with_k_target_values,
                                           working_directory=self.wdir,
-                                          shock_tube_instance = self.MSI_instance_two,
+                                          batch_reactor_instance = self.MSI_instance_two,
                                           optimized_cti_file=self.MSI_instance_two.new_cti_file,
                                           original_cti_file=self.original_cti_file)
     

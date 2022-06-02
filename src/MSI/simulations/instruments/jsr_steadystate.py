@@ -285,9 +285,11 @@ class JSR_steadystate(sim.Simulation):
             self.kineticSensitivities = np.dstack(numpyMatrixsksens)
             #print(np.shape(self.kineticSensitivities))
             self.solution=data
+            self.solution['pressure']=[self.pressure]
             return (self.solution,self.kineticSensitivities)
         else:
             self.solution=data
+            self.solution['pressure']=[self.pressure]
             return (self.solution,[])
         
         
@@ -378,7 +380,7 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         if save_timeHistories == 1:
             self.timeHistories=[]
             self.timeHistoryInterpToExperiment = None
-            self.pressureAndTemperatureToExperiment = None
+            self.pressureAndTemperatureToExperiment = pd.DataFrame()
         else:
             self.timeHistories=None
         
@@ -442,9 +444,9 @@ class JSR_multiTemp_steadystate(sim.Simulation):
         if self.timeHistories != None:
             self.timeHistories.append(solution)
         self.kineticSensitivities=ksens
-
-        if self.pressureAndTemperatureToExperiment == None:
-            self.pressureAndTemperatureToExperiment = solution[['temperature','pressure']]
+        if 'pressureAndTemperatureToExperiment' in vars(self):
+            if self.pressureAndTemperatureToExperiment.empty:
+                self.pressureAndTemperatureToExperiment = solution[['temperature','pressure']]
 
 
         return (solution,ksens)

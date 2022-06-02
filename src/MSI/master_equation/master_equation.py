@@ -301,7 +301,9 @@ class Master_Equation(object):
                         elif re.match('[Bb]atch[- ][Rr]eactor',exp['simulation_type']) and re.match('[Ii]gnition[- ][Dd]elay',exp['experiment_type']):
                             single_reaction_array = self.array_reshape(self.multiply_by_sensitivities(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0],reaction))
                         elif re.match('[Jj][Ss][Rr]',exp['simulation_type']) or re.match('[Jj]et[- ][Ss]tirred[- ][Rr]eactor',exp['simulation_type']):
-                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivities(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0],reaction))                        
+                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivities(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0],reaction))      
+                        elif re.match('[Ff]low[- ][Rr]eactor',exp['simulation_type']) and re.match('[Ss]pecies[- ][Pp]rofile',exp['experiment_type']):
+                            single_reaction_array = self.array_reshape(self.multiply_by_sensitivities(column,sensitivty_dict[reaction][0],exp['simulation'].timeHistories[0],reaction))                                             
 
 
                         temp.append(single_reaction_array)
